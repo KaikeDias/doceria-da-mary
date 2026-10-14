@@ -4,6 +4,7 @@ import { RouterTestingHarness } from '@angular/router/testing';
 import { routes } from './app.routes';
 import { App } from './app';
 import { publicConfig } from './core/config/public-config';
+import { whatsappMessages } from './core/config/contact-links';
 
 describe('Setup', () => {
   it('creates the application shell', () => {
@@ -11,25 +12,42 @@ describe('Setup', () => {
     expect(TestBed.createComponent(App).componentInstance).toBeTruthy();
   });
 
-  it('loads the public landing page with six products and safe contact placeholders', async () => {
+  it('loads six products with contextual WhatsApp links and the configured Instagram', async () => {
     TestBed.configureTestingModule({ providers: [provideRouter(routes)] });
     const harness = await RouterTestingHarness.create('/');
     const page = harness.routeNativeElement;
     expect(page?.querySelector('h1')?.textContent).toContain('Adoçando seus');
-    expect(page?.querySelector('button')?.classList.contains('btn-primary')).toBe(true);
+    expect(page?.querySelector('.header-order')?.classList.contains('btn-primary')).toBe(true);
     expect(page?.querySelector('svg path')).toBeTruthy();
     expect(page?.querySelectorAll('app-product-card')).toHaveLength(6);
-    expect(page?.querySelector('a[href^="https://wa.me"]')).toBeNull();
-    const buttons = page?.querySelectorAll<HTMLButtonElement>('app-product-card button');
-    expect(Array.from(buttons ?? []).every((button) => button.disabled)).toBe(true);
+    const links = Array.from(
+      page?.querySelectorAll<HTMLAnchorElement>('a[href^="https://wa.me/"]') ?? [],
+    );
+    expect(links).toHaveLength(10);
+    expect(
+      links.every((link) => new URL(link.href).pathname === `/${publicConfig.contact.whatsapp}`),
+    ).toBe(true);
+    expect(new Set(links.map((link) => new URL(link.href).searchParams.get('text'))).size).toBe(10);
+    expect(new URL(links[0].href).searchParams.get('text')).toBe(whatsappMessages.order);
+    const productLinks = page?.querySelectorAll<HTMLAnchorElement>('app-product-card a');
+    expect(new URL(productLinks![0].href).searchParams.get('text')).toContain('Bolo de Chocolate');
+    expect(page?.querySelectorAll(`a[href="${publicConfig.contact.instagram}"]`)).toHaveLength(2);
+    expect(page?.querySelector('#contato')?.textContent).toContain('+55 (89) 99425-9584');
+    expect(page?.querySelector('#contato')?.textContent).toContain('@doceriadamarypl');
+    expect(links.every((link) => link.target === '_blank' && link.rel.includes('noopener'))).toBe(
+      true,
+    );
     const filter = page?.querySelectorAll<HTMLButtonElement>('.filter-group button')[1];
     filter?.click();
     harness.detectChanges();
     expect(page?.querySelectorAll('app-product-card')).toHaveLength(2);
   }, 30000);
 
-  it('keeps all external configurations unset', () => {
-    expect(Object.values(publicConfig.contact).every((value) => value === null)).toBe(true);
+  it('keeps unspecified configurations unset', () => {
+    const { whatsapp, instagram, ...unspecified } = publicConfig.contact;
+    expect(whatsapp).toMatch(/^[1-9]\d{7,14}$/);
+    expect(instagram).toMatch(/^https:\/\/www\.instagram\.com\//);
+    expect(Object.values(unspecified).every((value) => value === null)).toBe(true);
     expect(publicConfig.apiUrl).toBeNull();
   });
 });

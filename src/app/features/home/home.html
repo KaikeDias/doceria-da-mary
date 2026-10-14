@@ -10,15 +10,17 @@
         <a href="#inicio">Início</a><a href="#cardapio">Cardápio</a><a href="#sobre">Sobre nós</a
         ><a href="#contato">Contato</a>
       </nav>
-      <button
+      <a
         class="btn btn-primary header-order"
-        type="button"
-        disabled
-        aria-label="Fazer pedido — WhatsApp a configurar"
+        [attr.href]="contactLinks.order"
+        [attr.aria-disabled]="!contactLinks.order ? 'true' : null"
+        target="_blank"
+        rel="noopener noreferrer"
+        aria-label="Fazer pedido pelo WhatsApp (abre em nova aba)"
       >
         <svg lucideMessageCircle [size]="15" aria-hidden="true"></svg> Fazer pedido
         <svg lucideArrowRight [size]="18" aria-hidden="true"></svg>
-      </button>
+      </a>
       <button
         #menuButton
         class="menu-toggle"
@@ -75,14 +77,16 @@
             <a class="btn btn-primary" href="#cardapio"
               >Conhecer o cardápio <svg lucideArrowRight [size]="19" aria-hidden="true"></svg
             ></a>
-            <button
+            <a
               class="btn contact-outline"
-              type="button"
-              disabled
-              aria-label="Pedir pelo WhatsApp — número a configurar"
+              [attr.href]="contactLinks.hero"
+              [attr.aria-disabled]="!contactLinks.hero ? 'true' : null"
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="Pedir pelo WhatsApp (abre em nova aba)"
             >
               Pedir pelo WhatsApp
-            </button>
+            </a>
           </div>
           <p class="hero-detail"><span></span> Um toque doce em cada detalhe</p>
         </div>
@@ -215,14 +219,16 @@
             ><span class="mobile-copy"> Vamos conversar sobre a sua encomenda!</span>
           </p>
         </div>
-        <button
+        <a
           class="btn btn-neutral"
-          type="button"
-          disabled
-          aria-label="Fazer uma encomenda — WhatsApp a configurar"
+          [attr.href]="contactLinks.customOrder"
+          [attr.aria-disabled]="!contactLinks.customOrder ? 'true' : null"
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label="Fazer uma encomenda pelo WhatsApp (abre em nova aba)"
         >
           Fazer uma encomenda <svg lucideArrowRight [size]="19" aria-hidden="true"></svg>
-        </button>
+        </a>
       </div>
     </section>
     <section id="contato" class="contact-section" aria-labelledby="contact-title">
@@ -237,27 +243,31 @@
         <div class="contact-grid">
           <div>
             <p class="eyebrow">WhatsApp</p>
-            <button
-              type="button"
-              disabled
+            <a
+              [attr.href]="contactLinks.questions"
+              [attr.aria-disabled]="!contactLinks.questions ? 'true' : null"
+              target="_blank"
+              rel="noopener noreferrer"
               class="contact-link"
-              aria-label="Peça ou tire suas dúvidas — WhatsApp a configurar"
+              aria-label="Peça ou tire suas dúvidas pelo WhatsApp (abre em nova aba)"
             >
               Peça ou tire suas dúvidas <svg lucideArrowRight [size]="20" aria-hidden="true"></svg>
-            </button>
-            <p class="contact-placeholder">Número a configurar</p>
+            </a>
+            <p class="contact-placeholder">{{ contactPhone }}</p>
           </div>
           <div>
             <p class="eyebrow">Instagram</p>
-            <button
-              type="button"
-              disabled
+            <a
+              [attr.href]="contact.instagram"
+              [attr.aria-disabled]="!contact.instagram ? 'true' : null"
+              target="_blank"
+              rel="noopener noreferrer"
               class="contact-link"
-              aria-label="Acompanhe nossas novidades — Instagram a configurar"
+              aria-label="Acompanhe nossas novidades no Instagram (abre em nova aba)"
             >
               Acompanhe nossas novidades <svg lucideArrowRight [size]="20" aria-hidden="true"></svg>
-            </button>
-            <p class="contact-placeholder">Perfil a configurar</p>
+            </a>
+            <p class="contact-placeholder">{{ instagramHandle }}</p>
           </div>
         </div>
       </div>
@@ -272,9 +282,16 @@
         <nav class="footer-nav" aria-label="Navegação do rodapé">
           <a href="#inicio">Início</a><a href="#cardapio">Cardápio</a><a href="#sobre">Sobre nós</a
           ><a href="#contato">Contato</a
-          ><button type="button" disabled class="desktop-copy" aria-label="Instagram a configurar">
+          ><a
+            [attr.href]="contact.instagram"
+            [attr.aria-disabled]="!contact.instagram ? 'true' : null"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="desktop-copy"
+            aria-label="Instagram (abre em nova aba)"
+          >
             Instagram →
-          </button>
+          </a>
         </nav>
       </div>
       <div class="footer-bottom">

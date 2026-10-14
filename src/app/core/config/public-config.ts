@@ -12,8 +12,8 @@ export interface PublicConfig {
 
 export const publicConfig: PublicConfig = {
   contact: {
-    whatsapp: null,
-    instagram: null,
+    whatsapp: '5589994259584',
+    instagram: 'https://www.instagram.com/doceriadamarypl/',
     email: null,
     address: null,
     locationUrl: null,
