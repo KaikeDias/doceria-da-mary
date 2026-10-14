@@ -1,6 +1,6 @@
 # ARCHITECTURE.md — Doceria da Mary
 
-> **Status:** landing page pública implementada a partir das exportações desktop/mobile do Paper fornecidas pelo usuário. Catálogo demonstrativo e filtros locais existem; contatos funcionais, administração e backend continuam futuros.
+> **Status:** landing page pública implementada a partir das exportações desktop/mobile do Paper fornecidas pelo usuário. Catálogo demonstrativo, filtros locais e links WhatsApp/Instagram ativos. Administração e backend continuam futuros.
 
 ## 1. Visão geral
 
@@ -11,11 +11,11 @@
 - Rota `/` lazy com landing page responsiva: apresentação, categorias, cardápio, sobre, encomendas, contato e rodapé. Menu mobile e navegação por âncoras.
 - `features/catalog/catalog.ts` contém contratos Product/Category, seis produtos demonstrativos, filtro puro e preços em centavos. `product-card` reutiliza a apresentação dos produtos; Home usa Signals e computed para filtro e menu. Não há modal representado nas referências fornecidas.
 - `outputMode: "static"` e `RenderMode.Prerender` para `/`. Entrada server Angular apenas para geração estática; nenhum servidor Express ou SSR dinâmico em produção.
-- Configuração tipada em `src/app/core/config/public-config.ts`, com contatos e API `null`. Nenhuma integração ativa.
+- Configuração tipada em `src/app/core/config/public-config.ts`, com WhatsApp/Instagram fornecidos pelo usuário; demais contatos e API continuam `null`. `core/config/contact-links.ts` centraliza mensagens por contexto, validação do número e codificação dos links wa.me. Os produtos incluem o nome na mensagem. Sem envio automático ou API de mensagens.
 - Assets em `public/`: logo original, recortes das fotos das exportações em WebP e fontes Cormorant Garamond/DM Sans locais em WOFF2. PNGs @4x são referências e ficam fora do build. Favicon original ainda não fornecido.
 - Vitest pelo builder Angular e Prettier; comandos e versões no README. Não há lint instalado.
 
-As seções abaixo descrevem a arquitetura-alvo; detalhes ainda ausentes (modal, fluxo ativo de WhatsApp, disponibilidade de produtos e administração) são futuros, sujeitos à autorização e aos designs do Paper. O estado vigente e validações estão em `docs/PROJECT_STATUS.md`; a origem das referências está em `docs/decisions/ADR-0001-referencias-exportadas.md`.
+As seções abaixo descrevem a arquitetura-alvo; detalhes ainda ausentes (modal, disponibilidade de produtos e administração) são futuros, sujeitos à autorização e aos designs do Paper. O estado vigente e validações estão em `docs/PROJECT_STATUS.md`; a origem das referências está em `docs/decisions/ADR-0001-referencias-exportadas.md`.
 
 A **Doceria da Mary** será uma aplicação web de apresentação de confeitaria artesanal. A experiência pública é uma landing page com catálogo digital de produtos. Ao selecionar um doce ou uma encomenda, o visitante é direcionado ao WhatsApp, que é o canal externo de atendimento e fechamento do pedido.
 

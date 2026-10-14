@@ -1,6 +1,6 @@
 # Doceria da Mary
 
-Landing page responsiva de uma doceria artesanal, implementada a partir dos layouts desktop/mobile exportados do Paper. Inclui apresentação, categorias, cardápio demonstrativo com seis produtos e filtros, sobre, encomendas e contato. As ações externas estão desabilitadas enquanto os contatos não forem fornecidos. Não há administração, backend ou e-commerce.
+Landing page responsiva de uma doceria artesanal, implementada a partir dos layouts desktop/mobile exportados do Paper. Inclui apresentação, categorias, cardápio demonstrativo com seis produtos e filtros, sobre, encomendas e contato. WhatsApp e Instagram estão ativos com os dados fornecidos pela proprietária. Não há administração, backend ou e-commerce.
 
 ## Stack instalada
 
@@ -40,7 +40,8 @@ Não há ferramenta de lint instalada; a formatação é verificada com Prettier
 public/                            # logo, fotos WebP, fontes WOFF2 e referências
 src/
   app/
-    core/config/public-config.ts   # contatos e API públicos, todos null
+    core/config/public-config.ts   # contatos públicos e placeholders restantes
+    core/config/contact-links.ts   # links WhatsApp e mensagens por contexto
     features/home/                 # landing page, menu e seções responsivas
     features/catalog/              # dados tipados, filtro, preços e card reutilizado
     app.ts / app.html              # shell com RouterOutlet
@@ -68,9 +69,11 @@ favicon porque o asset específico ainda não foi fornecido.
 
 ## Contatos e designs
 
-Configurações públicas ficam em `src/app/core/config/public-config.ts`, com valores
-`null` para WhatsApp, Instagram, e-mail, endereço, localização, horários e API.
-Não há links externos de contato nem serviços fictícios. Os CTAs atuais permanecem desabilitados; preencher a configuração não ativa integrações automaticamente.
+Configurações públicas ficam em `src/app/core/config/public-config.ts`. WhatsApp e Instagram usam os valores fornecidos pelo usuário; e-mail, endereço, localização, horários e API continuam `null`.
+
+`src/app/core/config/contact-links.ts` centraliza validação do número, montagem do link `wa.me` e mensagens: pedido no cabeçalho, apresentação no hero, encomenda especial, dúvidas e interesse em cada produto com seu nome. A mensagem é codificada com `encodeURIComponent`. Sem número internacional válido, não há URL. Links externos abrem em nova aba com `noopener noreferrer`.
+
+O WhatsApp recebe somente um texto preenchido para o visitante revisar e enviar; o site não envia mensagens nem utiliza API externa.
 
 O Paper é a referência oficial. Como o MCP estava limitado, o usuário forneceu PNGs desktop/mobile para a implementação atual. As fotos foram recortadas dessas exportações e salvas em WebP; substituir pelos arquivos originais quando disponíveis. Fontes Cormorant Garamond e DM Sans são locais, com licenças OFL. Os PNGs @4x ficam fora do build.
 
@@ -79,9 +82,9 @@ Não criar telas, funcionalidades ou fluxos além do solicitado e representado n
 ## Validação da landing page
 
 - `npm run build`: aprovado, com uma rota estática pré-renderizada.
-- `npm test -- --watch=false`: cinco testes aprovados (shell, rota/cards, placeholders, filtro e preços).
+- `npm test -- --watch=false`: nove testes aprovados (shell, rota/cards, configuração, filtro, preços, validação e codificação de links/mensagens).
 - `npm run format:check`: aprovado.
-- HTML de produção verificado com assertions: seis cards pré-renderizados, fontes/fotos locais, nenhum destino wa.me e referências PNG excluídas do build.
+- HTML de produção: seis cards pré-renderizados e dez links WhatsApp contextualizados, além dos dois links Instagram. A primeira entrega também verificou fontes/fotos locais e referências PNG excluídas do build.
 - Navegador conferido em 320, 390, 768, 1024 e 1440 px sem overflow horizontal; filtros, menu mobile e âncoras funcionando.
 - Pequenos textos sobre fundos rosas usam `brand-text`, uma variação mais escura para contraste. Filtros mobile têm alvos de 44 px.
 
