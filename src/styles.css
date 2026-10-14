@@ -1,0 +1,159 @@
+@import 'tailwindcss' source('./');
+
+@font-face {
+  font-family: 'Cormorant Garamond';
+  src: url('/fonts/cormorant-garamond.woff2') format('woff2');
+  font-style: normal;
+  font-weight: 300 700;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'DM Sans';
+  src: url('/fonts/dm-sans.woff2') format('woff2');
+  font-style: normal;
+  font-weight: 100 1000;
+  font-display: swap;
+}
+
+@theme {
+  --font-display: 'Cormorant Garamond', Georgia, serif;
+  --font-body: 'DM Sans', Arial, sans-serif;
+}
+
+.mary-site .btn {
+  border-radius: 999px;
+  box-shadow: none;
+  font-family: var(--font-body);
+  font-weight: 700;
+}
+
+.mary-site .btn:disabled {
+  opacity: 1;
+}
+.mary-site .btn-primary:disabled {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+  color: var(--color-primary-content);
+}
+.mary-site .btn-neutral:disabled {
+  background: var(--color-neutral);
+  border-color: var(--color-neutral);
+  color: var(--color-neutral-content);
+}
+
+@layer base {
+  body {
+    margin: 0;
+    background: var(--color-base-100);
+    color: var(--color-neutral);
+    font-family: var(--font-body);
+  }
+  p {
+    margin: 0;
+  }
+  h1,
+  h2 {
+    font-family: var(--font-display);
+    font-weight: 600;
+    color: var(--color-neutral);
+  }
+  h2 {
+    font-size: 58px;
+    line-height: 1.05;
+    letter-spacing: -0.7px;
+  }
+  a {
+    text-decoration: none;
+  }
+  button:not(:disabled),
+  a {
+    cursor: pointer;
+  }
+  button:disabled {
+    cursor: not-allowed;
+  }
+  :focus-visible {
+    outline: 3px solid var(--color-primary);
+    outline-offset: 5px;
+  }
+  section[id] {
+    scroll-margin-top: 24px;
+  }
+  @media (max-width: 700px) {
+    h2 {
+      font-size: 40px;
+      line-height: 1.04;
+      letter-spacing: -0.3px;
+    }
+  }
+}
+
+@layer components {
+  .eyebrow {
+    font: 700 12px/1.5 var(--font-body);
+    color: var(--color-brand-text);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+  }
+  .skip-link {
+    position: fixed;
+    top: -100px;
+    left: 16px;
+    z-index: 10;
+    padding: 12px 18px;
+    border-radius: 8px;
+    background: var(--color-base-100);
+  }
+  .skip-link:focus {
+    top: 12px;
+  }
+  @media (max-width: 700px) {
+    .eyebrow {
+      font-size: 10px;
+      letter-spacing: 1.6px;
+    }
+  }
+}
+
+@plugin 'daisyui' {
+  themes: false;
+}
+
+@plugin 'daisyui/theme' {
+  name: 'doceria-mary';
+  default: true;
+  prefersdark: false;
+  color-scheme: light;
+
+  --color-primary: #a65a6a;
+  --color-primary-content: #ffffff;
+  --color-brand-text: #8c4555;
+  --color-secondary: #f0d2c8;
+  --color-secondary-content: #2f2420;
+  --color-accent: #9bae8a;
+  --color-accent-content: #2f2420;
+  --color-neutral: #5a3a2e;
+  --color-neutral-content: #fff8f3;
+  --color-base-100: #fff8f3;
+  --color-base-200: #f9ece6;
+  --color-base-300: #f0d2c8;
+  --color-base-content: #2f2420;
+  --color-info: #f0d2c8;
+  --color-info-content: #2f2420;
+  --color-success: #78956c;
+  --color-success-content: #2f2420;
+  --color-warning: #c98a5a;
+  --color-warning-content: #2f2420;
+  --color-error: #b84f5f;
+  --color-error-content: #ffffff;
+
+  --radius-selector: 0.5rem;
+  --radius-field: 0.5rem;
+  --radius-box: 1rem;
+  --size-selector: 0.25rem;
+  --size-field: 0.25rem;
+  --border: 1px;
+  --depth: 0;
+  --noise: 0;
+}

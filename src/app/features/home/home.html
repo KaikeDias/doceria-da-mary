@@ -1,0 +1,286 @@
+<div class="mary-site" id="inicio">
+  <a class="skip-link" href="#cardapio">Ir para o cardápio</a>
+  <header class="site-header">
+    <div class="container header-inner">
+      <a href="#inicio" class="brand" aria-label="Doceria da Mary — início" (click)="closeMenu()">
+        <img src="logo.png" alt="" width="64" height="64" />
+        <span>Doceria da Mary<small>Doces artesanais</small></span>
+      </a>
+      <nav class="desktop-nav" aria-label="Navegação principal">
+        <a href="#inicio">Início</a><a href="#cardapio">Cardápio</a><a href="#sobre">Sobre nós</a
+        ><a href="#contato">Contato</a>
+      </nav>
+      <button
+        class="btn btn-primary header-order"
+        type="button"
+        disabled
+        aria-label="Fazer pedido — WhatsApp a configurar"
+      >
+        <svg lucideMessageCircle [size]="15" aria-hidden="true"></svg> Fazer pedido
+        <svg lucideArrowRight [size]="18" aria-hidden="true"></svg>
+      </button>
+      <button
+        #menuButton
+        class="menu-toggle"
+        type="button"
+        [attr.aria-expanded]="menuOpen()"
+        aria-controls="mobile-navigation"
+        [attr.aria-label]="menuOpen() ? 'Fechar menu' : 'Abrir menu'"
+        (click)="menuOpen.set(!menuOpen())"
+        (keydown.escape)="closeMenu(); menuButton.focus()"
+      >
+        @if (menuOpen()) {
+          <svg lucideX aria-hidden="true"></svg>
+        } @else {
+          <svg lucideMenu aria-hidden="true"></svg>
+        }
+      </button>
+    </div>
+    @if (menuOpen()) {
+      <nav
+        id="mobile-navigation"
+        class="mobile-nav"
+        aria-label="Navegação mobile"
+        (keydown.escape)="closeMenu(); menuButton.focus()"
+      >
+        <a href="#inicio" (click)="closeMenu()">Início</a
+        ><a href="#cardapio" (click)="closeMenu()">Cardápio</a
+        ><a href="#sobre" (click)="closeMenu()">Sobre nós</a
+        ><a href="#contato" (click)="closeMenu()">Contato</a>
+      </nav>
+    }
+  </header>
+  <main>
+    <section class="hero" aria-labelledby="hero-title">
+      <div class="container hero-grid">
+        <div class="hero-copy">
+          <p class="eyebrow">
+            <span class="hero-rule"></span
+            ><span class="desktop-copy">Feito com carinho, especialmente para você</span
+            ><span class="mobile-copy">Feito com carinho, para você</span>
+          </p>
+          <h1 id="hero-title">
+            Adoçando seus<br class="desktop-break" />
+            momentos mais<br class="desktop-break" />
+            especiais.
+          </h1>
+          <p class="hero-description desktop-copy">
+            Doces artesanais feitos com afeto, ingredientes escolhidos com cuidado e aquele sabor
+            que transforma qualquer ocasião em memória.
+          </p>
+          <p class="hero-description mobile-copy">
+            Doces artesanais preparados com amor e cuidado para transformar cada ocasião em memória.
+          </p>
+          <div class="hero-actions">
+            <a class="btn btn-primary" href="#cardapio"
+              >Conhecer o cardápio <svg lucideArrowRight [size]="19" aria-hidden="true"></svg
+            ></a>
+            <button
+              class="btn contact-outline"
+              type="button"
+              disabled
+              aria-label="Pedir pelo WhatsApp — número a configurar"
+            >
+              Pedir pelo WhatsApp
+            </button>
+          </div>
+          <p class="hero-detail"><span></span> Um toque doce em cada detalhe</p>
+        </div>
+        <div class="hero-picture">
+          <img
+            src="images/hero.webp"
+            alt="Seleção de doces artesanais com chocolate, creme e morangos em uma bandeja"
+            width="984"
+            height="783"
+            fetchpriority="high"
+          />
+          <div class="hero-label"><span>Feito à mão</span><small>Com todo carinho ♡</small></div>
+        </div>
+      </div>
+    </section>
+    <section class="categories-section" aria-labelledby="categories-title">
+      <div class="container">
+        <p class="eyebrow">Escolha o seu momento doce</p>
+        <div class="section-heading">
+          <h2 id="categories-title">Encontre seu doce favorito</h2>
+          <p class="category-caption">Uma delícia para cada vontade.</p>
+        </div>
+        <div class="category-grid">
+          @for (category of categories; track category.id) {
+            <a class="category-link" href="#cardapio" (click)="selectCategory(category.id)">
+              <img
+                [src]="'images/' + category.image + '.webp'"
+                alt=""
+                width="80"
+                height="80"
+                loading="lazy"
+              />
+              <span
+                ><span class="desktop-copy">{{ category.label }}</span
+                ><span class="mobile-copy">{{ category.name }}</span
+                ><small>Explorar <svg lucideArrowRight [size]="14" aria-hidden="true"></svg></small
+              ></span>
+            </a>
+          }
+        </div>
+      </div>
+    </section>
+    <section id="cardapio" class="catalog-section" aria-labelledby="catalog-title">
+      <div class="container">
+        <p class="eyebrow">Doces que encantam</p>
+        <div class="section-heading catalog-heading">
+          <div>
+            <h2 id="catalog-title">Nosso cardápio</h2>
+            <p>Escolha o que mais combina com o seu momento.</p>
+          </div>
+          <p class="demo-note">Valores ilustrativos para demonstração</p>
+        </div>
+        <div class="filter-group" role="group" aria-label="Filtrar produtos por categoria">
+          <button
+            type="button"
+            [class.active]="selectedCategory() === 'todos'"
+            [attr.aria-pressed]="selectedCategory() === 'todos'"
+            (click)="selectCategory('todos')"
+          >
+            Todos
+          </button>
+          @for (category of categories; track category.id) {
+            <button
+              type="button"
+              [class.active]="selectedCategory() === category.id"
+              [attr.aria-pressed]="selectedCategory() === category.id"
+              (click)="selectCategory(category.id)"
+            >
+              {{ category.name }}
+            </button>
+          }
+        </div>
+        <p class="mobile-demo-note">Valores ilustrativos para demonstração</p>
+        <div class="product-grid" aria-live="polite" aria-relevant="additions removals">
+          @for (product of visibleProducts(); track product.id) {
+            <app-product-card [product]="product" [categoryName]="product.categoryId" />
+          } @empty {
+            <p class="empty-catalog">Nenhum doce nesta categoria por enquanto.</p>
+          }
+        </div>
+      </div>
+    </section>
+    <section id="sobre" class="about-section" aria-labelledby="about-title">
+      <div class="container about-grid">
+        <div class="about-picture">
+          <img
+            src="images/about.webp"
+            alt="Bolo artesanal sendo decorado à mão com creme"
+            width="1068"
+            height="912"
+            loading="lazy"
+          />
+        </div>
+        <div class="about-copy">
+          <p class="eyebrow">A essência da nossa cozinha</p>
+          <h2 id="about-title">
+            Um pouquinho<br />
+            sobre nós
+          </h2>
+          <p>
+            A Doceria da Mary nasceu do prazer de transformar ingredientes simples em momentos
+            cheios de afeto. Cada doce é preparado com cuidado, da escolha dos sabores ao último
+            detalhe da apresentação.
+          </p>
+          <p class="about-extra">
+            Por aqui, acreditamos que um doce especial aproxima pessoas e faz qualquer encontro
+            ficar ainda mais gostoso.
+          </p>
+          <div class="about-tags">
+            <span>♡ Produção artesanal</span
+            ><span
+              ><span class="desktop-copy">✦ Feito com cuidado</span
+              ><span class="mobile-copy">✦ Atenção aos detalhes</span></span
+            >
+          </div>
+        </div>
+      </div>
+    </section>
+    <section class="orders-section" aria-labelledby="orders-title">
+      <div class="container orders-inner">
+        <div>
+          <p class="eyebrow">Encomendas especiais</p>
+          <h2 id="orders-title">
+            Tem uma ocasião especial<br class="desktop-break" />
+            chegando?
+          </h2>
+          <p>
+            Conte pra gente o que você está imaginando.<span class="desktop-copy">
+              Vamos conversar sobre a sua encomenda!</span
+            ><span class="mobile-copy"> Vamos conversar sobre a sua encomenda!</span>
+          </p>
+        </div>
+        <button
+          class="btn btn-neutral"
+          type="button"
+          disabled
+          aria-label="Fazer uma encomenda — WhatsApp a configurar"
+        >
+          Fazer uma encomenda <svg lucideArrowRight [size]="19" aria-hidden="true"></svg>
+        </button>
+      </div>
+    </section>
+    <section id="contato" class="contact-section" aria-labelledby="contact-title">
+      <div class="container">
+        <p class="eyebrow">Fale com a gente</p>
+        <div class="section-heading contact-heading">
+          <h2 id="contact-title">Vamos adoçar o seu dia?</h2>
+          <p>
+            Tem uma ideia, uma dúvida ou uma ocasião para celebrar? Estamos por aqui para conversar.
+          </p>
+        </div>
+        <div class="contact-grid">
+          <div>
+            <p class="eyebrow">WhatsApp</p>
+            <button
+              type="button"
+              disabled
+              class="contact-link"
+              aria-label="Peça ou tire suas dúvidas — WhatsApp a configurar"
+            >
+              Peça ou tire suas dúvidas <svg lucideArrowRight [size]="20" aria-hidden="true"></svg>
+            </button>
+            <p class="contact-placeholder">Número a configurar</p>
+          </div>
+          <div>
+            <p class="eyebrow">Instagram</p>
+            <button
+              type="button"
+              disabled
+              class="contact-link"
+              aria-label="Acompanhe nossas novidades — Instagram a configurar"
+            >
+              Acompanhe nossas novidades <svg lucideArrowRight [size]="20" aria-hidden="true"></svg>
+            </button>
+            <p class="contact-placeholder">Perfil a configurar</p>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+  <footer class="site-footer">
+    <div class="container">
+      <div class="footer-top">
+        <a href="#inicio" class="brand"
+          ><img src="logo.png" alt="" width="54" height="54" /><span>Doceria da Mary</span></a
+        >
+        <nav class="footer-nav" aria-label="Navegação do rodapé">
+          <a href="#inicio">Início</a><a href="#cardapio">Cardápio</a><a href="#sobre">Sobre nós</a
+          ><a href="#contato">Contato</a
+          ><button type="button" disabled class="desktop-copy" aria-label="Instagram a configurar">
+            Instagram →
+          </button>
+        </nav>
+      </div>
+      <div class="footer-bottom">
+        <p>© 2026 Doceria da Mary. Feito com carinho.</p>
+        <p class="desktop-copy">Doces artesanais para momentos especiais.</p>
+      </div>
+    </div>
+  </footer>
+</div>
