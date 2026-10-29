@@ -12,4 +12,16 @@ export const routes: Routes = [
     title: 'Login | Doceria da Mary',
     loadComponent: () => import('./features/auth/login').then((m) => m.Login),
   },
+  {
+    path: 'admin',
+    loadComponent: () => import('./features/admin/admin').then((m) => m.Admin),
+    children: [
+      { path: '', pathMatch: 'full', redirectTo: 'cardapio' },
+      {
+        path: 'cardapio',
+        title: 'Cardápio | Painel Doceria da Mary',
+        loadComponent: () => import('./features/admin/cardapio').then((m) => m.Cardapio),
+      },
+    ],
+  },
 ];

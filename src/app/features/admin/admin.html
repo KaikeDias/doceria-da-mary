@@ -1,0 +1,122 @@
+<ng-template #brand>
+  <img src="logo.png" alt="" width="44" height="44" class="size-11 shrink-0" />
+  <span class="font-display text-xl leading-none font-medium whitespace-nowrap text-neutral"
+    >Doceria da Mary<small
+      class="mt-1 block font-body text-[10px] font-semibold tracking-[2px] text-brand-text uppercase"
+      >Painel</small
+    ></span
+  >
+</ng-template>
+
+<ng-template #menu>
+  <nav aria-label="Menu do painel" class="flex flex-1 flex-col gap-1 text-[15px] font-medium">
+    <a
+      routerLink="/admin/cardapio"
+      routerLinkActive="bg-primary text-primary-content"
+      ariaCurrentWhenActive="page"
+      class="flex min-h-11 items-center gap-3 rounded-xl px-4 text-neutral mouse:hover:bg-base-300"
+    >
+      <svg lucideCakeSlice [size]="18" aria-hidden="true"></svg>Cardápio
+    </a>
+    <span
+      aria-disabled="true"
+      class="flex min-h-11 cursor-not-allowed items-center gap-3 rounded-xl px-4 text-neutral opacity-60"
+    >
+      <svg lucideTags [size]="18" aria-hidden="true"></svg>Categorias<span class="sr-only">
+        (em breve)</span
+      >
+    </span>
+    <span
+      aria-disabled="true"
+      class="flex min-h-11 cursor-not-allowed items-center gap-3 rounded-xl px-4 text-neutral opacity-60"
+    >
+      <svg lucideSettings [size]="18" aria-hidden="true"></svg>Configurações<span class="sr-only">
+        (em breve)</span
+      >
+    </span>
+
+    <div class="mt-auto flex flex-col gap-1 border-t border-base-300 pt-4">
+      <a
+        href="/"
+        target="_blank"
+        rel="noopener"
+        class="flex min-h-11 items-center gap-3 rounded-xl px-4 text-neutral mouse:hover:bg-base-300"
+      >
+        <svg lucideExternalLink [size]="18" aria-hidden="true"></svg>Visualizar site<span
+          class="sr-only"
+        >
+          (abre em nova aba)</span
+        >
+      </a>
+      <a
+        routerLink="/login"
+        class="flex min-h-11 items-center gap-3 rounded-xl px-4 text-neutral mouse:hover:bg-base-300"
+      >
+        <svg lucideLogOut [size]="18" aria-hidden="true"></svg>Sair
+      </a>
+    </div>
+  </nav>
+</ng-template>
+
+<div class="min-h-dvh overflow-x-clip bg-base-100 font-body text-base-content lg:flex">
+  <aside
+    class="sticky top-0 hidden h-dvh w-60 shrink-0 flex-col gap-6 border-r border-base-300 bg-base-200 p-4 lg:flex"
+  >
+    <div class="flex items-center gap-2.5 px-2 pt-2">
+      <ng-container [ngTemplateOutlet]="brand" />
+    </div>
+    <ng-container [ngTemplateOutlet]="menu" />
+  </aside>
+
+  <div class="min-w-0 flex-1">
+    <header class="flex h-16 items-center justify-between border-b border-base-300 px-4 lg:hidden">
+      <div class="flex items-center gap-3">
+        <button
+          type="button"
+          class="btn btn-ghost btn-square size-11 min-h-11"
+          aria-label="Abrir menu"
+          aria-haspopup="dialog"
+          (click)="openDrawer()"
+        >
+          <svg lucideMenu [size]="22" aria-hidden="true"></svg>
+        </button>
+        <img src="logo.png" alt="" width="32" height="32" class="size-8" />
+        <span class="font-display text-xl font-medium text-neutral">Doceria da Mary</span>
+      </div>
+      <a
+        href="/"
+        target="_blank"
+        rel="noopener"
+        class="btn btn-ghost btn-square size-11 min-h-11"
+        aria-label="Visualizar site (abre em nova aba)"
+      >
+        <svg lucideExternalLink [size]="20" aria-hidden="true"></svg>
+      </a>
+    </header>
+
+    <main class="px-5 py-6 lg:px-10 lg:py-9">
+      <router-outlet />
+    </main>
+  </div>
+</div>
+
+<dialog
+  #drawer
+  aria-label="Menu do painel"
+  class="m-0 h-dvh max-h-none w-72 max-w-[85vw] flex-col gap-6 rounded-r-3xl bg-base-200 p-4 backdrop:bg-black/40 open:flex"
+  (click)="drawerClick($event)"
+>
+  <div class="flex items-center justify-between gap-2 px-2 pt-2">
+    <div class="flex items-center gap-2.5"><ng-container [ngTemplateOutlet]="brand" /></div>
+    <button
+      type="button"
+      autofocus
+      class="btn btn-square size-11 min-h-11 rounded-xl border-0 bg-base-100"
+      aria-label="Fechar menu"
+      (click)="closeDrawer()"
+    >
+      <svg lucideX [size]="20" aria-hidden="true"></svg>
+    </button>
+  </div>
+  <ng-container [ngTemplateOutlet]="menu" />
+</dialog>
