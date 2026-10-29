@@ -2,7 +2,7 @@
   <a class="skip-link" href="#cardapio">Ir para o cardápio</a>
   <header class="site-header">
     <div class="container header-inner">
-      <a href="#inicio" class="brand" aria-label="Doceria da Mary — início" (click)="closeMenu()">
+      <a href="#inicio" class="brand" aria-label="Doceria da Mary — início">
         <img src="logo.png" alt="" width="64" height="64" />
         <span>Doceria da Mary<small>Doces artesanais</small></span>
       </a>
@@ -18,60 +18,27 @@
         rel="noopener noreferrer"
         aria-label="Fazer pedido pelo WhatsApp (abre em nova aba)"
       >
-        <svg lucideMessageCircle [size]="15" aria-hidden="true"></svg> Fazer pedido
-        <svg lucideArrowRight [size]="18" aria-hidden="true"></svg>
+        <img src="icons/whatsapp.svg" alt="" width="15" height="15" aria-hidden="true" />
+        <span class="desktop-copy">Fazer pedido</span><span class="mobile-copy">Pedir</span>
+        <svg class="desktop-copy" lucideArrowRight [size]="18" aria-hidden="true"></svg>
       </a>
-      <button
-        #menuButton
-        class="menu-toggle"
-        type="button"
-        [attr.aria-expanded]="menuOpen()"
-        aria-controls="mobile-navigation"
-        [attr.aria-label]="menuOpen() ? 'Fechar menu' : 'Abrir menu'"
-        (click)="menuOpen.set(!menuOpen())"
-        (keydown.escape)="closeMenu(); menuButton.focus()"
-      >
-        @if (menuOpen()) {
-          <svg lucideX aria-hidden="true"></svg>
-        } @else {
-          <svg lucideMenu aria-hidden="true"></svg>
-        }
-      </button>
     </div>
-    @if (menuOpen()) {
-      <nav
-        id="mobile-navigation"
-        class="mobile-nav"
-        aria-label="Navegação mobile"
-        (keydown.escape)="closeMenu(); menuButton.focus()"
-      >
-        <a href="#inicio" (click)="closeMenu()">Início</a
-        ><a href="#cardapio" (click)="closeMenu()">Cardápio</a
-        ><a href="#sobre" (click)="closeMenu()">Sobre nós</a
-        ><a href="#contato" (click)="closeMenu()">Contato</a>
-      </nav>
-    }
   </header>
   <main>
     <section class="hero" aria-labelledby="hero-title">
       <div class="container hero-grid">
         <div class="hero-copy">
           <p class="eyebrow">
-            <span class="hero-rule"></span
-            ><span class="desktop-copy">Feito com carinho, especialmente para você</span
-            ><span class="mobile-copy">Feito com carinho, para você</span>
+            <span class="hero-rule"></span><span>Feito com carinho, especialmente para você</span>
           </p>
           <h1 id="hero-title">
             Adoçando seus<br class="desktop-break" />
             momentos mais<br class="desktop-break" />
             especiais.
           </h1>
-          <p class="hero-description desktop-copy">
+          <p class="hero-description">
             Doces artesanais feitos com afeto, ingredientes escolhidos com cuidado e aquele sabor
             que transforma qualquer ocasião em memória.
-          </p>
-          <p class="hero-description mobile-copy">
-            Doces artesanais preparados com amor e cuidado para transformar cada ocasião em memória.
           </p>
           <div class="hero-actions">
             <a class="btn btn-primary" href="#cardapio"
@@ -120,9 +87,8 @@
                 loading="lazy"
               />
               <span
-                ><span class="desktop-copy">{{ category.label }}</span
-                ><span class="mobile-copy">{{ category.name }}</span
-                ><small>Explorar <svg lucideArrowRight [size]="14" aria-hidden="true"></svg></small
+                >{{ category.label
+                }}<small>Explorar <svg lucideArrowRight [size]="14" aria-hidden="true"></svg></small
               ></span>
             </a>
           }
@@ -137,7 +103,6 @@
             <h2 id="catalog-title">Nosso cardápio</h2>
             <p>Escolha o que mais combina com o seu momento.</p>
           </div>
-          <p class="demo-note">Valores ilustrativos para demonstração</p>
         </div>
         <div class="filter-group" role="group" aria-label="Filtrar produtos por categoria">
           <button
@@ -159,7 +124,6 @@
             </button>
           }
         </div>
-        <p class="mobile-demo-note">Valores ilustrativos para demonstração</p>
         <div class="product-grid" aria-live="polite" aria-relevant="additions removals">
           @for (product of visibleProducts(); track product.id) {
             <app-product-card [product]="product" [categoryName]="product.categoryId" />
@@ -183,7 +147,7 @@
         <div class="about-copy">
           <p class="eyebrow">A essência da nossa cozinha</p>
           <h2 id="about-title">
-            Um pouquinho<br />
+            Um pouquinho<br class="desktop-break" />
             sobre nós
           </h2>
           <p>
@@ -196,11 +160,7 @@
             ficar ainda mais gostoso.
           </p>
           <div class="about-tags">
-            <span>♡ Produção artesanal</span
-            ><span
-              ><span class="desktop-copy">✦ Feito com cuidado</span
-              ><span class="mobile-copy">✦ Atenção aos detalhes</span></span
-            >
+            <span>♡ Produção artesanal</span><span>✦ Feito com cuidado</span>
           </div>
         </div>
       </div>
@@ -213,11 +173,7 @@
             Tem uma ocasião especial<br class="desktop-break" />
             chegando?
           </h2>
-          <p>
-            Conte pra gente o que você está imaginando.<span class="desktop-copy">
-              Vamos conversar sobre a sua encomenda!</span
-            ><span class="mobile-copy"> Vamos conversar sobre a sua encomenda!</span>
-          </p>
+          <p>Conte pra gente o que você está imaginando. Vamos conversar sobre a sua encomenda!</p>
         </div>
         <a
           class="btn btn-neutral"
@@ -227,48 +183,75 @@
           rel="noopener noreferrer"
           aria-label="Fazer uma encomenda pelo WhatsApp (abre em nova aba)"
         >
-          Fazer uma encomenda <svg lucideArrowRight [size]="19" aria-hidden="true"></svg>
+          Fazer uma encomenda
+          <svg lucideArrowRight [size]="19" aria-hidden="true"></svg>
         </a>
       </div>
     </section>
     <section id="contato" class="contact-section" aria-labelledby="contact-title">
-      <div class="container">
-        <p class="eyebrow">Fale com a gente</p>
-        <div class="section-heading contact-heading">
-          <h2 id="contact-title">Vamos adoçar o seu dia?</h2>
+      <div class="container contact-layout">
+        <div class="contact-heading">
+          <p class="eyebrow">Fale com a gente</p>
+          <h2 id="contact-title">
+            Vamos adoçar<br class="desktop-break" />
+            o seu dia?
+          </h2>
           <p>
             Tem uma ideia, uma dúvida ou uma ocasião para celebrar? Estamos por aqui para conversar.
           </p>
         </div>
         <div class="contact-grid">
-          <div>
-            <p class="eyebrow">WhatsApp</p>
-            <a
-              [attr.href]="contactLinks.questions"
-              [attr.aria-disabled]="!contactLinks.questions ? 'true' : null"
-              target="_blank"
-              rel="noopener noreferrer"
-              class="contact-link"
-              aria-label="Peça ou tire suas dúvidas pelo WhatsApp (abre em nova aba)"
-            >
-              Peça ou tire suas dúvidas <svg lucideArrowRight [size]="20" aria-hidden="true"></svg>
-            </a>
-            <p class="contact-placeholder">{{ contactPhone }}</p>
-          </div>
-          <div>
-            <p class="eyebrow">Instagram</p>
-            <a
-              [attr.href]="contact.instagram"
-              [attr.aria-disabled]="!contact.instagram ? 'true' : null"
-              target="_blank"
-              rel="noopener noreferrer"
-              class="contact-link"
-              aria-label="Acompanhe nossas novidades no Instagram (abre em nova aba)"
-            >
-              Acompanhe nossas novidades <svg lucideArrowRight [size]="20" aria-hidden="true"></svg>
-            </a>
-            <p class="contact-placeholder">{{ instagramHandle }}</p>
-          </div>
+          <a
+            [attr.href]="contactLinks.questions"
+            [attr.aria-disabled]="!contactLinks.questions ? 'true' : null"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="contact-card whatsapp-card"
+            aria-label="Peça ou tire suas dúvidas pelo WhatsApp (abre em nova aba)"
+          >
+            <span class="contact-icon"
+              ><img src="icons/whatsapp.svg" alt="" width="28" height="28" aria-hidden="true"
+            /></span>
+            <span class="contact-content">
+              <span class="eyebrow">WhatsApp</span>
+              <span class="contact-title">Peça ou tire suas dúvidas</span>
+              <span class="contact-detail"
+                ><span class="desktop-copy">Resposta direta com a Mary · </span
+                >{{ contactPhone }}</span
+              >
+            </span>
+          </a>
+          <a
+            [attr.href]="contact.instagram"
+            [attr.aria-disabled]="!contact.instagram ? 'true' : null"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="contact-card instagram-card"
+            aria-label="Acompanhe nossas novidades no Instagram (abre em nova aba)"
+          >
+            <span class="contact-icon"
+              ><svg
+                width="28"
+                height="28"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.8"
+                aria-hidden="true"
+              >
+                <rect x="3" y="3" width="18" height="18" rx="5" />
+                <circle cx="12" cy="12" r="4" />
+                <circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none" /></svg
+            ></span>
+            <span class="contact-content">
+              <span class="eyebrow">Instagram</span>
+              <span class="contact-title">Acompanhe nossas novidades</span>
+              <span class="contact-detail"
+                ><span class="desktop-copy">Bastidores e lançamentos · </span
+                >{{ instagramHandle }}</span
+              >
+            </span>
+          </a>
         </div>
       </div>
     </section>
@@ -287,7 +270,6 @@
             [attr.aria-disabled]="!contact.instagram ? 'true' : null"
             target="_blank"
             rel="noopener noreferrer"
-            class="desktop-copy"
             aria-label="Instagram (abre em nova aba)"
           >
             Instagram →

@@ -5,94 +5,88 @@
 .product-card {
   height: 100%;
   overflow: hidden;
-  border: 1px solid var(--color-base-300);
-  border-radius: 24px;
-  background: var(--color-base-100);
-  box-shadow: 0 8px 20px #5a3a2e04;
+  border-radius: 20px;
+  background: #fff;
+  box-shadow: 0 6px 20px #5a3a2e06;
 }
 .product-card > img {
   display: block;
   width: 100%;
-  aspect-ratio: 1.74;
+  aspect-ratio: 1.725;
   object-fit: cover;
 }
 .product-content {
   padding: 24px;
 }
 .product-category {
-  text-transform: uppercase;
-  color: var(--color-primary);
+  color: var(--color-brand-text);
   font-size: 10px;
-  font-weight: 700;
+  font-weight: 500;
   letter-spacing: 1.6px;
 }
 h3 {
-  font: 600 30px/1.15 var(--font-display);
+  font: 500 30px/1.15 var(--font-display);
   color: var(--color-neutral);
   margin-top: 10px;
 }
 .product-description {
   font-size: 14px;
-  line-height: 1.5;
-  min-height: 42px;
-  margin-top: 10px;
+  line-height: 1.6;
+  min-height: 45px;
+  margin-top: 12px;
 }
 .product-bottom {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 10px;
-  border-top: 1px solid var(--color-base-300);
-  margin-top: 14px;
-  padding-top: 12px;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 24px;
 }
 .product-price {
   color: var(--color-neutral);
   font-size: 14px;
-  font-weight: 700;
+  font-weight: 600;
 }
 .product-order {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
+  gap: 6px;
   white-space: nowrap;
-  color: var(--color-primary);
-  font-size: 12px;
-  font-weight: 700;
-  min-height: 28px;
-}
-.desktop-order {
-  margin-right: -2px;
+  color: var(--color-brand-text);
+  font-size: 13px;
+  font-weight: 500;
+  min-height: 44px;
+  margin-block: -8px;
 }
 @media (max-width: 700px) {
   .product-card {
-    border-radius: 16px;
+    border-radius: 18px;
   }
   .product-card > img {
     aspect-ratio: 1.6;
   }
   .product-content {
-    padding: 18px 16px 14px;
-  }
-  .product-category {
-    font-size: 9px;
+    padding: 18px 20px 16px;
   }
   h3 {
-    font-size: 27px;
+    font-size: 30px;
     margin-top: 8px;
   }
-  .product-description,
-  .desktop-order {
-    display: none;
+  .product-description {
+    min-height: 0;
+    margin-top: 10px;
   }
   .product-bottom {
-    margin-top: 12px;
-    padding-top: 10px;
+    margin-top: 20px;
   }
-  .product-price {
-    font-size: 12px;
+}
+@media (max-width: 360px) {
+  .product-content {
+    padding-inline: 16px;
   }
+  .product-price,
   .product-order {
-    font-size: 11px;
+    font-size: 12px;
   }
 }

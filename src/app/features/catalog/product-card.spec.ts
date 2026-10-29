@@ -1,0 +1,46 @@
+import { TestBed } from '@angular/core/testing';
+import { products } from './catalog';
+import { ProductCard } from './product-card';
+import { publicConfig } from '../../core/config/public-config';
+
+describe('Card do produto', () => {
+  const configuredContact = publicConfig.contact;
+  afterEach(() => Object.defineProperty(publicConfig, 'contact', { value: configuredContact }));
+
+  it('atualiza foto, descrição, preço e pedido quando o produto muda', () => {
+    const fixture = TestBed.createComponent(ProductCard);
+    const page = fixture.nativeElement as HTMLElement;
+    for (const product of [products[0], products[2]]) {
+      fixture.componentRef.setInput('product', product);
+      fixture.componentRef.setInput('categoryName', product.categoryId);
+      fixture.detectChanges();
+      expect(page.querySelector('h3')?.textContent?.trim()).toBe(product.name);
+      expect(page.querySelector('img')?.getAttribute('alt')).toBe(product.name);
+      expect(page.querySelector('img')?.getAttribute('src')).toBe(`images/${product.image}.webp`);
+      expect(page.querySelector('.product-description')?.textContent?.trim()).toBe(
+        product.description,
+      );
+      expect(page.querySelector('.product-category')?.textContent?.trim()).toBe(product.categoryId);
+      expect(page.querySelector('.product-price')?.textContent?.trim()).toContain(
+        product.price.kind === 'starting-at' ? 'A partir de R$' : 'R$',
+      );
+      const link = page.querySelector<HTMLAnchorElement>('.product-order')!;
+      expect(link.textContent).toContain('Pedir no WhatsApp');
+      expect(link.getAttribute('aria-label')).toContain(product.name);
+      expect(new URL(link.href).searchParams.get('text')).toContain(product.name);
+    }
+  });
+
+  it('sinaliza indisponibilidade quando o WhatsApp está ausente', () => {
+    Object.defineProperty(publicConfig, 'contact', {
+      value: { ...publicConfig.contact, whatsapp: null },
+    });
+    const fixture = TestBed.createComponent(ProductCard);
+    fixture.componentRef.setInput('product', products[0]);
+    fixture.componentRef.setInput('categoryName', 'Bolos');
+    fixture.detectChanges();
+    const link = (fixture.nativeElement as HTMLElement).querySelector('.product-order')!;
+    expect(link.getAttribute('aria-disabled')).toBe('true');
+    expect(link.hasAttribute('href')).toBe(false);
+  });
+});

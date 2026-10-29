@@ -30,7 +30,7 @@ import { productWhatsappUrl } from '../../core/config/contact-links';
             target="_blank"
             rel="noopener noreferrer"
           >
-            <span class="desktop-order">Pedir no </span>WhatsApp
+            Pedir no WhatsApp
             <svg lucideArrowRight aria-hidden="true" [size]="16"></svg>
           </a>
         </div>

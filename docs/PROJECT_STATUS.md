@@ -1,17 +1,25 @@
 # Estado do projeto
 
-Atualizado em 2026-10-14.
+Atualizado em 2026-10-29.
 
 Repositório publicado em main no origin (GitHub KaikeDias/doceria-landing-page), com commits separados de assets, aplicação e documentação. Registro operacional em [commits e push](tasks/2026-10-14-commits-push.md).
 
 ## Existente
 
 - Landing page responsiva em `/`: apresentação, categorias, cardápio, sobre, encomendas, contato e rodapé.
-- Seis produtos demonstrativos reproduzidos da referência, filtro por categoria, menu mobile e navegação por âncoras.
+- Seis produtos demonstrativos reproduzidos da referência, filtro por categoria, CTA de pedido no cabeçalho mobile e navegação por âncoras.
 - Logo original em `public/logo.png`; fotos extraídas das exportações e otimizadas em WebP.
 - Cormorant Garamond e DM Sans locais em WOFF2, com licenças OFL.
 - Angular 22.2.2 standalone OnPush, Signals, TypeScript strict, Tailwind 4, daisyUI 5 e SSG.
 - WhatsApp e Instagram ativos com valores fornecidos pelo usuário; mensagens específicas para cabeçalho, hero, encomendas, dúvidas e cada produto. Demais contatos e API permanecem `null`.
+
+## Atualização visual de 2026-10-29
+
+Desktop e mobile adequados às novas referências em `public/design/landing-page`: cabeçalho mobile com CTA Pedir, hero com texto completo e selo, categorias com foto superior no mobile, descrições visíveis nos produtos, sobre completo e contato em cards clicáveis. WhatsApp e Instagram reais preservados.
+
+Especificação e evidências: [especificação](../specs/atualizacao-design-landing-page/spec.md) e [tarefas](../specs/atualizacao-design-landing-page/tasks.md).
+
+Build estático aprovado e 17 testes aprovados; cobertura de 100% nas unidades Home e ProductCard. Validação visual e de overflow em navegador pendente, pois não há navegador disponível nesta sessão. As verificações de navegador descritas abaixo referem-se à entrega anterior.
 
 ## Trabalho concluído
 

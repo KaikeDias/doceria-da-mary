@@ -46,7 +46,7 @@
   body {
     margin: 0;
     background: var(--color-base-100);
-    color: var(--color-neutral);
+    color: #705e55;
     font-family: var(--font-body);
   }
   p {
@@ -55,11 +55,11 @@
   h1,
   h2 {
     font-family: var(--font-display);
-    font-weight: 600;
+    font-weight: 500;
     color: var(--color-neutral);
   }
   h2 {
-    font-size: 58px;
+    font-size: 56px;
     line-height: 1.05;
     letter-spacing: -0.7px;
   }
@@ -91,7 +91,7 @@
 
 @layer components {
   .eyebrow {
-    font: 700 12px/1.5 var(--font-body);
+    font: 500 12px/1.5 var(--font-body);
     color: var(--color-brand-text);
     letter-spacing: 2px;
     text-transform: uppercase;
