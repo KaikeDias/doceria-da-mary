@@ -1,0 +1,327 @@
+<ng-template #preview>
+  <div class="rounded-3xl bg-base-200 p-5">
+    <article class="overflow-hidden rounded-[20px] bg-white shadow-[0_6px_20px_#5a3a2e0f]">
+      @if (images().length) {
+        <img [src]="images()[0]" alt="" class="block aspect-[1.7] w-full object-cover" />
+      } @else {
+        <div
+          aria-hidden="true"
+          class="grid aspect-[1.7] place-items-center bg-secondary text-primary"
+        >
+          <svg lucideImage [size]="32"></svg>
+        </div>
+      }
+      <div class="p-5">
+        <p class="text-[10px] font-medium tracking-[2px] text-brand-text uppercase">
+          {{ previewCategory() }}
+        </p>
+        <p
+          class="mt-2 font-display text-2xl leading-tight font-medium break-words"
+          [class.text-neutral]="name().trim()"
+          [class.text-neutral/60]="!name().trim()"
+        >
+          {{ name().trim() || 'Nome do doce' }}
+        </p>
+        <p
+          class="mt-2 line-clamp-2 text-sm leading-relaxed break-words"
+          [class.text-brand-text]="!description().trim()"
+        >
+          {{ description().trim() || 'A descrição do doce aparece aqui.' }}
+        </p>
+        <div
+          class="mt-4 flex items-center justify-between gap-3 border-t border-base-200 pt-4 text-sm"
+        >
+          <span class="font-semibold text-base-content">{{ previewPrice() }}</span>
+          <span class="inline-flex items-center gap-1 text-[13px] font-medium text-brand-text"
+            >Pedir no WhatsApp<svg lucideArrowRight [size]="14" aria-hidden="true"></svg
+          ></span>
+        </div>
+      </div>
+    </article>
+  </div>
+  <p class="mt-4 text-[13px] leading-relaxed text-neutral">
+    A prévia atualiza enquanto você preenche. O botão do WhatsApp é ilustrativo.
+  </p>
+</ng-template>
+
+<form novalidate class="mx-auto max-w-[1120px]" (submit)="$event.preventDefault(); save()">
+  <div class="flex items-center gap-2">
+    <a
+      routerLink="/admin/cardapio"
+      aria-label="Voltar ao cardápio"
+      class="btn btn-ghost btn-square -ml-3 size-11 min-h-11 lg:hidden"
+    >
+      <svg lucideArrowLeft [size]="20" aria-hidden="true"></svg>
+    </a>
+    <nav aria-label="Trilha">
+      <ol class="flex items-center gap-2 text-sm text-neutral">
+        <li>
+          <a routerLink="/admin/cardapio" class="inline-flex min-h-11 items-center">Cardápio</a>
+        </li>
+        <li aria-hidden="true"><svg lucideChevronRight [size]="14"></svg></li>
+        <li aria-current="page" class="font-semibold text-base-content">
+          {{ existing ? 'Editar produto' : 'Adicionar produto' }}
+        </li>
+      </ol>
+    </nav>
+  </div>
+  <h1 class="mt-1 font-display text-[34px] leading-tight font-medium text-neutral lg:text-[40px]">
+    {{ existing ? 'Editar produto' : 'Novo produto' }}
+  </h1>
+  <p class="mt-1 text-[15px] text-neutral">Preencha as informações que aparecerão no cardápio.</p>
+
+  <div class="mt-6 grid gap-8 lg:grid-cols-[minmax(0,1fr)_340px]">
+    <div class="flex min-w-0 flex-col gap-5">
+      <section
+        aria-labelledby="produto-basicas"
+        class="rounded-2xl border border-base-300 bg-white p-4 sm:p-6"
+      >
+        <h2 id="produto-basicas" class="font-semibold text-neutral">Informações básicas</h2>
+        <div class="mt-4 grid gap-5 md:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">
+          <div>
+            <label for="produto-name" class="text-sm font-semibold text-base-content"
+              >Nome do produto <span class="font-normal text-neutral">(obrigatório)</span></label
+            >
+            <input
+              id="produto-name"
+              type="text"
+              maxlength="80"
+              placeholder="Ex.: Bolo de Cenoura com Chocolate"
+              class="input mt-2 h-12 w-full rounded-xl border-primary/60 bg-base-100"
+              [class.input-error]="submitted() && errors().name"
+              [attr.aria-invalid]="submitted() && !!errors().name"
+              [attr.aria-describedby]="submitted() && errors().name ? 'produto-name-error' : null"
+              [value]="name()"
+              (input)="name.set($any($event.target).value)"
+            />
+            @if (submitted() && errors().name) {
+              <p id="produto-name-error" class="mt-1.5 text-sm text-error">{{ errors().name }}</p>
+            }
+          </div>
+          <div>
+            <label for="produto-category" class="text-sm font-semibold text-base-content"
+              >Categoria</label
+            >
+            <select
+              id="produto-category"
+              class="select mt-2 h-12 w-full rounded-xl border-primary/60 bg-base-100 hover:cursor-pointer"
+              [class.select-error]="submitted() && errors().category"
+              [attr.aria-invalid]="submitted() && !!errors().category"
+              [attr.aria-describedby]="
+                submitted() && errors().category ? 'produto-category-error' : null
+              "
+              (change)="categoryId.set($any($event.target).value)"
+            >
+              <option value="" [selected]="!categoryId()">Escolha uma categoria</option>
+              @for (item of categories; track item.id) {
+                <option [value]="item.id" [selected]="item.id === categoryId()">
+                  {{ item.label }}
+                </option>
+              }
+            </select>
+            @if (submitted() && errors().category) {
+              <p id="produto-category-error" class="mt-1.5 text-sm text-error">
+                {{ errors().category }}
+              </p>
+            }
+          </div>
+          <div class="md:col-span-2">
+            <div class="flex items-baseline justify-between gap-3">
+              <label for="produto-description" class="text-sm font-semibold text-base-content"
+                >Descrição</label
+              >
+              <span class="text-xs text-neutral" aria-hidden="true"
+                >{{ description().length }}/300</span
+              >
+            </div>
+            <textarea
+              id="produto-description"
+              maxlength="300"
+              rows="4"
+              placeholder="Conte o sabor, o recheio e para quantas pessoas serve."
+              aria-describedby="produto-description-count"
+              class="textarea mt-2 w-full rounded-xl border-primary/60 bg-base-100 text-base"
+              [value]="description()"
+              (input)="description.set($any($event.target).value)"
+            ></textarea>
+            <span id="produto-description-count" class="sr-only"
+              >{{ description().length }} de 300 caracteres</span
+            >
+          </div>
+          <div>
+            <label for="produto-price" class="text-sm font-semibold text-base-content"
+              >Preço em reais <span class="font-normal text-neutral">(opcional)</span></label
+            >
+            <label
+              class="input mt-2 h-12 w-full gap-3 rounded-xl border-primary/60 bg-base-100"
+              [class.input-error]="submitted() && errors().price"
+            >
+              <span aria-hidden="true" class="text-neutral">R$</span>
+              <input
+                id="produto-price"
+                type="text"
+                inputmode="decimal"
+                maxlength="8"
+                placeholder="0,00"
+                class="grow"
+                [attr.aria-invalid]="submitted() && !!errors().price"
+                [attr.aria-describedby]="
+                  submitted() && errors().price
+                    ? 'produto-price-error produto-price-help'
+                    : 'produto-price-help'
+                "
+                [value]="price()"
+                (input)="setPrice($any($event.target))"
+              />
+            </label>
+            @if (submitted() && errors().price) {
+              <p id="produto-price-error" class="mt-1.5 text-sm text-error">{{ errors().price }}</p>
+            }
+            <p id="produto-price-help" class="mt-1.5 text-xs text-neutral">
+              Sem preço, o site mostra “Sob consulta”.
+            </p>
+          </div>
+          <label
+            class="flex items-start gap-3 self-start rounded-xl bg-base-200 p-3.5 md:mt-7"
+            [class.cursor-pointer]="hasPrice()"
+            [class.opacity-60]="!hasPrice()"
+          >
+            <input
+              type="checkbox"
+              class="checkbox checkbox-primary mt-0.5 rounded-md"
+              [disabled]="!hasPrice()"
+              [checked]="startingAt() && hasPrice()"
+              (change)="startingAt.set($any($event.target).checked)"
+            />
+            <span>
+              <span class="block text-sm font-semibold text-base-content"
+                >Exibir preço como “A partir de”</span
+              >
+              <span class="block text-xs text-neutral"
+                >Para doces cujo valor muda com tamanho ou sabor.</span
+              >
+            </span>
+          </label>
+        </div>
+      </section>
+
+      <section
+        aria-labelledby="produto-imagens"
+        class="rounded-2xl border border-base-300 bg-white p-4 sm:p-6"
+      >
+        <h2 id="produto-imagens" class="font-semibold text-neutral">Imagens</h2>
+        <p class="mt-1 text-sm text-neutral">
+          Até 5 fotos. A imagem principal é a que aparece no cardápio.
+        </p>
+        @if (images().length < 5) {
+          <div
+            class="mt-4 flex flex-col items-center rounded-2xl border-2 border-dashed border-primary/40 px-4 py-8 text-center"
+            (dragover)="$event.preventDefault()"
+            (drop)="drop($event)"
+          >
+            <span
+              aria-hidden="true"
+              class="grid size-13 place-items-center rounded-full bg-base-200 text-primary"
+              ><svg lucideImagePlus [size]="22"></svg
+            ></span>
+            <p class="mt-3 font-semibold text-base-content">Arraste as fotos do doce para cá</p>
+            <p class="mt-1 text-sm text-neutral">ou</p>
+            <label
+              class="btn btn-outline mt-2 h-11 min-h-11 rounded-full border-primary px-5 text-brand-text focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-primary"
+            >
+              Escolher fotos
+              <input
+                type="file"
+                accept="image/*"
+                multiple
+                class="sr-only"
+                (change)="pick($any($event.target))"
+              />
+            </label>
+          </div>
+        }
+        <p role="status" class="mt-3 text-sm text-error empty:hidden">{{ imageNotice() }}</p>
+        @if (images().length) {
+          <ul class="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-5">
+            @for (url of images(); track url; let i = $index) {
+              <li class="relative overflow-hidden rounded-xl border border-base-300 bg-base-100">
+                <img
+                  [src]="url"
+                  [alt]="'Foto ' + (i + 1)"
+                  class="aspect-square w-full object-cover"
+                />
+                @if (i === 0) {
+                  <span
+                    class="absolute top-2 left-2 rounded-full bg-primary px-2.5 py-0.5 text-[11px] font-semibold text-primary-content"
+                    >Principal</span
+                  >
+                }
+                <button
+                  type="button"
+                  class="btn btn-circle absolute top-1 right-1 size-11 min-h-11 border-0 bg-white/90"
+                  [attr.aria-label]="'Remover foto ' + (i + 1)"
+                  (click)="remove(i)"
+                >
+                  <svg lucideX [size]="16" aria-hidden="true"></svg>
+                </button>
+                @if (i > 0) {
+                  <button
+                    type="button"
+                    class="btn btn-ghost h-11 min-h-11 w-full rounded-none text-xs"
+                    [attr.aria-label]="'Definir foto ' + (i + 1) + ' como principal'"
+                    (click)="makeMain(i)"
+                  >
+                    Definir como principal
+                  </button>
+                }
+              </li>
+            }
+          </ul>
+        }
+      </section>
+
+      <details class="group lg:hidden">
+        <summary
+          class="flex min-h-11 cursor-pointer list-none items-center gap-2 text-xs font-semibold tracking-[2px] text-brand-text uppercase"
+        >
+          <svg lucideEye [size]="16" aria-hidden="true"></svg>Prévia no site
+          <svg
+            lucideChevronRight
+            [size]="16"
+            aria-hidden="true"
+            class="transition-transform group-open:rotate-90 motion-reduce:transition-none"
+          ></svg>
+        </summary>
+        <div class="mt-2"><ng-container [ngTemplateOutlet]="preview" /></div>
+      </details>
+    </div>
+
+    <aside aria-labelledby="produto-previa" class="hidden lg:block">
+      <div class="sticky top-6">
+        <h2
+          id="produto-previa"
+          class="flex items-center gap-2 text-xs font-semibold tracking-[2px] text-brand-text uppercase"
+        >
+          <svg lucideEye [size]="16" aria-hidden="true"></svg>Prévia no site
+        </h2>
+        <div class="mt-4"><ng-container [ngTemplateOutlet]="preview" /></div>
+      </div>
+    </aside>
+  </div>
+
+  <div
+    class="sticky bottom-0 z-10 -mx-5 mt-8 -mb-6 flex gap-3 border-t border-base-300 bg-base-100 px-5 py-4 lg:-mx-10 lg:-mb-9 lg:justify-end lg:px-10"
+  >
+    <a
+      routerLink="/admin/cardapio"
+      class="btn btn-outline h-12 min-h-12 flex-1 rounded-full border-neutral/60 px-6 lg:flex-none"
+      >Cancelar</a
+    >
+    <button
+      type="submit"
+      class="btn btn-primary h-12 min-h-12 flex-[1.5] rounded-full px-8 font-bold lg:flex-none"
+    >
+      {{ existing ? 'Salvar alterações' : 'Salvar produto' }}
+    </button>
+  </div>
+</form>

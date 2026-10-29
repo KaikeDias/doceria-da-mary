@@ -3,6 +3,7 @@ import { Router, provideRouter } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
 import { routes } from '../../app.routes';
 import { StatusFilter, matches, normalize } from './cardapio';
+import { MenuStore } from './menu-store';
 
 async function setup(url = '/admin/cardapio') {
   TestBed.configureTestingModule({ providers: [provideRouter(routes)] });
@@ -188,10 +189,10 @@ describe('Cardápio', () => {
     expect(page.textContent).toContain('Seu cardápio ainda está vazio');
     expect(page.textContent).toContain('Adicione o primeiro doce e ele já aparece no seu site');
     expect(page.textContent).not.toContain('Nenhum doce encontrado');
-    const add = Array.from(page.querySelectorAll('button')).find((b) =>
+    const add = Array.from(page.querySelectorAll('a')).find((b) =>
       b.textContent?.includes('Adicionar primeiro produto'),
     )!;
-    expect(add.getAttribute('aria-disabled')).toBe('true');
+    expect(add.getAttribute('href')).toBe('/admin/cardapio/novo');
     expect(page.textContent).toMatch(/Total de produtos\s*0/);
     expect(page.textContent).toMatch(/Publicados no site\s*0\s*de 0/);
   });
@@ -242,14 +243,22 @@ describe('Cardápio', () => {
     expect(page.querySelector('[role=status]')?.textContent).toContain('foi excluído do cardápio.');
   });
 
-  it('CA08: unavailable controls are marked and do nothing', async () => {
-    const { harness, page } = await setup();
-    const disabled = Array.from(page.querySelectorAll<HTMLButtonElement>('[aria-disabled=true]'));
-    expect(disabled.length).toBeGreaterThan(12);
-    disabled.forEach((button) => button.click());
+  it('formulário CA01/CA09: add and edit link to the form; no price shows "Sob consulta"', async () => {
+    const { harness, page, rows, text } = await setup();
+    expect(page.querySelector('a[href="/admin/cardapio/novo"]')?.textContent).toContain(
+      'Adicionar produto',
+    );
+    expect(
+      page.querySelector('tbody a[aria-label="Editar Bolo de Chocolate"]')?.getAttribute('href'),
+    ).toBe('/admin/cardapio/bolo-chocolate/editar');
+    expect(page.querySelectorAll('app-cardapio [aria-disabled=true]')).toHaveLength(0);
+    const store = TestBed.inject(MenuStore);
+    store.save({ ...store.find('brownie')!, price: null, images: [] });
     harness.detectChanges();
-    expect(TestBed.inject(Router).url).toBe('/admin/cardapio');
-    expect(page.textContent).not.toContain('Nenhum doce encontrado');
+    expect(text(rows()[2])).toContain('Sob consulta');
+    expect(text(rows()[2])).not.toContain('Preço fixo');
+    expect(rows()[2].querySelector('img')).toBeNull();
+    expect(text(page.querySelectorAll('ul > li')[2])).toContain('Sob consulta');
   });
 
   it('CA12: has table headers, a switch role and a fallback when an image fails', async () => {
