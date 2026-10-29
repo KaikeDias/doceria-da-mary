@@ -19,151 +19,79 @@
 @theme {
   --font-display: 'Cormorant Garamond', Georgia, serif;
   --font-body: 'DM Sans', Arial, sans-serif;
+  --breakpoint-desktop: 701px;
+  --color-brand-text: #8c4555;
+  --color-primary-hover: color-mix(in srgb, var(--color-primary), #000 12%);
+  --color-neutral-hover: color-mix(in srgb, var(--color-neutral), #000 12%);
+  --color-brand-hover: color-mix(in srgb, var(--color-brand-text), #000 12%);
 }
 
-.mary-site .btn {
-  border-radius: 999px;
-  box-shadow: none;
-  font-family: var(--font-body);
-  font-weight: 700;
-}
-
-.mary-site .btn:disabled {
-  opacity: 1;
-}
-.mary-site .btn-primary:disabled {
-  background: var(--color-primary);
-  border-color: var(--color-primary);
-  color: var(--color-primary-content);
-}
-.mary-site .btn-neutral:disabled {
-  background: var(--color-neutral);
-  border-color: var(--color-neutral);
-  color: var(--color-neutral-content);
-}
-
-.mary-site :is(button, .btn, .product-order, .details-order) {
-  transition:
-    background-color 160ms ease,
-    border-color 160ms ease,
-    color 160ms ease;
-}
-.mary-site :is(.product-photo, .thumbnails button) img {
-  transition: filter 160ms ease;
-}
-.mary-site :is(button, .btn, .product-order, .details-order)[aria-disabled='true'] {
-  pointer-events: none;
-}
-@media (hover: hover) and (pointer: fine) {
-  .mary-site
-    :is(button, .btn, .product-order, .details-order):not(:disabled, [aria-disabled='true']):hover {
-    background-color: var(--color-base-300);
-    border-color: var(--color-primary);
-    color: var(--color-brand-text);
-  }
-  .mary-site :is(.btn-primary, .details-order):not(:disabled, [aria-disabled='true']):hover {
-    background-color: color-mix(in srgb, var(--color-primary), #000 12%);
-    border-color: color-mix(in srgb, var(--color-primary), #000 12%);
-    color: var(--color-primary-content);
-  }
-  .mary-site :is(.btn-neutral, .filter-group .active):not(:disabled, [aria-disabled='true']):hover {
-    background-color: color-mix(in srgb, var(--color-neutral), #000 12%);
-    border-color: color-mix(in srgb, var(--color-neutral), #000 12%);
-    color: var(--color-neutral-content);
-  }
-  .mary-site :is(.product-name, .product-order):not(:disabled, [aria-disabled='true']):hover {
-    background-color: transparent;
-    color: color-mix(in srgb, var(--color-brand-text), #000 12%);
-  }
-  .mary-site
-    :is(.product-photo, .thumbnails button):not(:disabled, [aria-disabled='true']):hover
-    img {
-    filter: brightness(0.9);
-  }
-}
-@media (prefers-reduced-motion: reduce) {
-  .mary-site :is(button, .btn, .product-order, .details-order),
-  .mary-site :is(.product-photo, .thumbnails button) img {
-    transition: none;
+@custom-variant mouse {
+  @media (hover: hover) and (pointer: fine) {
+    @slot;
   }
 }
 
 @layer base {
   body {
-    margin: 0;
-    background: var(--color-base-100);
-    color: #705e55;
-    font-family: var(--font-body);
-  }
-  p {
-    margin: 0;
-  }
-  h1,
-  h2 {
-    font-family: var(--font-display);
-    font-weight: 500;
-    color: var(--color-neutral);
-  }
-  h2 {
-    font-size: 56px;
-    line-height: 1.05;
-    letter-spacing: -0.7px;
-  }
-  a {
-    text-decoration: none;
+    @apply m-0 bg-base-100 font-body text-[#705e55];
   }
   button:not(:disabled),
   a {
-    cursor: pointer;
+    @apply cursor-pointer;
   }
   button:disabled {
-    cursor: not-allowed;
+    @apply cursor-not-allowed;
   }
   :focus-visible {
-    outline: 3px solid var(--color-primary);
-    outline-offset: 5px;
-  }
-  section[id] {
-    scroll-margin-top: 24px;
-  }
-  @media (max-width: 700px) {
-    h2 {
-      font-size: 40px;
-      line-height: 1.04;
-      letter-spacing: -0.3px;
-    }
+    @apply outline-3 outline-solid outline-primary outline-offset-5;
   }
 }
 
-@layer components {
-  .eyebrow {
-    font: 500 12px/1.5 var(--font-body);
-    color: var(--color-brand-text);
-    letter-spacing: 2px;
-    text-transform: uppercase;
+@layer utilities {
+  :where(.mary-site .btn) {
+    @apply rounded-full font-body font-bold shadow-none;
   }
-  .skip-link {
-    position: fixed;
-    top: -100px;
-    left: 16px;
-    z-index: 10;
-    padding: 12px 18px;
-    border-radius: 8px;
-    background: var(--color-base-100);
+  .mary-site .btn:disabled {
+    @apply opacity-100;
   }
-  .skip-link:focus {
-    top: 12px;
+  .mary-site .btn-primary:disabled {
+    @apply border-primary bg-primary text-primary-content;
   }
-  @media (max-width: 700px) {
-    .eyebrow {
-      font-size: 10px;
-      letter-spacing: 1.6px;
-    }
+  .mary-site .btn-neutral:disabled {
+    @apply border-neutral bg-neutral text-neutral-content;
+  }
+}
+
+/* Shared control defaults also cover native buttons without a DaisyUI class. */
+@layer utilities {
+  .mary-site :is(button, .btn) {
+    @apply transition-colors duration-160 ease-[ease] motion-reduce:transition-none motion-reduce:duration-0 aria-disabled:pointer-events-none;
+  }
+  .mary-site :is(button, .btn):not(:disabled, [aria-disabled='true']) {
+    @apply mouse:hover:border-primary mouse:hover:bg-base-300 mouse:hover:text-brand-text;
+  }
+  .mary-site .btn-primary:not(:disabled, [aria-disabled='true']) {
+    @apply mouse:hover:border-primary-hover mouse:hover:bg-primary-hover mouse:hover:text-primary-content;
+  }
+  .mary-site .btn-neutral:not(:disabled, [aria-disabled='true']) {
+    @apply mouse:hover:border-neutral-hover mouse:hover:bg-neutral-hover mouse:hover:text-neutral-content;
+  }
+  .mary-site .btn-link:not(:disabled, [aria-disabled='true']) {
+    @apply mouse:hover:bg-transparent mouse:hover:text-brand-hover mouse:hover:no-underline;
+  }
+  .mary-site :is(.product-photo, .thumbnails button) img {
+    @apply transition-[filter] duration-160 ease-[ease] motion-reduce:transition-none motion-reduce:duration-0;
+  }
+  .mary-site :is(.product-photo, .thumbnails button):not(:disabled, [aria-disabled='true']) {
+    @apply mouse:hover:[&_img]:brightness-90;
   }
 }
 
 @plugin 'daisyui' {
   themes: false;
+  /* The native dialog already restores the page scroll state. */
+  exclude: rootscrollgutter;
 }
 
 @plugin 'daisyui/theme' {

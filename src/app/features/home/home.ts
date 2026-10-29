@@ -10,7 +10,6 @@ import { whatsappMessages, whatsappUrl } from '../../core/config/contact-links';
   selector: 'app-home',
   imports: [LucideArrowRight, ProductCard, ProductDetails],
   templateUrl: './home.html',
-  styleUrl: './home.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class Home {

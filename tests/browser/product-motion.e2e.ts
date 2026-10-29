@@ -18,7 +18,7 @@ test('Animações CA01: hover amplia e eleva sem mover os vizinhos; saída resta
   const initial = await card.boundingBox();
   const neighbor = await cards.nth(1).boundingBox();
   const initialShadow = await card.evaluate((element) => getComputedStyle(element).boxShadow);
-  await expect(card).toHaveCSS('transition-duration', '0.22s, 0.22s');
+  await expect(card).toHaveCSS('transition-duration', '0.22s');
   await card.hover();
   await card.evaluate(async (element) => {
     await Promise.all(element.getAnimations().map((animation) => animation.finished));

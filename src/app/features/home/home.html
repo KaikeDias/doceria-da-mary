@@ -1,17 +1,37 @@
 <div class="mary-site" id="inicio">
-  <a class="skip-link" href="#cardapio">Ir para o cardápio</a>
-  <header class="site-header">
-    <div class="container header-inner">
-      <a href="#inicio" class="brand" aria-label="Doceria da Mary — início">
-        <img src="logo.png" alt="" width="64" height="64" />
-        <span>Doceria da Mary<small>Doces artesanais</small></span>
+  <a
+    class="skip-link fixed -top-25 left-4 z-10 rounded-lg bg-base-100 px-4.5 py-3 focus:top-3"
+    href="#cardapio"
+    >Ir para o cardápio</a
+  >
+  <header class="site-header border-b border-base-200">
+    <div
+      class="header-inner mx-auto w-[min(1264px,calc(100%_-_176px))] desktop:max-[1101px]:w-[calc(100%_-_64px)] max-desktop:w-[calc(100%_-_40px)] flex h-[109px] items-center justify-between gap-6 desktop:max-[901px]:h-auto desktop:max-[901px]:flex-wrap desktop:max-[901px]:py-5 desktop:max-[901px]:gap-y-4 max-desktop:h-[67px] max-desktop:gap-3"
+    >
+      <a
+        href="#inicio"
+        class="brand inline-flex items-center gap-4 whitespace-nowrap font-display text-[26px] leading-[1.1] font-medium text-neutral max-desktop:gap-2.5 max-desktop:text-[20px]"
+        aria-label="Doceria da Mary — início"
+      >
+        <img src="logo.png" alt="" width="64" height="64" class="max-desktop:size-9" />
+        <span
+          >Doceria da Mary<small
+            class="mt-[5px] block font-body text-[9px] leading-normal font-medium tracking-[2px] uppercase max-desktop:mt-[3px] max-desktop:text-[7px] max-desktop:tracking-[1.8px]"
+            >Doces artesanais</small
+          ></span
+        >
       </a>
-      <nav class="desktop-nav" aria-label="Navegação principal">
-        <a href="#inicio">Início</a><a href="#cardapio">Cardápio</a><a href="#sobre">Sobre nós</a
-        ><a href="#contato">Contato</a>
+      <nav
+        class="desktop-nav flex items-center gap-[38px] text-[13px] font-medium desktop:max-[1101px]:gap-5 desktop:max-[901px]:order-3 desktop:max-[901px]:basis-full desktop:max-[901px]:justify-center max-desktop:hidden"
+        aria-label="Navegação principal"
+      >
+        <a href="#inicio" class="hover:underline underline-offset-[5px]">Início</a
+        ><a href="#cardapio" class="hover:underline underline-offset-[5px]">Cardápio</a
+        ><a href="#sobre" class="hover:underline underline-offset-[5px]">Sobre nós</a
+        ><a href="#contato" class="hover:underline underline-offset-[5px]">Contato</a>
       </nav>
       <a
-        class="btn btn-primary header-order"
+        class="btn btn-primary header-order min-h-[46px] px-6 text-[13px] max-desktop:min-h-11 max-desktop:gap-1.5 max-desktop:px-4 max-desktop:text-sm"
         [attr.href]="contactLinks.order"
         [attr.aria-disabled]="!contactLinks.order ? 'true' : null"
         target="_blank"
@@ -19,33 +39,56 @@
         aria-label="Fazer pedido pelo WhatsApp (abre em nova aba)"
       >
         <img src="icons/whatsapp.svg" alt="" width="15" height="15" aria-hidden="true" />
-        <span class="desktop-copy">Fazer pedido</span><span class="mobile-copy">Pedir</span>
-        <svg class="desktop-copy" lucideArrowRight [size]="18" aria-hidden="true"></svg>
+        <span class="desktop-copy max-desktop:hidden">Fazer pedido</span
+        ><span class="mobile-copy hidden max-desktop:inline">Pedir</span>
+        <svg
+          class="desktop-copy max-desktop:hidden"
+          lucideArrowRight
+          [size]="18"
+          aria-hidden="true"
+        ></svg>
       </a>
     </div>
   </header>
   <main>
-    <section class="hero" aria-labelledby="hero-title">
-      <div class="container hero-grid">
+    <section
+      class="hero pt-14 pb-[62px] max-desktop:pt-8 max-desktop:pb-11"
+      aria-labelledby="hero-title"
+    >
+      <div
+        class="hero-grid grid grid-cols-[minmax(0,560fr)_minmax(0,640fr)] items-center gap-16 desktop:max-[1101px]:gap-8 max-desktop:flex max-desktop:flex-col max-desktop:items-stretch max-desktop:gap-9 mx-auto w-[min(1264px,calc(100%_-_176px))] desktop:max-[1101px]:w-[calc(100%_-_64px)] max-desktop:w-[calc(100%_-_40px)]"
+      >
         <div class="hero-copy">
-          <p class="eyebrow">
-            <span class="hero-rule"></span><span>Feito com carinho, especialmente para você</span>
+          <p
+            class="eyebrow font-body leading-normal font-medium tracking-[2px] text-brand-text uppercase max-desktop:text-[10px] flex items-center gap-3.5 text-[11px] max-desktop:gap-2.5 max-desktop:tracking-[1.5px]"
+          >
+            <span class="hero-rule h-px w-10 shrink-0 bg-primary max-desktop:w-[26px]"></span
+            ><span>Feito com carinho, especialmente para você</span>
           </p>
-          <h1 id="hero-title">
-            Adoçando seus<br class="desktop-break" />
-            momentos mais<br class="desktop-break" />
+          <h1
+            id="hero-title"
+            class="font-display font-medium text-neutral mt-7 mb-[30px] text-[clamp(48px,5vw,72px)] leading-[1.1] tracking-[-1.2px] max-desktop:mt-6 max-desktop:mb-[22px] max-desktop:text-[clamp(42px,11.8vw,46px)] max-desktop:leading-[1.05] max-desktop:tracking-[-0.5px]"
+          >
+            Adoçando seus<br class="desktop-break max-desktop:hidden" />
+            momentos mais<br class="desktop-break max-desktop:hidden" />
             especiais.
           </h1>
-          <p class="hero-description">
+          <p
+            class="hero-description max-w-[465px] text-[17px] leading-[1.7] max-desktop:text-[15px] max-desktop:leading-[1.75]"
+          >
             Doces artesanais feitos com afeto, ingredientes escolhidos com cuidado e aquele sabor
             que transforma qualquer ocasião em memória.
           </p>
-          <div class="hero-actions">
-            <a class="btn btn-primary" href="#cardapio"
+          <div
+            class="hero-actions mt-9 flex flex-wrap gap-4 max-desktop:mt-7 max-desktop:flex-col max-desktop:gap-3"
+          >
+            <a
+              class="btn btn-primary min-h-[54px] px-7 text-sm max-desktop:min-h-[52px] max-desktop:text-[15px]"
+              href="#cardapio"
               >Conhecer o cardápio <svg lucideArrowRight [size]="19" aria-hidden="true"></svg
             ></a>
             <a
-              class="btn contact-outline"
+              class="btn contact-outline btn-outline border-primary bg-transparent text-primary min-h-[54px] px-7 text-sm max-desktop:min-h-[52px] max-desktop:text-[15px]"
               [attr.href]="contactLinks.hero"
               [attr.aria-disabled]="!contactLinks.hero ? 'true' : null"
               target="_blank"
@@ -55,61 +98,130 @@
               Pedir pelo WhatsApp
             </a>
           </div>
-          <p class="hero-detail"><span></span> Um toque doce em cada detalhe</p>
+          <p
+            class="hero-detail mt-12 flex items-center gap-3 text-[10px] tracking-[1.5px] uppercase max-desktop:hidden"
+          >
+            <span class="h-px w-[30px] bg-secondary"></span> Um toque doce em cada detalhe
+          </p>
         </div>
-        <div class="hero-picture">
+        <div
+          class="hero-picture relative rounded-[36px] bg-secondary p-3.5 max-desktop:rounded-[26px] max-desktop:p-2.5"
+        >
           <img
             src="images/hero.webp"
             alt="Seleção de doces artesanais com chocolate, creme e morangos em uma bandeja"
             width="984"
             height="783"
             fetchpriority="high"
+            class="block aspect-[1.3] w-full rounded-3xl object-cover max-desktop:aspect-[1.1] max-desktop:rounded-[18px]"
           />
-          <div class="hero-label"><span>Feito à mão</span><small>Com todo carinho ♡</small></div>
+          <div
+            class="hero-label absolute bottom-9 -left-9 rounded-[18px] bg-base-100 px-6 py-4.5 max-desktop:-bottom-4.5 max-desktop:left-3.5 max-desktop:rounded-2xl max-desktop:px-4.5 max-desktop:py-4"
+          >
+            <span class="font-display text-[clamp(20px,1.7vw,24px)] leading-none font-medium"
+              >Feito à mão</span
+            ><small
+              class="mt-[7px] block text-[10px] font-medium tracking-[1.5px] text-brand-text uppercase max-desktop:text-[9px] max-desktop:tracking-[1px]"
+              >Com todo carinho ♡</small
+            >
+          </div>
         </div>
       </div>
     </section>
-    <section class="categories-section" aria-labelledby="categories-title">
-      <div class="container">
-        <p class="eyebrow">Escolha o seu momento doce</p>
-        <div class="section-heading">
-          <h2 id="categories-title">Encontre seu doce favorito</h2>
-          <p class="category-caption">Uma delícia para cada vontade.</p>
+    <section
+      class="categories-section bg-base-200 pt-20 pb-24 max-desktop:pt-12 max-desktop:pb-[52px]"
+      aria-labelledby="categories-title"
+    >
+      <div
+        class="mx-auto w-[min(1264px,calc(100%_-_176px))] desktop:max-[1101px]:w-[calc(100%_-_64px)] max-desktop:w-[calc(100%_-_40px)]"
+      >
+        <p
+          class="eyebrow font-body text-xs leading-normal font-medium tracking-[2px] text-brand-text uppercase max-desktop:text-[10px] max-desktop:tracking-[1.6px]"
+        >
+          Escolha o seu momento doce
+        </p>
+        <div class="section-heading flex items-center justify-between gap-9 max-desktop:block">
+          <h2
+            id="categories-title"
+            class="font-display font-medium text-neutral leading-[1.05] tracking-[-0.7px] max-desktop:leading-[1.04] max-desktop:tracking-[-0.3px] mt-3.5 text-[48px] max-desktop:text-[36px]"
+          >
+            Encontre seu doce favorito
+          </h2>
+          <p
+            class="category-caption self-end pb-[5px] max-desktop:mt-3 max-desktop:p-0 max-desktop:text-sm text-[15px]"
+          >
+            Uma delícia para cada vontade.
+          </p>
         </div>
-        <div class="category-grid">
+        <div
+          class="category-grid mt-11 grid grid-cols-4 gap-6 desktop:max-[1101px]:grid-cols-2 max-desktop:mt-6 max-desktop:grid-cols-2 max-desktop:gap-3"
+        >
           @for (category of categories; track category.id) {
-            <a class="category-link" href="#cardapio" (click)="selectCategory(category.id)">
+            <a
+              class="category-link flex items-center gap-4.5 rounded-[20px] bg-white p-3.5 max-desktop:block max-desktop:overflow-hidden max-desktop:rounded-[18px] max-desktop:p-0"
+              href="#cardapio"
+              (click)="selectCategory(category.id)"
+            >
               <img
                 [src]="'images/' + category.image + '.webp'"
                 alt=""
                 width="80"
                 height="80"
                 loading="lazy"
+                class="size-[76px] rounded-xl object-cover max-desktop:block max-desktop:aspect-[1.92] max-desktop:h-auto max-desktop:w-full max-desktop:rounded-none"
               />
               <span
+                class="font-display text-2xl leading-[1.2] font-medium text-neutral max-desktop:block max-desktop:px-3.5 max-desktop:pt-3 max-desktop:pb-3.5 max-desktop:text-[clamp(18px,5.4vw,21px)]"
                 >{{ category.label
-                }}<small>Explorar <svg lucideArrowRight [size]="14" aria-hidden="true"></svg></small
+                }}<small
+                  class="mt-2 flex items-center gap-1.5 font-body text-xs leading-[1.2] font-medium text-brand-text"
+                  >Explorar <svg lucideArrowRight [size]="14" aria-hidden="true"></svg></small
               ></span>
             </a>
           }
         </div>
       </div>
     </section>
-    <section id="cardapio" class="catalog-section" aria-labelledby="catalog-title">
-      <div class="container">
-        <p class="eyebrow">Doces que encantam</p>
-        <div class="section-heading catalog-heading">
+    <section
+      id="cardapio"
+      class="catalog-section py-24 max-desktop:py-14 scroll-mt-6"
+      aria-labelledby="catalog-title"
+    >
+      <div
+        class="mx-auto w-[min(1264px,calc(100%_-_176px))] desktop:max-[1101px]:w-[calc(100%_-_64px)] max-desktop:w-[calc(100%_-_40px)]"
+      >
+        <p
+          class="eyebrow font-body text-xs leading-normal font-medium tracking-[2px] text-brand-text uppercase max-desktop:text-[10px] max-desktop:tracking-[1.6px]"
+        >
+          Doces que encantam
+        </p>
+        <div
+          class="section-heading catalog-heading flex items-center justify-between gap-9 max-desktop:block"
+        >
           <div>
-            <h2 id="catalog-title">Nosso cardápio</h2>
-            <p>Escolha o que mais combina com o seu momento.</p>
+            <h2
+              id="catalog-title"
+              class="font-display font-medium text-neutral text-[56px] leading-[1.05] tracking-[-0.7px] max-desktop:text-[40px] max-desktop:leading-[1.04] max-desktop:tracking-[-0.3px] mt-3.5 mb-4 max-desktop:mb-3"
+            >
+              Nosso cardápio
+            </h2>
+            <p class="text-[15px] max-desktop:text-sm max-desktop:leading-[1.6]">
+              Escolha o que mais combina com o seu momento.
+            </p>
           </div>
         </div>
-        <div class="filter-group" role="group" aria-label="Filtrar produtos por categoria">
+        <div
+          class="filter-group mt-[34px] mb-10 flex flex-wrap gap-3 max-desktop:-mx-[5px] max-desktop:mt-[22px] max-desktop:mb-7 max-desktop:flex-nowrap max-desktop:gap-2.5 max-desktop:overflow-x-auto max-desktop:p-[5px] max-desktop:[scrollbar-width:thin]"
+          role="group"
+          aria-label="Filtrar produtos por categoria"
+        >
           <button
             type="button"
             [class.active]="selectedCategory() === 'todos'"
+            [class.btn-neutral]="selectedCategory() === 'todos'"
             [attr.aria-pressed]="selectedCategory() === 'todos'"
             (click)="selectCategory('todos')"
+            class="btn h-auto min-h-11 rounded-[30px] border-base-300 bg-white px-[26px] py-[11px] text-sm font-medium text-neutral aria-pressed:border-neutral aria-pressed:bg-neutral aria-pressed:text-neutral-content max-desktop:shrink-0 max-desktop:px-4.5"
           >
             Todos
           </button>
@@ -117,14 +229,20 @@
             <button
               type="button"
               [class.active]="selectedCategory() === category.id"
+              [class.btn-neutral]="selectedCategory() === category.id"
               [attr.aria-pressed]="selectedCategory() === category.id"
               (click)="selectCategory(category.id)"
+              class="btn h-auto min-h-11 rounded-[30px] border-base-300 bg-white px-[26px] py-[11px] text-sm font-medium text-neutral aria-pressed:border-neutral aria-pressed:bg-neutral aria-pressed:text-neutral-content max-desktop:shrink-0 max-desktop:px-4.5"
             >
               {{ category.name }}
             </button>
           }
         </div>
-        <div class="product-grid" aria-live="polite" aria-relevant="additions removals">
+        <div
+          class="product-grid grid grid-cols-3 gap-6 desktop:max-[1101px]:grid-cols-2 max-desktop:grid-cols-1 max-desktop:gap-5"
+          aria-live="polite"
+          aria-relevant="additions removals"
+        >
           @for (product of visibleProducts(); track product.id) {
             <app-product-card
               [product]="product"
@@ -132,95 +250,154 @@
               (details)="selectedProduct.set($event)"
             />
           } @empty {
-            <p class="empty-catalog">Nenhum doce nesta categoria por enquanto.</p>
+            <p class="empty-catalog col-span-full">Nenhum doce nesta categoria por enquanto.</p>
           }
         </div>
       </div>
     </section>
-    <section id="sobre" class="about-section" aria-labelledby="about-title">
-      <div class="container about-grid">
-        <div class="about-picture">
+    <section
+      id="sobre"
+      class="about-section bg-base-200 py-24 max-desktop:pt-16 max-desktop:pb-15 scroll-mt-6"
+      aria-labelledby="about-title"
+    >
+      <div
+        class="about-grid mx-auto w-[min(1264px,calc(100%_-_176px))] desktop:max-[1101px]:w-[calc(100%_-_64px)] max-desktop:w-[calc(100%_-_40px)] grid grid-cols-[minmax(0,560fr)_minmax(0,564fr)] items-center gap-[140px] desktop:max-[1101px]:gap-10 max-desktop:flex max-desktop:flex-col max-desktop:items-stretch max-desktop:gap-10"
+      >
+        <div
+          class="about-picture rotate-[-1.5deg] rounded-[36px] bg-base-100 p-3.5 shadow-[0_24px_45px_#5a3a2e12] max-desktop:rounded-[28px] max-desktop:p-2.5"
+        >
           <img
             src="images/about.webp"
             alt="Bolo artesanal sendo decorado à mão com creme"
             width="1068"
             height="912"
             loading="lazy"
+            class="block aspect-[1.06] w-full rounded-3xl object-cover max-desktop:aspect-square max-desktop:rounded-[18px]"
           />
         </div>
         <div class="about-copy">
-          <p class="eyebrow">A essência da nossa cozinha</p>
-          <h2 id="about-title">
-            Um pouquinho<br class="desktop-break" />
+          <p
+            class="eyebrow font-body text-xs leading-normal font-medium tracking-[2px] text-brand-text uppercase max-desktop:text-[10px] max-desktop:tracking-[1.6px]"
+          >
+            A essência da nossa cozinha
+          </p>
+          <h2
+            id="about-title"
+            class="font-display font-medium text-neutral text-[56px] leading-[1.05] tracking-[-0.7px] max-desktop:text-[40px] max-desktop:leading-[1.04] max-desktop:tracking-[-0.3px] mt-[22px] mb-8 max-desktop:mt-4 max-desktop:mb-6"
+          >
+            Um pouquinho<br class="desktop-break max-desktop:hidden" />
             sobre nós
           </h2>
-          <p>
+          <p
+            class="mt-6 text-base leading-[1.75] max-desktop:mt-4 max-desktop:text-[15px] max-desktop:leading-[1.7]"
+          >
             A Doceria da Mary nasceu do prazer de transformar ingredientes simples em momentos
             cheios de afeto. Cada doce é preparado com cuidado, da escolha dos sabores ao último
             detalhe da apresentação.
           </p>
-          <p class="about-extra">
+          <p
+            class="about-extra mt-6 text-base leading-[1.75] max-desktop:mt-4 max-desktop:text-[15px] max-desktop:leading-[1.7]"
+          >
             Por aqui, acreditamos que um doce especial aproxima pessoas e faz qualquer encontro
             ficar ainda mais gostoso.
           </p>
-          <div class="about-tags">
-            <span>♡ Produção artesanal</span><span>✦ Feito com cuidado</span>
+          <div class="about-tags mt-8 flex flex-wrap gap-3.5 max-desktop:mt-6 max-desktop:gap-2.5">
+            <span
+              class="rounded-3xl bg-base-100 px-4.5 py-2.5 text-xs text-neutral max-desktop:px-4"
+              >♡ Produção artesanal</span
+            ><span
+              class="rounded-3xl bg-base-100 px-4.5 py-2.5 text-xs text-neutral max-desktop:px-4"
+              >✦ Feito com cuidado</span
+            >
           </div>
         </div>
       </div>
     </section>
-    <section class="orders-section" aria-labelledby="orders-title">
-      <div class="container orders-inner">
+    <section
+      class="orders-section bg-secondary py-[84px] max-desktop:pt-[52px] max-desktop:pb-14"
+      aria-labelledby="orders-title"
+    >
+      <div
+        class="orders-inner mx-auto w-[min(1264px,calc(100%_-_176px))] desktop:max-[1101px]:w-[calc(100%_-_64px)] max-desktop:w-[calc(100%_-_40px)] flex items-center justify-between gap-15 max-desktop:block"
+      >
         <div>
-          <p class="eyebrow">Encomendas especiais</p>
-          <h2 id="orders-title">
-            Tem uma ocasião especial<br class="desktop-break" />
+          <p
+            class="eyebrow font-body text-xs leading-normal font-medium tracking-[2px] text-brand-text uppercase max-desktop:text-[10px] max-desktop:tracking-[1.6px]"
+          >
+            Encomendas especiais
+          </p>
+          <h2
+            id="orders-title"
+            class="font-display font-medium text-neutral text-[56px] leading-[1.05] tracking-[-0.7px] max-desktop:text-[40px] max-desktop:leading-[1.04] max-desktop:tracking-[-0.3px] mt-4.5 mb-[22px] max-desktop:mt-4 max-desktop:mb-4.5"
+          >
+            Tem uma ocasião especial<br class="desktop-break max-desktop:hidden" />
             chegando?
           </h2>
-          <p>Conte pra gente o que você está imaginando. Vamos conversar sobre a sua encomenda!</p>
+          <p class="text-base leading-[1.6] max-desktop:text-sm max-desktop:leading-[1.7]">
+            Conte pra gente o que você está imaginando. Vamos conversar sobre a sua encomenda!
+          </p>
         </div>
         <a
-          class="btn btn-neutral"
+          class="btn btn-neutral min-h-14 shrink-0 px-8 text-sm max-desktop:mt-7 max-desktop:min-h-[54px] max-desktop:w-full"
           [attr.href]="contactLinks.customOrder"
           [attr.aria-disabled]="!contactLinks.customOrder ? 'true' : null"
           target="_blank"
           rel="noopener noreferrer"
           aria-label="Fazer uma encomenda pelo WhatsApp (abre em nova aba)"
         >
-          Fazer uma encomenda
-          <svg lucideArrowRight [size]="19" aria-hidden="true"></svg>
+          Fazer uma encomenda <svg lucideArrowRight [size]="19" aria-hidden="true"></svg>
         </a>
       </div>
     </section>
-    <section id="contato" class="contact-section" aria-labelledby="contact-title">
-      <div class="container contact-layout">
+    <section
+      id="contato"
+      class="contact-section py-[108px] max-desktop:py-14 scroll-mt-6"
+      aria-labelledby="contact-title"
+    >
+      <div
+        class="contact-layout mx-auto w-[min(1264px,calc(100%_-_176px))] desktop:max-[1101px]:w-[calc(100%_-_64px)] max-desktop:w-[calc(100%_-_40px)] grid grid-cols-2 items-center gap-6 max-desktop:block"
+      >
         <div class="contact-heading">
-          <p class="eyebrow">Fale com a gente</p>
-          <h2 id="contact-title">
-            Vamos adoçar<br class="desktop-break" />
+          <p
+            class="eyebrow font-body text-xs leading-normal font-medium tracking-[2px] text-brand-text uppercase max-desktop:text-[10px] max-desktop:tracking-[1.6px]"
+          >
+            Fale com a gente
+          </p>
+          <h2
+            id="contact-title"
+            class="font-display font-medium text-neutral text-[56px] leading-[1.05] tracking-[-0.7px] max-desktop:text-[40px] max-desktop:leading-[1.04] max-desktop:tracking-[-0.3px] mt-4 mb-6 max-desktop:mb-4"
+          >
+            Vamos adoçar<br class="desktop-break max-desktop:hidden" />
             o seu dia?
           </h2>
-          <p>
+          <p class="max-w-[390px] text-base leading-[1.7] max-desktop:text-sm">
             Tem uma ideia, uma dúvida ou uma ocasião para celebrar? Estamos por aqui para conversar.
           </p>
         </div>
-        <div class="contact-grid">
+        <div class="contact-grid grid gap-4 max-desktop:mt-7 max-desktop:gap-3.5">
           <a
             [attr.href]="contactLinks.questions"
             [attr.aria-disabled]="!contactLinks.questions ? 'true' : null"
             target="_blank"
             rel="noopener noreferrer"
-            class="contact-card whatsapp-card"
+            class="contact-card whatsapp-card border-primary bg-primary text-white flex min-w-0 items-center gap-4.5 rounded-[28px] border p-[26px] shadow-[0_8px_22px_#5a3a2e08] max-desktop:gap-3.5 max-desktop:rounded-[26px] max-desktop:p-4.5"
             aria-label="Peça ou tire suas dúvidas pelo WhatsApp (abre em nova aba)"
           >
-            <span class="contact-icon"
+            <span
+              class="contact-icon grid size-14 shrink-0 place-items-center rounded-full max-desktop:size-[46px] bg-[#ffffff26] text-white"
               ><img src="icons/whatsapp.svg" alt="" width="28" height="28" aria-hidden="true"
             /></span>
-            <span class="contact-content">
-              <span class="eyebrow">WhatsApp</span>
-              <span class="contact-title">Peça ou tire suas dúvidas</span>
-              <span class="contact-detail"
-                ><span class="desktop-copy">Resposta direta com a Mary · </span
+            <span class="contact-content min-w-0">
+              <span
+                class="eyebrow font-body leading-normal font-medium tracking-[2px] uppercase max-desktop:tracking-[1.6px] block text-[11px] text-white"
+                >WhatsApp</span
+              >
+              <span
+                class="contact-title mt-1.5 mb-2 block font-display text-[30px] leading-[1.15] font-medium max-desktop:text-[26px] text-white"
+                >Peça ou tire suas dúvidas</span
+              >
+              <span class="contact-detail block text-xs wrap-anywhere"
+                ><span class="desktop-copy max-desktop:hidden">Resposta direta com a Mary · </span
                 >{{ contactPhone }}</span
               >
             </span>
@@ -230,10 +407,11 @@
             [attr.aria-disabled]="!contact.instagram ? 'true' : null"
             target="_blank"
             rel="noopener noreferrer"
-            class="contact-card instagram-card"
+            class="contact-card instagram-card flex min-w-0 items-center gap-4.5 rounded-[28px] border border-base-300 bg-white p-[26px] shadow-[0_8px_22px_#5a3a2e08] max-desktop:gap-3.5 max-desktop:rounded-[26px] max-desktop:p-4.5"
             aria-label="Acompanhe nossas novidades no Instagram (abre em nova aba)"
           >
-            <span class="contact-icon"
+            <span
+              class="contact-icon grid size-14 shrink-0 place-items-center rounded-full bg-base-200 text-primary max-desktop:size-[46px]"
               ><svg
                 width="28"
                 height="28"
@@ -247,11 +425,17 @@
                 <circle cx="12" cy="12" r="4" />
                 <circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none" /></svg
             ></span>
-            <span class="contact-content">
-              <span class="eyebrow">Instagram</span>
-              <span class="contact-title">Acompanhe nossas novidades</span>
-              <span class="contact-detail"
-                ><span class="desktop-copy">Bastidores e lançamentos · </span
+            <span class="contact-content min-w-0">
+              <span
+                class="eyebrow font-body leading-normal font-medium tracking-[2px] text-brand-text uppercase max-desktop:tracking-[1.6px] block text-[11px]"
+                >Instagram</span
+              >
+              <span
+                class="contact-title mt-1.5 mb-2 block font-display text-[30px] leading-[1.15] font-medium text-neutral max-desktop:text-[26px]"
+                >Acompanhe nossas novidades</span
+              >
+              <span class="contact-detail block text-xs wrap-anywhere"
+                ><span class="desktop-copy max-desktop:hidden">Bastidores e lançamentos · </span
                 >{{ instagramHandle }}</span
               >
             </span>
@@ -260,29 +444,45 @@
       </div>
     </section>
   </main>
-  <footer class="site-footer">
-    <div class="container">
-      <div class="footer-top">
-        <a href="#inicio" class="brand"
-          ><img src="logo.png" alt="" width="54" height="54" /><span>Doceria da Mary</span></a
+  <footer
+    class="site-footer bg-neutral pt-10 pb-[46px] text-neutral-content max-desktop:pt-8 max-desktop:pb-[26px]"
+  >
+    <div
+      class="mx-auto w-[min(1264px,calc(100%_-_176px))] desktop:max-[1101px]:w-[calc(100%_-_64px)] max-desktop:w-[calc(100%_-_40px)]"
+    >
+      <div
+        class="footer-top flex items-center justify-between gap-8 pb-8 max-desktop:block max-desktop:pb-6"
+      >
+        <a
+          href="#inicio"
+          class="brand inline-flex items-center gap-4 whitespace-nowrap font-display text-[26px] leading-[1.1] font-medium max-desktop:gap-2.5 max-desktop:text-[20px] text-inherit"
+          ><img src="logo.png" alt="" width="54" height="54" class="max-desktop:size-9" /><span
+            >Doceria da Mary</span
+          ></a
         >
-        <nav class="footer-nav" aria-label="Navegação do rodapé">
-          <a href="#inicio">Início</a><a href="#cardapio">Cardápio</a><a href="#sobre">Sobre nós</a
-          ><a href="#contato">Contato</a
+        <nav
+          class="footer-nav flex flex-wrap items-center gap-7 text-[13px] font-medium max-desktop:mt-6 max-desktop:gap-x-[22px] max-desktop:gap-y-4 max-desktop:text-xs"
+          aria-label="Navegação do rodapé"
+        >
+          <a href="#inicio" class="hover:underline underline-offset-[5px]">Início</a
+          ><a href="#cardapio" class="hover:underline underline-offset-[5px]">Cardápio</a
+          ><a href="#sobre" class="hover:underline underline-offset-[5px]">Sobre nós</a
+          ><a href="#contato" class="hover:underline underline-offset-[5px]">Contato</a
           ><a
             [attr.href]="contact.instagram"
             [attr.aria-disabled]="!contact.instagram ? 'true' : null"
             target="_blank"
             rel="noopener noreferrer"
             aria-label="Instagram (abre em nova aba)"
+            class="hover:underline underline-offset-[5px]"
           >
             Instagram →
           </a>
         </nav>
       </div>
-      <div class="footer-bottom">
+      <div class="footer-bottom flex justify-between border-t border-[#fff8f340] pt-6 text-xs">
         <p>© 2026 Doceria da Mary. Feito com carinho.</p>
-        <p class="desktop-copy">Doces artesanais para momentos especiais.</p>
+        <p class="desktop-copy max-desktop:hidden">Doces artesanais para momentos especiais.</p>
       </div>
     </div>
   </footer>

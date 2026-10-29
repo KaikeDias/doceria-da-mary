@@ -36,22 +36,17 @@ import { productWhatsappUrl } from '../../core/config/contact-links';
   ],
   templateUrl: './product-details.html',
   styleUrl: './product-details.css',
+  host: { class: 'contents' },
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ProductDetails implements OnDestroy {
   readonly product = input.required<Product>();
   readonly closed = output<void>();
   protected readonly dialog = viewChild.required<ElementRef<HTMLDialogElement>>('dialog');
-  protected readonly selectedImage = linkedSignal({
-    source: this.product,
-    computation: () => 0,
-  });
+  protected readonly selectedImage = linkedSignal({ source: this.product, computation: () => 0 });
   protected readonly failedImages = signal<ReadonlySet<string>>(new Set());
   protected readonly images = computed(() => [
-    {
-      src: `images/${this.product().image}.webp`,
-      alt: `${this.product().name} — foto 1`,
-    },
+    { src: `images/${this.product().image}.webp`, alt: `${this.product().name} — foto 1` },
     ...(this.product().additionalImages ?? []),
   ]);
   protected readonly currentImage = computed(() => this.images()[this.selectedImage()]);

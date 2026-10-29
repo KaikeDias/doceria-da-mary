@@ -6,12 +6,19 @@
   (pointerdown)="startBackdropPress($event)"
   (click)="closeFromBackdrop($event)"
   (keydown)="keepFocus($event)"
+  class="modal fixed inset-0 m-auto hidden h-fit w-[min(1000px,calc(100%_-_48px))] max-w-none max-h-[calc(100dvh_-_48px)] overflow-visible rounded-[28px] border-0 bg-base-100 p-0 text-[#705e55] shadow-[0_24px_64px_#2f242040] transition-none open:visible open:block open:bg-base-100 open:opacity-100 backdrop:block backdrop:bg-[#2f242099] backdrop:backdrop-blur-[8px] motion-reduce:animate-none motion-reduce:backdrop:animate-none max-desktop:inset-x-0 max-desktop:top-auto max-desktop:bottom-0 max-desktop:m-0 max-desktop:max-h-[calc(100dvh_-_24px)] max-desktop:w-full max-desktop:rounded-b-none"
 >
-  <div class="details-panel" [class.variable-price]="product().price.kind === 'starting-at'">
-    <span class="sheet-handle" aria-hidden="true"></span>
+  <div
+    class="details-panel modal-box relative grid h-[min(560px,calc(100dvh_-_48px))] w-full max-w-none max-h-none grid-cols-2 grid-rows-[minmax(0,1fr)_auto] overflow-visible rounded-[inherit] p-4 opacity-100 [scale:1] [translate:0] shadow-none transition-none [&.variable-price]:h-[min(680px,calc(100dvh_-_48px))] max-desktop:flex max-desktop:h-[min(784px,calc(100dvh_-_24px))] max-desktop:flex-col max-desktop:px-0 max-desktop:pt-6 max-desktop:pb-0 max-desktop:[&.variable-price]:h-[min(784px,calc(100dvh_-_24px))]"
+    [class.variable-price]="product().price.kind === 'starting-at'"
+  >
+    <span
+      class="sheet-handle absolute top-2.5 left-[calc(50%_-_20px)] hidden h-1 w-10 rounded bg-[#e5c5bb] max-desktop:block"
+      aria-hidden="true"
+    ></span>
     <button
       type="button"
-      class="close-button round-button"
+      class="close-button round-button btn btn-circle btn-ghost flex size-11 min-h-11 items-center justify-center border-0 bg-base-200 text-neutral absolute top-4.5 right-4.5 z-2 max-desktop:top-9 max-desktop:right-11 max-desktop:bg-base-100"
       aria-label="Fechar detalhes"
       autofocus
       (click)="close()"
@@ -19,12 +26,16 @@
       <svg lucideX [size]="20" aria-hidden="true"></svg>
     </button>
 
-    <div class="details-scroll">
-      <div class="gallery">
-        <div class="main-photo">
+    <div
+      class="details-scroll contents max-desktop:block max-desktop:min-h-0 max-desktop:flex-1 max-desktop:overflow-y-auto max-desktop:overscroll-contain max-desktop:px-4 max-desktop:[scrollbar-width:thin]"
+    >
+      <div class="gallery col-start-1 row-start-1 row-end-3 flex min-h-0 min-w-0 flex-col gap-3">
+        <div
+          class="main-photo relative min-h-0 flex-1 overflow-hidden rounded-[20px] bg-base-200 max-desktop:h-[280px] max-desktop:flex-none"
+        >
           @if (failedImages().has(currentImage().src)) {
             <div
-              class="photo-unavailable"
+              class="photo-unavailable flex size-full flex-col items-center justify-center gap-2 p-4 text-center"
               role="img"
               [attr.aria-label]="currentImage().alt + ' — imagem indisponível'"
             >
@@ -34,7 +45,7 @@
             </div>
           } @else {
             <img
-              class="product-image"
+              class="product-image size-full object-cover"
               [src]="currentImage().src"
               [alt]="currentImage().alt"
               (error)="imageFailed(currentImage().src)"
@@ -43,7 +54,7 @@
           @if (images().length > 1) {
             <button
               type="button"
-              class="previous round-button"
+              class="previous round-button btn btn-circle btn-ghost flex size-11 min-h-11 items-center justify-center border-0 bg-base-200 text-neutral absolute top-[calc(50%_-_22px)] left-3.5 bg-[#fff8f3eb] max-desktop:hidden"
               aria-label="Foto anterior"
               (click)="moveImage(-1)"
             >
@@ -51,28 +62,40 @@
             </button>
             <button
               type="button"
-              class="next round-button"
+              class="next round-button absolute top-[calc(50%_-_22px)] right-3.5 bg-[#fff8f3eb] max-desktop:hidden btn btn-circle btn-ghost flex size-11 min-h-11 items-center justify-center border-0 bg-base-200 text-neutral"
               aria-label="Próxima foto"
               (click)="moveImage(1)"
             >
               <svg lucideChevronRight [size]="20" aria-hidden="true"></svg>
             </button>
-            <span class="photo-count" aria-live="polite"
+            <span
+              class="photo-count absolute bottom-3.5 left-3.5 rounded-[20px] bg-[#2f242099] px-3 py-1.5 text-xs text-white"
+              aria-live="polite"
               >{{ selectedImage() + 1 }} / {{ images().length }}</span
             >
           }
         </div>
         @if (images().length > 1) {
-          <div class="thumbnails" role="group" aria-label="Fotos do produto">
+          <div
+            class="thumbnails flex shrink-0 gap-2.5 overflow-x-auto p-[2px] max-desktop:gap-2"
+            role="group"
+            aria-label="Fotos do produto"
+          >
             @for (image of images(); track $index) {
               <button
                 type="button"
                 [attr.aria-label]="'Ver foto ' + ($index + 1) + ' de ' + product().name"
                 [attr.aria-pressed]="selectedImage() === $index"
                 (click)="selectedImage.set($index)"
+                class="btn btn-ghost group flex h-16 min-h-0 basis-[84px] shrink-0 items-center justify-center overflow-hidden rounded-[14px] border-2 border-transparent bg-base-200 p-0 text-brand-text aria-pressed:border-primary focus-visible:outline-offset-[-5px] max-desktop:h-[52px] max-desktop:basis-16 max-desktop:rounded-xl"
               >
                 @if (!failedImages().has(image.src)) {
-                  <img [src]="image.src" alt="" (error)="imageFailed(image.src)" />
+                  <img
+                    [src]="image.src"
+                    alt=""
+                    (error)="imageFailed(image.src)"
+                    class="size-full object-cover group-aria-[pressed=false]:opacity-65"
+                  />
                 } @else {
                   <svg lucideInfo [size]="20" aria-hidden="true"></svg>
                 }
@@ -82,28 +105,59 @@
         }
       </div>
 
-      <div class="product-information">
-        <p class="eyebrow details-category">{{ categoryName() }}</p>
-        <h2 id="product-details-title">{{ product().name }}</h2>
-        <p class="details-description">
+      <div
+        class="product-information col-start-2 row-start-1 min-h-0 min-w-0 overflow-y-auto overscroll-contain pt-[26px] pr-7 pb-5 pl-12 wrap-anywhere [scrollbar-width:thin] desktop:max-[1001px]:pl-6 max-desktop:overflow-visible max-desktop:px-1 max-desktop:py-6"
+      >
+        <p
+          class="eyebrow details-category font-body leading-normal font-medium tracking-[2px] text-brand-text uppercase max-desktop:text-[10px] max-desktop:tracking-[1.6px] flex items-center gap-2.5 text-[10px] before:h-px before:w-[22px] before:bg-current before:content-['']"
+        >
+          {{ categoryName() }}
+        </p>
+        <h2
+          id="product-details-title"
+          class="mt-3 mb-5 font-display text-[46px] leading-[1.1] font-medium tracking-normal text-neutral desktop:max-[1001px]:text-[38px] max-desktop:mt-2 max-desktop:text-[36px]"
+        >
+          {{ product().name }}
+        </h2>
+        <p class="details-description text-[15px] leading-[1.7] max-desktop:leading-[1.65]">
           {{ product().details || product().description }}
         </p>
-        <div class="price-section">
-          <p class="content-price">
-            <span>{{ priceLabel() }}</span
-            ><strong>{{ amount() }}</strong>
+        <div
+          class="price-section mt-6 flex flex-wrap items-center justify-between gap-3 border-y border-base-300 py-4.5 max-desktop:mt-5 max-desktop:border-0 max-desktop:p-0"
+        >
+          <p class="content-price max-desktop:hidden">
+            <span class="block text-[13px]">{{ priceLabel() }}</span
+            ><strong
+              class="block font-display text-[36px] leading-[1.15] font-semibold text-base-content"
+              >{{ amount() }}</strong
+            >
           </p>
           @if (priceNote()) {
-            <p class="price-note">{{ priceNote() }}</p>
+            <p
+              class="price-note max-w-[180px] text-right text-xs max-desktop:max-w-none max-desktop:text-left max-desktop:text-[13px]"
+            >
+              {{ priceNote() }}
+            </p>
           }
         </div>
         @if (product().information?.length) {
-          <section class="good-to-know" aria-labelledby="good-to-know-title">
-            <h3 id="good-to-know-title">Bom saber</h3>
-            <ul>
+          <section
+            class="good-to-know mt-5 max-desktop:rounded-[20px] max-desktop:bg-base-200 max-desktop:px-4 max-desktop:py-4.5"
+            aria-labelledby="good-to-know-title"
+          >
+            <h3
+              id="good-to-know-title"
+              class="mb-3 text-[10px] font-semibold tracking-[1.6px] text-neutral uppercase"
+            >
+              Bom saber
+            </h3>
+            <ul class="m-0 list-none p-0">
               @for (item of product().information; track $index) {
-                <li>
-                  <span class="info-icon" aria-hidden="true">
+                <li class="mt-2.5 flex items-center gap-3 text-sm text-base-content">
+                  <span
+                    class="info-icon flex h-8 basis-8 shrink-0 items-center justify-center rounded-full bg-base-200 text-primary max-desktop:bg-base-100"
+                    aria-hidden="true"
+                  >
                     @switch (item.icon) {
                       @case ('clock') {
                         <svg lucideClock [size]="16"></svg>
@@ -125,14 +179,19 @@
       </div>
     </div>
 
-    <footer class="details-footer">
-      <p class="footer-price">
-        <span>{{ priceLabel() }}</span
-        ><strong>{{ amount() }}</strong>
+    <footer
+      class="details-footer col-start-2 row-start-2 min-w-0 pt-4.5 pr-7 pb-2.5 pl-12 desktop:max-[1001px]:pl-6 max-desktop:flex max-desktop:shrink-0 max-desktop:flex-wrap max-desktop:items-center max-desktop:gap-x-3.5 max-desktop:gap-y-3 max-desktop:border-t max-desktop:border-base-300 max-desktop:px-4 max-desktop:pt-3.5 max-desktop:pb-[max(26px,env(safe-area-inset-bottom))] [@media(max-height:450px)]:pt-2 [@media(max-height:450px)]:pb-2"
+    >
+      <p class="footer-price hidden max-desktop:block">
+        <span class="block text-[13px] max-desktop:text-xs">{{ priceLabel() }}</span
+        ><strong
+          class="block font-display text-[36px] leading-[1.15] font-semibold text-base-content max-desktop:text-[28px]"
+          >{{ amount() }}</strong
+        >
       </p>
       <a
         role="link"
-        class="details-order"
+        class="details-order btn btn-primary flex h-auto min-h-14 w-full items-center justify-center gap-2.5 rounded-full border-0 px-4.5 py-3 text-center text-sm font-semibold shadow-[0_10px_20px_#a65a6a26] aria-disabled:cursor-default aria-disabled:opacity-75 max-desktop:min-w-0 max-desktop:flex-[1_1_210px] max-desktop:px-3"
         [attr.href]="whatsappLink()"
         [attr.aria-disabled]="!whatsappLink() ? 'true' : null"
         [attr.aria-label]="
@@ -143,10 +202,21 @@
         target="_blank"
         rel="noopener noreferrer"
       >
-        <img src="icons/whatsapp.svg" alt="" width="20" height="20" aria-hidden="true" />
+        <img
+          src="icons/whatsapp.svg"
+          alt=""
+          width="20"
+          height="20"
+          aria-hidden="true"
+          class="shrink-0"
+        />
         {{ whatsappLink() ? 'Pedir pelo WhatsApp' : 'WhatsApp indisponível' }}
       </a>
-      <p class="order-caption">Você conversa direto com a Mary — sem compromisso.</p>
+      <p
+        class="order-caption mt-2.5 text-center text-xs max-desktop:hidden [@media(max-height:450px)]:hidden"
+      >
+        Você conversa direto com a Mary — sem compromisso.
+      </p>
     </footer>
   </div>
 </dialog>
