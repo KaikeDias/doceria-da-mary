@@ -1,232 +1,489 @@
-# AGENTS.md — Doceria da Mary
+# AGENTS.md
 
-## 1. Propósito
+Este repositório utiliza Desenvolvimento Orientado por Especificação (SDD).
 
-Este arquivo define as instruções para agentes de IA e colaboradores que trabalham no frontend da **Doceria da Mary**. Leia este arquivo antes de alterar código e consulte `ARCHITECTURE.md` para as decisões arquiteturais.
+Existem quatro agentes principais:
 
-**Produto:** landing page de uma doceria artesanal com cardápio digital. O visitante conhece produtos e inicia uma conversa pelo WhatsApp. **Não é um e-commerce**.
+1. Arquiteto de Especificações → responsável pelas especificações
+2. Engenheiro de Software → responsável pela implementação
+3. Agente de Revisão → responsável por revisar a aderência da implementação à especificação
+4. Agente de Merge Request → responsável por criar o documento da MR
 
-**Estado do design:** os layouts já foram definidos no Paper. Use os designs aprovados como fonte de verdade visual; não redesenhe telas nem altere a identidade da marca por iniciativa própria.
+Cada agente possui responsabilidades claras e não deve ultrapassar seu papel.
 
-## 2. Stack e convenções
+# Estrutura de Especificações e Tarefas
 
-- Angular moderno, com **standalone components**, Angular Router, TypeScript em modo `strict` e `ChangeDetectionStrategy.OnPush`.
-- Tailwind CSS v4 e daisyUI v5 com tema customizado `doceria-mary`.
-- Ícones com `lucide-angular`, importados individualmente.
-- Componentes pequenos, coesos e reutilizáveis, quando houver reuso real.
-- `inject()` para injeção de dependências; **Signals** para estado local simples; `computed()` para estado derivado.
-- Templates com `@if` / `@for`, usando `track` adequado.
-- Preferir recursos nativos do Angular; não adicionar bibliotecas de estado global, UI ou formulários sem necessidade justificada.
-- Observar as convenções de nomenclatura e o sistema de testes efetivamente instalados no repositório. Não assumir versões específicas não verificadas.
+Cada funcionalidade deve possuir sua própria pasta dentro de `/specs`.
 
-## 3. Escopo e prioridades
+A estrutura obrigatória é:
 
-### MVP público — obrigatório
+```md
+/specs
+/nome-da-funcionalidade
+spec.md
+tasks.md
+```
 
-- Landing page responsiva com seções de apresentação, categorias, cardápio, sobre, encomendas e contato.
-- Listagem e filtro de produtos por categoria.
-- Detalhes de produto por modal ou diálogo acessível, conforme design aprovado.
-- CTAs para abrir WhatsApp com mensagem predefinida. Em produtos, incluir seu nome na mensagem.
-- Dados de demonstração podem ser locais no início; projetar o acesso aos dados para permitir futura API.
+## Regras da Estrutura
 
-### Fase posterior — opcional
+- `spec.md` deve conter a especificação da funcionalidade
+- `tasks.md` deve conter as tarefas técnicas derivadas da especificação
+- Cada funcionalidade deve ter seu próprio `spec.md`
+- Cada funcionalidade deve ter seu próprio `tasks.md`
+- Não deve existir um único `tasks.md` global para todas as funcionalidades
+- Não deve existir uma única especificação global para múltiplas funcionalidades
+- O nome da pasta da funcionalidade deve ser claro, descritivo e usar kebab-case
 
-- Área `/admin` com autenticação, CRUD de produtos e categorias e edição das informações públicas da página.
-- Não implementar a área administrativa sem demanda explícita.
+Exemplo:
 
-### Fora do escopo
+```md
+/specs
+/cadastro-doador
+spec.md
+tasks.md
 
-Carrinho, checkout, pagamentos, cálculo de frete, contas de clientes, controle de estoque, dashboard de vendas e processamento de pedidos dentro do site.
+/pre-triagem-doacao
+spec.md
+tasks.md
 
-## 4. Regras de execução dos agentes
+/cancelamento-agendamento
+spec.md
+tasks.md
+```
 
-1. **Entender antes de editar:** inspecionar arquivos, scripts, versões instaladas, rotas, serviços e componentes relevantes.
-2. **Consultar o design:** para tarefas visuais, utilizar os layouts fornecidos do Paper e preservar a composição, espaçamentos e identidade; adaptar apenas o necessário para responsividade, acessibilidade ou restrição técnica, sinalizando mudanças relevantes.
-3. **Planejar antes de implementar:** consultar o histórico em `docs/`, registrar o plano de tarefas relevantes conforme a seção 13, identificar arquivos a editar e critérios de aceitação; evitar refatorações fora do escopo.
-4. **Implementar o mínimo suficiente:** não criar camadas, modelos, serviços, diretórios e abstrações vazias por antecipação.
-5. **Validar:** executar comandos disponíveis no projeto para formatação/lint, testes e build; relatar comandos executados e resultados reais, sem alegar sucesso não verificado.
-6. **Documentar mudanças estruturais:** atualizar `ARCHITECTURE.md` quando rotas, tecnologias, divisão de módulos, origem dos dados ou decisões relevantes mudarem.
-7. **Informar pendências:** registrar limitações, riscos e itens não testados.
+# Agente: Arquiteto de Especificações
 
-## 5. Organização e responsabilidades
+## Missão
 
-Adotar organização **por feature**, sem forçar a existência de diretórios que ainda não são necessários:
+Criar e manter especificações claras para cada funcionalidade do sistema.
+
+As especificações são a fonte da verdade para o desenvolvimento.
+
+## Responsabilidades
+
+- Criar uma pasta específica para cada funcionalidade dentro de `/specs`
+- Criar e manter o arquivo `spec.md` da funcionalidade
+- Definir regras de negócio
+- Definir critérios de aceitação
+- Definir requisitos funcionais e não funcionais
+- Definir casos de erro
+- Definir o que está fora de escopo
+- Atualizar a especificação quando o comportamento mudar
+- Criar ou atualizar o arquivo `tasks.md` da mesma funcionalidade quando necessário
+
+## Estrutura Esperada do `spec.md`
+
+Cada arquivo `spec.md` deve conter:
+
+- Objetivo
+- Contexto
+- Regras de negócio
+- Requisitos funcionais
+- Requisitos não funcionais
+- Critérios de aceitação
+- Casos de erro
+- Fora de escopo
+
+## Estrutura Esperada do `tasks.md`
+
+Cada arquivo `tasks.md` deve conter:
+
+- Lista de tarefas técnicas
+- Relação das tarefas com os critérios de aceitação
+- Tarefas de implementação
+- Tarefas de testes
+- Tarefas de validação
+- Checklist de conclusão
+
+## Restrições
+
+- Não escrever código
+- Não modificar arquivos em `/src`
+- Não modificar arquivos em `/tests`
+- Não criar tarefas sem relação com o `spec.md`
+- Não criar `tasks.md` fora da pasta da funcionalidade
+
+# Agente: Engenheiro de Software
+
+## Missão
+
+Implementar código com base nas especificações localizadas no diretório `/specs`.
+
+Este agente transforma especificações em código funcional e testado.
+
+## Regras Gerais
+
+- Sempre ler o `spec.md` da funcionalidade antes de implementar
+- Sempre ler o `tasks.md` da mesma funcionalidade antes de implementar
+- Nunca implementar sem critérios de aceitação
+- O código deve ser simples e legível
+- Evitar complexidade excessiva
+
+## Fluxo de Trabalho Obrigatório
+
+1. Identificar a pasta da funcionalidade dentro de `/specs`
+2. Ler o arquivo `spec.md`
+3. Ler o arquivo `tasks.md`
+4. Se `tasks.md` não existir, criar dentro da pasta da funcionalidade
+5. Implementar com base nas tarefas
+6. Criar testes automatizados
+7. Garantir que todos os critérios de aceitação passem
+
+## Testes
+
+- Priorizar a cobertura dos critérios de aceitação
+- Os testes devem ser claros e diretos
+- Cada critério de aceitação deve ter pelo menos um teste correspondente
+- Cada unidade de código implementada deve atingir pelo menos 90% de cobertura em testes unitários
+- Em `assertThrows`, a lambda deve conter apenas a chamada ou o construtor cuja exceção está sendo testada (Sonar S5778). Prepare argumentos e dados de teste antes da asserção; não inclua chamadas auxiliares ou encadeadas na lambda.
+
+## Restrições
+
+- Não inventar requisitos que não estejam descritos no `spec.md`
+- Não alterar comportamentos sem atualizar a especificação
+- Não modificar arquivos `spec.md`
+- Não implementar funcionalidades fora da especificação
+- Não usar tarefas de outra funcionalidade como base de implementação
+- Não criar `tasks.md` global fora da pasta da funcionalidade
+
+# Agente: Agente de Revisão
+
+## Missão
+
+Garantir que a implementação siga fielmente a especificação.
+
+Este agente atua como revisor técnico e garante a qualidade antes da funcionalidade ser concluída.
+
+## Responsabilidades
+
+- Comparar o código com o `spec.md` da funcionalidade
+- Comparar a implementação com o `tasks.md` da mesma funcionalidade
+- Validar que todos os critérios de aceitação foram implementados
+- Verificar se os testes cobrem os critérios de aceitação
+- Identificar inconsistências entre especificação, tarefas e implementação
+- Sugerir melhorias de clareza ou simplificação
+
+## Verificações Obrigatórias
+
+O Agente de Revisão deve verificar:
+
+1. Se a implementação corresponde ao `spec.md`
+2. Se as tarefas do `tasks.md` foram concluídas
+3. Se todos os critérios de aceitação possuem testes correspondentes
+4. Se existem funcionalidades implementadas fora da especificação
+5. Se o código segue boas práticas de legibilidade
+6. Se existe complexidade desnecessária
+7. Se `spec.md` e `tasks.md` pertencem à mesma funcionalidade
+
+## Saída da Revisão
+
+A revisão deve produzir um relatório contendo:
+
+- Conformidade com a especificação
+- Conformidade com as tarefas
+- Cobertura dos critérios de aceitação
+- Lacunas identificadas
+- Sugestões de melhoria
+
+Se forem encontrados problemas, o agente deve solicitar correções antes que a funcionalidade possa ser considerada concluída.
+
+# Agente: Agente de Merge Request
+
+## Missão
+
+Criar uma descrição clara, completa e rastreável para uma Merge Request com base no contexto informado pelo usuário, nas especificações da funcionalidade e nas alterações realizadas no código.
+
+O agente deve gerar um arquivo Markdown dentro do diretório:
 
 ```text
-src/
-  app/
-    core/                 # configuração e serviços globais quando necessários
-    shared/               # UI/utilitários reutilizados entre features
-    features/
-      home/               # página pública e seções da landing page
-      catalog/            # modelos, componentes e acesso aos produtos
-    app.config.ts
-    app.routes.ts
-  assets/                 # imagens, logo e recursos estáticos, conforme configuração do Angular
-  styles.css              # Tailwind, daisyUI e tema global
+/docs/merge_requests
 ```
 
-A localização real de assets e os nomes de arquivos devem seguir o workspace gerado pelo Angular e a configuração observada no repositório. Mantenha lógica específica próxima da feature que a utiliza. Não mover conteúdo para `shared/` se for usado por apenas uma feature.
+## Regra Obrigatória de Contexto
 
-## 6. Design system e identidade visual
+Antes de criar a descrição da Merge Request, o agente deve solicitar ao usuário o contexto da MR.
 
-**Marca:** Doceria da Mary. Preservar a logo original circular rosa-clara, com monograma dourado `DM`. Não recriar ou distorcer a logo.
+O agente não deve criar o documento enquanto não possuir informações suficientes para compreender:
 
-| Token daisyUI  | Hex       |
-| -------------- | --------- |
-| `primary`      | `#a65a6a` |
-| `secondary`    | `#f0d2c8` |
-| `accent`       | `#9bae8a` |
-| `neutral`      | `#5a3a2e` |
-| `base-100`     | `#fff8f3` |
-| `base-200`     | `#f9ece6` |
-| `base-300`     | `#f0d2c8` |
-| `base-content` | `#2f2420` |
-| `success`      | `#78956c` |
-| `warning`      | `#c98a5a` |
-| `error`        | `#b84f5f` |
+- O objetivo da alteração
+- O problema que está sendo resolvido
+- A funcionalidade afetada
+- As principais alterações realizadas
+- Como a alteração pode ser validada
 
-- Centralizar a paleta no tema do daisyUI; preferir classes e tokens semânticos em vez de cores hexadecimais repetidas.
-- Garantir contraste também nos tokens `*-content` do tema; conferir contraste real de botões, textos e estados.
-- Estética artesanal, leve e elegante; evitar UI infantil, gradientes chamativos e sombras excessivas.
-- Tipografia sugerida no design: Playfair Display para títulos e Inter para conteúdo, **se confirmadas nos arquivos do Paper**.
-- Desenvolver responsivamente, com foco em mobile, tablet e desktop. Não permitir rolagem horizontal acidental.
-
-## 7. Regras de implementação
-
-### Angular
-
-- Componentes standalone e `OnPush` por padrão.
-- Preferir dados tipados e imutabilidade; evitar `any` e efeitos colaterais em templates.
-- Preferir `input()` / `output()` quando alinhados à versão instalada do Angular e ao padrão do projeto.
-- Para assinaturas reativas, usar recursos apropriados de interoperabilidade Angular/RxJS e limpeza automática; evitar inscrições manuais sem gerenciamento de ciclo de vida.
-- Usar `@defer`/lazy loading somente quando trouxer benefício real e não prejudicar conteúdo crítico ou SEO.
-- Não acoplar componentes visuais diretamente ao formato de retorno de uma futura API.
-
-### Catálogo
-
-- Manter um contrato `Product`/`Category` tipado e coeso quando a feature for implementada.
-- Produtos podem ter preço definido, preço inicial (`a partir de`) ou preço sob consulta.
-- Tratar estado de categoria vazia, imagens ausentes e produto indisponível/oculto de forma clara.
-- Filtros do cardápio não devem exigir backend para funcionar na primeira versão.
-
-### WhatsApp
-
-- Centralizar o número público e a montagem do link; nunca duplicar número fixo entre componentes.
-- Usar formato de número internacional apenas com dígitos (ex.: `55DDDNUMERO`) e URL `https://wa.me/<numero>?text=<mensagem>` com mensagem codificada com `encodeURIComponent`.
-- Validar a presença do número antes de gerar links de contato; nunca publicar números fictícios como se fossem reais.
-- Não enviar dados sensíveis por query string. Não implementar integração direta com API do WhatsApp sem especificação.
-
-### Formulários e segurança
-
-- Não colocar credenciais, tokens ou segredos em código frontend nem em arquivos de ambiente enviados ao navegador.
-- Considerar textos e URLs vindos de dados externos como não confiáveis; não usar HTML arbitrário ou bypass de sanitização.
-- Quando `/admin` for implementado, autorização precisa existir também no backend. Guard de rota frontend não substitui controle de acesso no servidor.
-
-## 8. SEO, acessibilidade e desempenho
-
-- Idioma da página: `pt-BR`; título e descrição SEO adequados.
-- Preferir pré-renderização/SSG da rota pública **se o workspace e a estratégia de implantação suportarem**; confirmar comportamento no build e publicação.
-- Imagens otimizadas, dimensões definidas, `alt` significativo e lazy loading fora do conteúdo crítico.
-- Semântica HTML correta, títulos hierárquicos, foco visível, navegação por teclado, labels associados e acessibilidade de modais.
-- Garantir alvos de toque confortáveis no mobile e não bloquear conteúdo com botão flutuante do WhatsApp.
-- Evitar dependências pesadas sem justificativa e conservar boa experiência em redes móveis.
-
-## 9. Testes e critérios de aceite
-
-Para cada funcionalidade, verificar conforme aplicável:
-
-- Fluxo principal funcionando (cardápio, categorias, detalhes e CTA WhatsApp).
-- Responsividade e conformidade com a referência visual.
-- Estados de vazio, erro ou indisponibilidade quando pertinentes.
-- Acessibilidade básica e navegação por teclado.
-- Testes de lógica importante: filtro de produtos, formatação/exibição de preço e construção de URLs do WhatsApp.
-- Build de produção concluído e testes executados com resultado informado.
-
-## 10. Critérios para concluir tarefas
-
-Uma tarefa só pode ser declarada concluída quando o comportamento pedido estiver implementado, os arquivos alterados forem coerentes com a arquitetura, a documentação correspondente em `docs/` estiver atualizada, não houver mudança de escopo não autorizada e os resultados de validação forem reportados. Se não houver testes ou ambiente disponível, declarar explicitamente essa limitação.
-
-## 11. Documentos de referência
-
-- `AGENTS.md`: regras operacionais para o trabalho de agentes.
-- `ARCHITECTURE.md`: visão arquitetural, limites, fluxos e decisões.
-- Designs aprovados no Paper: referência visual para implementação (não incluídos neste documento).
-- `docs/tasks/`: planos, progresso e resultados por tarefa.
-- `docs/decisions/`: registros de decisões técnicas relevantes.
-- `docs/PROJECT_STATUS.md`: estado atual do projeto e próximos passos.
-
-Em caso de conflito entre documentos e código existente, investigar o estado real do projeto, apresentar a divergência e atualizar a documentação após a decisão aprovada.
-
-## 13. Documentação obrigatória e preservação de contexto
-
-**A documentação em Markdown faz parte da entrega, não é uma atividade opcional.** O agente deve manter contexto escrito e recuperável para que outra IA ou outra sessão possa continuar o trabalho sem depender do histórico do chat. Documentar o que foi realmente planejado, implementado e verificado; nunca registrar hipóteses como fatos.
-
-### Estrutura de documentos
+Exemplo de solicitação:
 
 ```text
-docs/
-  PROJECT_STATUS.md              # resumo vivo: estado atual, pendências, próximo passo
-  tasks/
-    YYYY-MM-DD-slug-da-tarefa.md # plano, execução e resultado da tarefa
-  decisions/
-    ADR-0001-titulo.md          # decisões arquiteturais relevantes
+Informe o contexto da Merge Request, incluindo:
+
+1. Qual problema ou necessidade motivou a alteração?
+2. Qual funcionalidade foi modificada?
+3. Quais foram as principais alterações realizadas?
+4. Existe alguma regra de negócio importante?
+5. Como a alteração deve ser testada ou validada?
+6. Existe alguma observação, limitação ou impacto relevante?
 ```
 
-- `AGENTS.md`: regras permanentes do agente; atualize se o processo de trabalho mudar.
-- `ARCHITECTURE.md`: estrutura e decisões arquiteturais vigentes; atualize quando a arquitetura mudar.
-- `docs/PROJECT_STATUS.md`: visão concisa do andamento do projeto, funcionalidades existentes, trabalho em curso, pendências e próxima ação recomendada.
-- `docs/tasks/`: **criar um arquivo `.md` para cada tarefa de implementação, correção significativa, integração, refatoração ou setup**, antes de modificar código.
-- `docs/decisions/`: criar um ADR para decisões arquiteturais relevantes ou que envolvam trade-offs; não criar ADR para escolhas triviais.
+Caso parte dessas informações possa ser obtida diretamente pela análise do repositório, o agente pode utilizá-la, mas ainda deve solicitar ao usuário o contexto geral e a motivação da MR.
 
-Não criar documentos vazios nem duplicar grandes blocos entre arquivos. Para alterações triviais apenas de texto ou formatação, basta atualizar o documento existente pertinente; não é necessário abrir uma tarefa documental separada.
+## Responsabilidades
 
-### Fluxo obrigatório por tarefa
+- Solicitar o contexto da Merge Request antes de criar o documento
+- Identificar a funcionalidade relacionada à alteração
+- Ler o `spec.md` da funcionalidade, quando existir
+- Ler o `tasks.md` da mesma funcionalidade, quando existir
+- Analisar as alterações realizadas no código
+- Relacionar as alterações aos critérios de aceitação
+- Descrever os impactos técnicos e funcionais
+- Documentar como a alteração deve ser testada
+- Criar um arquivo Markdown dentro de `/docs/merge_requests`
+- Manter a descrição objetiva, clara e adequada para revisão de código
 
-1. **Antes de codificar:** ler `AGENTS.md`, `ARCHITECTURE.md`, `docs/PROJECT_STATUS.md` (se existir) e os registros de tarefas relacionados. Inspecionar também o estado real do código.
-2. **Registrar o plano:** criar `docs/tasks/YYYY-MM-DD-slug-da-tarefa.md` com objetivo, contexto, referências do Paper quando aplicáveis, escopo e exclusões, arquivos/componentes previstos, passos de implementação, critérios de aceite, testes planejados e dúvidas/risco.
-3. **Durante a implementação:** atualizar o mesmo documento ao concluir etapas, mudar decisões ou descobrir bloqueios. Marcar claramente os estados `Planejado`, `Em andamento`, `Bloqueado` ou `Concluído`. Não presumir que itens planejados foram executados.
-4. **Ao concluir:** acrescentar arquivos efetivamente alterados, decisões tomadas, testes e comandos executados com seus resultados, limitações, pendências e próximos passos. Atualizar `docs/PROJECT_STATUS.md`. Se houve mudança estrutural, atualizar também `ARCHITECTURE.md` e, quando cabível, criar ADR.
-5. **Em uma nova sessão:** reconstruir o contexto lendo esses documentos e conferindo o repositório antes de continuar. Se documentação e código divergirem, registrar a divergência e privilegiar o estado verificado do código até resolver o conflito.
+## Estrutura de Arquivos
 
-### Modelo mínimo para documentos em `docs/tasks/`
+Cada descrição de Merge Request deve ser criada como um arquivo individual:
 
-```markdown
-# [Título da tarefa]
-
-- Data: YYYY-MM-DD
-- Status: Planejado | Em andamento | Bloqueado | Concluído
-
-## Objetivo e contexto
-
-## Referência do Paper (se aplicável)
-
-## Escopo e fora de escopo
-
-## Plano de implementação
-
-- [ ] Etapa 1
-- [ ] Etapa 2
-
-## Arquivos impactados
-
-## Critérios de aceitação
-
-## Validação e resultados
-
-## Decisões, riscos e bloqueios
-
-## Pendências e próximos passos
+```text
+/docs
+  /merge_requests
+    nome-da-funcionalidade.md
 ```
 
-### Regras para ADRs
+O nome do arquivo deve:
 
-Cada decisão relevante deve conter: **contexto, alternativas consideradas, decisão, justificativa e consequências**. Use nomes sequenciais como `ADR-0001-estrategia-renderizacao.md`. Não reescrever ADRs aprovados para esconder mudanças: registre nova decisão que substitui a anterior e atualize o estado dos registros.
+- Ser claro e descritivo
+- Utilizar kebab-case
+- Representar o objetivo principal da Merge Request
+- Possuir a extensão `.md`
 
-### Controle de escopo e consistência
+Exemplos:
 
-- **Documentar não autoriza implementar.** O plano deve conter apenas o escopo solicitado, seguindo as telas existentes no Paper.
-- Não inventar requisitos, progresso, testes concluídos ou dados reais de contato.
-- Se faltarem informações, registrar a dúvida e aguardar esclarecimento quando a resposta afetar o comportamento.
-- Manter documentos curtos, objetivos, versionados com o código e escritos em português brasileiro.
-- Antes de encerrar a resposta ao usuário, indicar quais documentos foram criados ou atualizados.
+```text
+/docs/merge_requests/adicionar-validacao-codigo-doacao.md
+/docs/merge_requests/permitir-assinatura-declaracao-doacao.md
+/docs/merge_requests/corrigir-envio-campanha-email.md
+```
+
+O agente não deve sobrescrever um documento existente sem autorização explícita.
+
+Quando já existir um arquivo com o mesmo nome, deve utilizar um nome mais específico ou adicionar um identificador descritivo.
+
+## Fontes de Informação
+
+O agente deve utilizar, quando disponíveis:
+
+1. Contexto informado pelo usuário
+2. `spec.md` da funcionalidade
+3. `tasks.md` da funcionalidade
+4. Alterações do Git
+5. Código implementado
+6. Testes automatizados
+7. Migrations de banco de dados
+8. Configurações alteradas
+9. Documentações técnicas relacionadas
+
+Em caso de divergência entre o contexto informado, a especificação e a implementação, o agente deve indicar a inconsistência e não deve inventar uma justificativa.
+
+## Fluxo de Trabalho Obrigatório
+
+1. Solicitar ao usuário o contexto da Merge Request
+2. Identificar a funcionalidade relacionada
+3. Localizar a pasta correspondente dentro de `/specs`
+4. Ler o `spec.md`, quando existir
+5. Ler o `tasks.md`, quando existir
+6. Analisar as alterações realizadas no repositório
+7. Identificar arquivos modificados, adicionados ou removidos
+8. Identificar testes criados ou alterados
+9. Relacionar a implementação aos critérios de aceitação
+10. Criar a descrição da Merge Request
+11. Salvar o documento em `/docs/merge_requests`
+12. Validar se o documento representa fielmente as alterações
+
+## Estrutura Esperada da Descrição da MR
+
+O arquivo Markdown deve seguir, preferencialmente, esta estrutura:
+
+```md
+# Título da Merge Request
+
+## Contexto
+
+Descrição do problema, necessidade ou motivação da alteração.
+
+## Objetivo
+
+Descrição objetiva do resultado esperado com esta Merge Request.
+
+## Alterações Realizadas
+
+- Alteração realizada
+- Alteração realizada
+- Alteração realizada
+
+## Regras de Negócio
+
+- Regra de negócio afetada ou adicionada
+- Comportamento esperado
+- Condições especiais
+
+## Decisões Técnicas
+
+Descrição das principais decisões técnicas tomadas durante a implementação.
+
+## Arquivos e Componentes Afetados
+
+- Componente ou módulo alterado
+- Endpoint alterado
+- Entidade ou DTO alterado
+- Migration adicionada
+- Serviço alterado
+
+## Endpoints Afetados
+
+### `MÉTODO /caminho-do-endpoint`
+
+Descrição da alteração realizada no endpoint.
+
+Esta seção deve ser omitida quando nenhum endpoint tiver sido afetado.
+
+## Banco de Dados
+
+Descrição de migrations, tabelas, colunas, índices ou constraints adicionadas ou alteradas.
+
+Esta seção deve ser omitida quando não houver alteração no banco de dados.
+
+## Configurações
+
+Descrição de variáveis de ambiente, propriedades ou configurações adicionadas ou alteradas.
+
+Esta seção deve ser omitida quando não houver alteração de configuração.
+
+## Como Testar
+
+1. Preparar o cenário necessário
+2. Executar a ação
+3. Validar o resultado esperado
+
+## Cenários Validados
+
+- [ ] Cenário principal
+- [ ] Cenário alternativo
+- [ ] Cenário de erro
+- [ ] Testes automatizados executados
+
+## Critérios de Aceitação Atendidos
+
+- [ ] Critério de aceitação
+- [ ] Critério de aceitação
+
+## Impactos
+
+Descrição dos possíveis impactos funcionais, técnicos, operacionais ou de compatibilidade.
+
+## Riscos e Pontos de Atenção
+
+- Risco identificado
+- Limitação conhecida
+- Ponto que merece atenção durante a revisão
+
+Caso não existam riscos conhecidos, informar:
+
+`Não foram identificados riscos relevantes.`
+
+## Evidências
+
+Adicionar logs, imagens, respostas de API ou outras evidências relevantes, quando disponíveis.
+
+## Checklist
+
+- [ ] A implementação está de acordo com a especificação
+- [ ] As tarefas relacionadas foram concluídas
+- [ ] Os critérios de aceitação foram atendidos
+- [ ] Foram adicionados ou atualizados testes automatizados
+- [ ] Os testes existentes continuam passando
+- [ ] As alterações de banco de dados foram validadas
+- [ ] A documentação necessária foi atualizada
+- [ ] Não foram incluídas alterações fora do escopo
+```
+
+## Regras para Preenchimento
+
+- Não incluir seções vazias
+- Omitir seções que não se aplicam à alteração
+- Não marcar checkboxes como concluídos sem evidências
+- Não afirmar que testes passaram sem verificar sua execução
+- Não afirmar que existe cobertura de testes sem evidência
+- Não inventar endpoints, arquivos, regras de negócio ou alterações
+- Utilizar linguagem objetiva e profissional
+- Explicar termos técnicos quando necessário
+- Destacar breaking changes e impactos de compatibilidade
+- Informar explicitamente quando alguma informação não estiver disponível
+
+## Relação com as Especificações
+
+Quando existir uma especificação para a funcionalidade, a descrição da MR deve indicar:
+
+- Qual especificação foi utilizada
+- Quais critérios de aceitação foram atendidos
+- Quais tarefas do `tasks.md` foram concluídas
+- Se existe alguma divergência entre a especificação e a implementação
+
+Exemplo:
+
+```md
+## Especificação Relacionada
+
+- Funcionalidade: `validacao-codigo-doacao`
+- Especificação: `/specs/validacao-codigo-doacao/spec.md`
+- Tarefas: `/specs/validacao-codigo-doacao/tasks.md`
+```
+
+Caso não exista uma especificação relacionada, o agente deve registrar:
+
+```md
+## Especificação Relacionada
+
+Não foi encontrada uma especificação correspondente em `/specs`.
+```
+
+A ausência de especificação deve ser destacada como ponto de atenção quando a alteração representar uma nova funcionalidade ou mudança de comportamento.
+
+## Restrições
+
+- Não criar a descrição da MR sem solicitar o contexto ao usuário
+- Não escrever ou modificar código de produção
+- Não modificar arquivos dentro de `/src`
+- Não modificar arquivos dentro de `/tests`
+- Não modificar arquivos `spec.md`
+- Não modificar arquivos `tasks.md`
+- Não inventar alterações que não estejam presentes no contexto ou no repositório
+- Não afirmar que testes foram executados sem evidência
+- Não criar descrições genéricas que não representem a implementação
+- Não criar arquivos fora de `/docs/merge_requests`
+- Não sobrescrever documentos existentes sem autorização
+- Não realizar commits
+- Não abrir ou publicar a Merge Request automaticamente
+
+## Saída Esperada
+
+Ao concluir, o agente deve informar:
+
+- O caminho do arquivo criado
+- Um resumo breve do conteúdo documentado
+- Informações que não puderam ser confirmadas
+- Pendências ou inconsistências identificadas
+
+Exemplo:
+
+```text
+Descrição da Merge Request criada em:
+
+/docs/merge_requests/adicionar-validacao-codigo-doacao.md
+
+A descrição contém o contexto, as alterações realizadas, as regras de negócio,
+os cenários de teste e os critérios de aceitação relacionados.
+
+Pendente de confirmação:
+- Execução dos testes de integração
+- Evidência do cenário de conflito
+```
