@@ -27,7 +27,7 @@
               {
                 "glob": "**/*",
                 "input": "public",
-                "ignore": ["**/*@4x.png"]
+                "ignore": ["**/*@4x.png", "design/**"]
               }
             ],
             "styles": ["src/styles.css"],
