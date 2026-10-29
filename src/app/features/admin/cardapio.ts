@@ -3,10 +3,12 @@ import {
   Component,
   ElementRef,
   computed,
+  inject,
   signal,
   viewChild,
 } from '@angular/core';
 import { NgTemplateOutlet } from '@angular/common';
+import { RouterLink } from '@angular/router';
 import {
   LucideCake,
   LucideCakeSlice,
@@ -20,14 +22,10 @@ import {
   LucideTrash2,
   LucideX,
 } from '@lucide/angular';
-import { Product, categories, formatPrice, products } from '../catalog/catalog';
+import { categories, formatPrice } from '../catalog/catalog';
+import { MenuItem, MenuStore } from './menu-store';
 
 export type StatusFilter = 'todos' | 'publicados' | 'ocultos';
-
-// shortcut: publicação só em memória (sem backend), trocar pelo estado salvo quando houver API.
-const hiddenByDefault = new Set(['caixa-docinhos']);
-
-type Item = Product & { published: boolean };
 
 export function normalize(text: string): string {
   return text.normalize('NFD').replace(/\p{M}/gu, '').toLowerCase().trim();
@@ -50,6 +48,7 @@ export function matches(
   selector: 'app-cardapio',
   imports: [
     NgTemplateOutlet,
+    RouterLink,
     LucideCake,
     LucideCakeSlice,
     LucideCircleCheck,
@@ -75,16 +74,15 @@ export class Cardapio {
     { id: 'publicados', label: 'Publicados' },
     { id: 'ocultos', label: 'Ocultos' },
   ];
-  protected readonly items = signal(
-    products.map((product) => ({ ...product, published: !hiddenByDefault.has(product.id) })),
-  );
+  private readonly store = inject(MenuStore);
+  protected readonly items = this.store.items;
   protected readonly query = signal('');
   protected readonly category = signal('todas');
   protected readonly status = signal<StatusFilter>('todos');
   protected readonly failedImages = signal<ReadonlySet<string>>(new Set());
   protected readonly saving = signal<string | null>(null);
   protected readonly message = signal('');
-  protected readonly deleting = signal<Item | null>(null);
+  protected readonly deleting = signal<MenuItem | null>(null);
 
   protected readonly publishedCount = computed(
     () => this.items().filter((item) => item.published).length,
@@ -97,11 +95,19 @@ export class Cardapio {
     return categories.find((category) => category.id === id)?.label ?? '';
   }
 
-  protected amount(product: Product): string {
-    return formatPrice({ ...product.price, kind: 'fixed' });
+  constructor() {
+    const flash = this.store.flash();
+    if (flash) {
+      this.store.flash.set('');
+      this.notify(flash);
+    }
   }
 
-  protected toggle(item: Item): void {
+  protected amount(item: MenuItem): string {
+    return item.price ? formatPrice({ ...item.price, kind: 'fixed' }) : 'Sob consulta';
+  }
+
+  protected toggle(item: MenuItem): void {
     this.saving.set(item.id);
     // shortcut: salvamento simulado (sem backend), trocar pela chamada à API quando houver.
     setTimeout(() => {
@@ -118,7 +124,7 @@ export class Cardapio {
     }, 600);
   }
 
-  protected askDelete(item: Item): void {
+  protected askDelete(item: MenuItem): void {
     this.deleting.set(item);
     this.confirm().nativeElement.showModal();
   }

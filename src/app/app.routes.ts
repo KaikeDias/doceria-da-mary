@@ -1,4 +1,6 @@
-import { Routes } from '@angular/router';
+import { inject } from '@angular/core';
+import { ActivatedRouteSnapshot, Router, Routes } from '@angular/router';
+import { MenuStore } from './features/admin/menu-store';
 
 export const routes: Routes = [
   {
@@ -21,6 +23,21 @@ export const routes: Routes = [
         path: 'cardapio',
         title: 'Cardápio | Painel Doceria da Mary',
         loadComponent: () => import('./features/admin/cardapio').then((m) => m.Cardapio),
+      },
+      {
+        path: 'cardapio/novo',
+        title: 'Novo produto | Painel Doceria da Mary',
+        loadComponent: () => import('./features/admin/produto-form').then((m) => m.ProdutoForm),
+      },
+      {
+        path: 'cardapio/:id/editar',
+        title: 'Editar produto | Painel Doceria da Mary',
+        canActivate: [
+          (route: ActivatedRouteSnapshot) =>
+            !!inject(MenuStore).find(route.paramMap.get('id')!) ||
+            inject(Router).createUrlTree(['/admin/cardapio']),
+        ],
+        loadComponent: () => import('./features/admin/produto-form').then((m) => m.ProdutoForm),
       },
       {
         path: 'categorias',

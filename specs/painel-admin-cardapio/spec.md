@@ -25,6 +25,7 @@ As imagens são referência de composição, tipografia, cores, espaçamento, í
 - Estado inicial de publicação conforme a referência: todos publicados, exceto "Caixa de Docinhos" (oculto), resultando em "5 de 6".
 - Não há referências para formulário de produto, menu "…" de ações, confirmações, tela de categorias nem configurações; esses fluxos não são implementados aqui. Os controles que os acionariam aparecem como na referência, porém indisponíveis (ver RN08).
 - As RN07, RN09 e a parte da RN08 sobre o menu "…" foram substituídas por `specs/estados-tela-cardapio/spec.md`.
+- A RN08 sobre "Adicionar produto" e "Editar" foi substituída por `specs/formulario-produto-cardapio/spec.md`.
 - A estrutura (menu e rotas) pertence ao painel e é reutilizada pelas próximas telas; a tela de categorias terá especificação própria em `specs/`.
 
 ## Regras de negócio
