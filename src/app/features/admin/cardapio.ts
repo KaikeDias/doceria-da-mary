@@ -1,12 +1,24 @@
-import { ChangeDetectionStrategy, Component, computed, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  ElementRef,
+  computed,
+  signal,
+  viewChild,
+} from '@angular/core';
 import { NgTemplateOutlet } from '@angular/common';
 import {
+  LucideCake,
   LucideCakeSlice,
+  LucideCircleCheck,
   LucideEllipsis,
   LucideGlobe,
   LucidePencil,
   LucidePlus,
   LucideSearch,
+  LucideSearchX,
+  LucideTrash2,
+  LucideX,
 } from '@lucide/angular';
 import { Product, categories, formatPrice, products } from '../catalog/catalog';
 
@@ -14,6 +26,8 @@ export type StatusFilter = 'todos' | 'publicados' | 'ocultos';
 
 // shortcut: publicação só em memória (sem backend), trocar pelo estado salvo quando houver API.
 const hiddenByDefault = new Set(['caixa-docinhos']);
+
+type Item = Product & { published: boolean };
 
 export function normalize(text: string): string {
   return text.normalize('NFD').replace(/\p{M}/gu, '').toLowerCase().trim();
@@ -36,17 +50,25 @@ export function matches(
   selector: 'app-cardapio',
   imports: [
     NgTemplateOutlet,
+    LucideCake,
     LucideCakeSlice,
+    LucideCircleCheck,
     LucideEllipsis,
     LucideGlobe,
     LucidePencil,
     LucidePlus,
     LucideSearch,
+    LucideSearchX,
+    LucideTrash2,
+    LucideX,
   ],
   templateUrl: './cardapio.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class Cardapio {
+  private readonly confirm = viewChild.required<ElementRef<HTMLDialogElement>>('confirm');
+  private messageTimer?: ReturnType<typeof setTimeout>;
+
   protected readonly categories = categories;
   protected readonly statuses: readonly { id: StatusFilter; label: string }[] = [
     { id: 'todos', label: 'Todos' },
@@ -60,6 +82,9 @@ export class Cardapio {
   protected readonly category = signal('todas');
   protected readonly status = signal<StatusFilter>('todos');
   protected readonly failedImages = signal<ReadonlySet<string>>(new Set());
+  protected readonly saving = signal<string | null>(null);
+  protected readonly message = signal('');
+  protected readonly deleting = signal<Item | null>(null);
 
   protected readonly publishedCount = computed(
     () => this.items().filter((item) => item.published).length,
@@ -76,10 +101,44 @@ export class Cardapio {
     return formatPrice({ ...product.price, kind: 'fixed' });
   }
 
-  protected toggle(id: string): void {
-    this.items.update((items) =>
-      items.map((item) => (item.id === id ? { ...item, published: !item.published } : item)),
-    );
+  protected toggle(item: Item): void {
+    this.saving.set(item.id);
+    // shortcut: salvamento simulado (sem backend), trocar pela chamada à API quando houver.
+    setTimeout(() => {
+      this.saving.set(null);
+      if (!this.items().some((other) => other.id === item.id)) return;
+      this.items.update((items) =>
+        items.map((other) =>
+          other.id === item.id ? { ...other, published: !other.published } : other,
+        ),
+      );
+      this.notify(
+        item.published ? `${item.name} saiu do site.` : `${item.name} agora aparece no site.`,
+      );
+    }, 600);
+  }
+
+  protected askDelete(item: Item): void {
+    this.deleting.set(item);
+    this.confirm().nativeElement.showModal();
+  }
+
+  protected confirmDelete(): void {
+    const item = this.deleting()!;
+    this.items.update((items) => items.filter((other) => other.id !== item.id));
+    this.confirm().nativeElement.close();
+    this.notify(`${item.name} foi excluído do cardápio.`);
+  }
+
+  // Fecha ao clicar no fundo escurecido (o próprio <dialog>).
+  protected confirmClick(event: MouseEvent): void {
+    if (event.target === this.confirm().nativeElement) this.confirm().nativeElement.close();
+  }
+
+  protected notify(text: string): void {
+    clearTimeout(this.messageTimer);
+    this.message.set(text);
+    this.messageTimer = setTimeout(() => this.message.set(''), 5000);
   }
 
   protected clearFilters(): void {

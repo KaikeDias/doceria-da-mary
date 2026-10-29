@@ -63,7 +63,7 @@ describe('Admin layout', () => {
 
   it('CA10: the drawer opens, and closes by button, backdrop and link, not by inner clicks', async () => {
     const { page } = await setup();
-    const drawer = page.querySelector<HTMLDialogElement>('dialog')!;
+    const drawer = page.querySelector<HTMLDialogElement>('dialog[aria-label="Menu do painel"]')!;
     const open = () => page.querySelector<HTMLButtonElement>('[aria-label="Abrir menu"]')!.click();
     open();
     expect(drawer.open).toBe(true);
