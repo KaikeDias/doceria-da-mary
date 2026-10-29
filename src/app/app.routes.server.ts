@@ -5,4 +5,5 @@ export const serverRoutes: ServerRoute[] = [
   { path: 'login', renderMode: RenderMode.Prerender },
   { path: 'admin', renderMode: RenderMode.Prerender },
   { path: 'admin/cardapio', renderMode: RenderMode.Prerender },
+  { path: 'admin/categorias', renderMode: RenderMode.Prerender },
 ];

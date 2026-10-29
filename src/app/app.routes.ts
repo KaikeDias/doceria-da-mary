@@ -22,6 +22,11 @@ export const routes: Routes = [
         title: 'Cardápio | Painel Doceria da Mary',
         loadComponent: () => import('./features/admin/cardapio').then((m) => m.Cardapio),
       },
+      {
+        path: 'categorias',
+        title: 'Categorias | Painel Doceria da Mary',
+        loadComponent: () => import('./features/admin/categorias').then((m) => m.Categorias),
+      },
     ],
   },
 ];

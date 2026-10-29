@@ -1,0 +1,138 @@
+<ng-template #publish let-item>
+  <label class="flex min-h-11 cursor-pointer items-center gap-2.5 text-[13px]">
+    <input
+      type="checkbox"
+      role="switch"
+      class="toggle toggle-success"
+      [attr.aria-label]="'Exibir ' + item.name + ' no site'"
+      [checked]="item.visible"
+      (change)="toggle(item.id)"
+    />
+    <span [class]="item.visible ? 'text-[#4f6a45]' : 'text-neutral'">{{
+      item.visible ? 'Visível' : 'Oculta'
+    }}</span>
+  </label>
+</ng-template>
+
+<ng-template #actions let-item>
+  <button
+    type="button"
+    aria-disabled="true"
+    [attr.aria-label]="'Editar ' + item.name + ' (em breve)'"
+    class="btn btn-square btn-outline size-11 min-h-11 rounded-xl border-base-300 aria-disabled:cursor-not-allowed aria-disabled:opacity-60"
+  >
+    <svg lucidePencil [size]="16" aria-hidden="true"></svg>
+  </button>
+  <button
+    type="button"
+    aria-disabled="true"
+    [attr.aria-label]="'Excluir ' + item.name + ' (em breve)'"
+    class="btn btn-square btn-outline size-11 min-h-11 rounded-xl border-base-300 text-error aria-disabled:cursor-not-allowed aria-disabled:opacity-60"
+  >
+    <svg lucideTrash2 [size]="16" aria-hidden="true"></svg>
+  </button>
+</ng-template>
+
+<ng-template #icon>
+  <span
+    aria-hidden="true"
+    class="grid size-10 shrink-0 place-items-center rounded-xl bg-primary/10 text-primary"
+    ><svg lucideTags [size]="18"></svg
+  ></span>
+</ng-template>
+
+<div class="mx-auto max-w-[1120px]">
+  <div class="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+    <div>
+      <h1 class="font-display text-[34px] leading-tight font-medium text-neutral lg:text-[40px]">
+        Categorias
+      </h1>
+      <p class="mt-1 text-[15px] text-neutral">
+        Agrupe seus doces do jeito que eles aparecem no site
+      </p>
+    </div>
+    <button
+      type="button"
+      aria-disabled="true"
+      class="btn btn-primary h-12 min-h-12 rounded-full px-6 font-bold shadow-[0_10px_24px_rgb(166_90_106_/_0.3)] aria-disabled:cursor-not-allowed aria-disabled:opacity-60"
+    >
+      <svg lucidePlus [size]="18" aria-hidden="true"></svg>Adicionar categoria<span class="sr-only">
+        (em breve)</span
+      >
+    </button>
+  </div>
+
+  <p
+    class="mt-6 flex items-start gap-3 rounded-2xl bg-base-200 px-5 py-4 text-sm text-neutral lg:max-w-[796px]"
+  >
+    <svg lucideInfo [size]="18" class="mt-0.5 shrink-0 text-primary" aria-hidden="true"></svg>
+    Categorias ocultas somem dos filtros do site, mas os doces delas continuam salvos aqui no
+    painel.
+  </p>
+
+  <table
+    class="mt-6 hidden w-full border-separate border-spacing-0 overflow-hidden rounded-2xl border border-base-300 bg-white text-left lg:table"
+  >
+    <thead>
+      <tr class="text-[11px] font-semibold tracking-[1.5px] text-neutral uppercase">
+        <th scope="col" class="border-b border-base-300 px-5 py-4">Categoria</th>
+        <th scope="col" class="border-b border-base-300 px-3 py-4">Produtos</th>
+        <th scope="col" class="border-b border-base-300 px-3 py-4">Status no site</th>
+        <th scope="col" class="border-b border-base-300 px-5 py-4 text-right">Ações</th>
+      </tr>
+    </thead>
+    <tbody>
+      @for (item of items(); track item.id) {
+        <tr class="[&:not(:last-child)>td]:border-b [&>td]:border-base-200">
+          <td class="px-5 py-2.5">
+            <div class="flex items-center gap-4">
+              <ng-container [ngTemplateOutlet]="icon" />
+              <span class="font-semibold text-base-content">{{ item.name }}</span>
+            </div>
+          </td>
+          <td class="px-3 text-sm text-base-content">{{ productCount(item.id) }}</td>
+          <td class="px-3">
+            <ng-container
+              [ngTemplateOutlet]="publish"
+              [ngTemplateOutletContext]="{ $implicit: item }"
+            />
+          </td>
+          <td class="px-5">
+            <div class="flex justify-end gap-2">
+              <ng-container
+                [ngTemplateOutlet]="actions"
+                [ngTemplateOutletContext]="{ $implicit: item }"
+              />
+            </div>
+          </td>
+        </tr>
+      }
+    </tbody>
+  </table>
+
+  <ul class="mt-6 flex flex-col gap-4 lg:hidden">
+    @for (item of items(); track item.id) {
+      <li class="rounded-2xl border border-base-300 bg-white p-4">
+        <div class="flex items-center gap-3">
+          <ng-container [ngTemplateOutlet]="icon" />
+          <div class="min-w-0 flex-1">
+            <p class="font-semibold text-base-content">{{ item.name }}</p>
+            <p class="text-sm text-neutral">{{ productCount(item.id) }}</p>
+          </div>
+        </div>
+        <div class="mt-3 flex items-center justify-between gap-3 border-t border-base-200 pt-3">
+          <ng-container
+            [ngTemplateOutlet]="publish"
+            [ngTemplateOutletContext]="{ $implicit: item }"
+          />
+          <div class="flex gap-2">
+            <ng-container
+              [ngTemplateOutlet]="actions"
+              [ngTemplateOutletContext]="{ $implicit: item }"
+            />
+          </div>
+        </div>
+      </li>
+    }
+  </ul>
+</div>

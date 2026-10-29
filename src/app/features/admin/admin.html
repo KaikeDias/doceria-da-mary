@@ -18,14 +18,14 @@
     >
       <svg lucideCakeSlice [size]="18" aria-hidden="true"></svg>Cardápio
     </a>
-    <span
-      aria-disabled="true"
-      class="flex min-h-11 cursor-not-allowed items-center gap-3 rounded-xl px-4 text-neutral opacity-60"
+    <a
+      routerLink="/admin/categorias"
+      routerLinkActive="bg-primary text-primary-content"
+      ariaCurrentWhenActive="page"
+      class="flex min-h-11 items-center gap-3 rounded-xl px-4 text-neutral mouse:hover:bg-base-300"
     >
-      <svg lucideTags [size]="18" aria-hidden="true"></svg>Categorias<span class="sr-only">
-        (em breve)</span
-      >
-    </span>
+      <svg lucideTags [size]="18" aria-hidden="true"></svg>Categorias
+    </a>
     <span
       aria-disabled="true"
       class="flex min-h-11 cursor-not-allowed items-center gap-3 rounded-xl px-4 text-neutral opacity-60"

@@ -43,9 +43,9 @@ describe('Admin layout', () => {
       expect(nav.querySelector('a[aria-current=page]')?.textContent).toContain('Cardápio');
       const disabled = Array.from(nav.querySelectorAll('[aria-disabled=true]'));
       expect(disabled.map((item) => item.textContent?.trim())).toEqual([
-        expect.stringContaining('Categorias'),
         expect.stringContaining('Configurações'),
       ]);
+      expect(nav.querySelector('a[href="/admin/categorias"]')?.textContent).toContain('Categorias');
       expect(disabled.every((item) => !item.hasAttribute('href'))).toBe(true);
       const site = nav.querySelector<HTMLAnchorElement>('a[target=_blank]')!;
       expect(site.getAttribute('href')).toBe('/');
