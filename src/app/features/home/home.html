@@ -126,7 +126,11 @@
         </div>
         <div class="product-grid" aria-live="polite" aria-relevant="additions removals">
           @for (product of visibleProducts(); track product.id) {
-            <app-product-card [product]="product" [categoryName]="product.categoryId" />
+            <app-product-card
+              [product]="product"
+              [categoryName]="product.categoryId"
+              (details)="selectedProduct.set($event)"
+            />
           } @empty {
             <p class="empty-catalog">Nenhum doce nesta categoria por enquanto.</p>
           }
@@ -282,4 +286,7 @@
       </div>
     </div>
   </footer>
+  @if (selectedProduct(); as product) {
+    <app-product-details [product]="product" (closed)="selectedProduct.set(null)" />
+  }
 </div>

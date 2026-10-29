@@ -9,6 +9,13 @@ export interface Product {
   readonly id: string;
   readonly name: string;
   readonly description: string;
+  readonly details?: string;
+  readonly additionalImages?: readonly { readonly src: string; readonly alt: string }[];
+  readonly priceNote?: string;
+  readonly information?: readonly {
+    readonly icon: 'clock' | 'snowflake' | 'info';
+    readonly text: string;
+  }[];
   readonly categoryId: string;
   readonly image: string;
   readonly price: { readonly kind: 'fixed' | 'starting-at'; readonly amountInCents: number };
@@ -29,6 +36,9 @@ export const products: readonly Product[] = [
     categoryId: 'bolos',
     image: 'chocolate-cake',
     description: 'Massa fofinha com recheio cremoso e cobertura generosa de chocolate.',
+    details:
+      'Massa fofinha de chocolate, recheio cremoso de brigadeiro e cobertura generosa de ganache, finalizado com rosetas de buttercream de chocolate. Um clássico feito do jeito que a gente gosta: bem servido e cheio de sabor.',
+    priceNote: 'Valor varia conforme tamanho e decoração',
     price: { kind: 'starting-at', amountInCents: 8500 },
   },
   {
@@ -45,6 +55,8 @@ export const products: readonly Product[] = [
     categoryId: 'sobremesas',
     image: 'brownie',
     description: 'Casquinha delicada, interior úmido e uma surpresa a cada mordida.',
+    details:
+      'Casquinha delicada por fora, interior úmido e bem chocolatudo — com uma surpresa cremosa escondida em cada mordida. Perfeito para um café da tarde ou para presentear alguém especial.',
     price: { kind: 'fixed', amountInCents: 1800 },
   },
   {

@@ -1,13 +1,14 @@
 import { ChangeDetectionStrategy, Component, computed, signal } from '@angular/core';
 import { LucideArrowRight } from '@lucide/angular';
-import { categories, products, filterProducts } from '../catalog/catalog';
+import { categories, products, filterProducts, Product } from '../catalog/catalog';
 import { ProductCard } from '../catalog/product-card';
+import { ProductDetails } from '../catalog/product-details';
 import { publicConfig } from '../../core/config/public-config';
 import { whatsappMessages, whatsappUrl } from '../../core/config/contact-links';
 
 @Component({
   selector: 'app-home',
-  imports: [LucideArrowRight, ProductCard],
+  imports: [LucideArrowRight, ProductCard, ProductDetails],
   templateUrl: './home.html',
   styleUrl: './home.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -28,6 +29,7 @@ export class Home {
   };
   protected readonly categories = categories;
   protected readonly selectedCategory = signal('todos');
+  protected readonly selectedProduct = signal<Product | null>(null);
   protected readonly visibleProducts = computed(() =>
     filterProducts(products, this.selectedCategory()),
   );

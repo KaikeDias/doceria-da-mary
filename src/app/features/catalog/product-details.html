@@ -1,0 +1,152 @@
+<dialog
+  #dialog
+  aria-labelledby="product-details-title"
+  aria-modal="true"
+  (cancel)="$event.preventDefault(); close()"
+  (pointerdown)="startBackdropPress($event)"
+  (click)="closeFromBackdrop($event)"
+  (keydown)="keepFocus($event)"
+>
+  <div class="details-panel" [class.variable-price]="product().price.kind === 'starting-at'">
+    <span class="sheet-handle" aria-hidden="true"></span>
+    <button
+      type="button"
+      class="close-button round-button"
+      aria-label="Fechar detalhes"
+      autofocus
+      (click)="close()"
+    >
+      <svg lucideX [size]="20" aria-hidden="true"></svg>
+    </button>
+
+    <div class="details-scroll">
+      <div class="gallery">
+        <div class="main-photo">
+          @if (failedImages().has(currentImage().src)) {
+            <div
+              class="photo-unavailable"
+              role="img"
+              [attr.aria-label]="currentImage().alt + ' — imagem indisponível'"
+            >
+              <svg lucideInfo [size]="28" aria-hidden="true"></svg>
+              <span>Imagem indisponível</span>
+              <span>{{ product().name }}</span>
+            </div>
+          } @else {
+            <img
+              class="product-image"
+              [src]="currentImage().src"
+              [alt]="currentImage().alt"
+              (error)="imageFailed(currentImage().src)"
+            />
+          }
+          @if (images().length > 1) {
+            <button
+              type="button"
+              class="previous round-button"
+              aria-label="Foto anterior"
+              (click)="moveImage(-1)"
+            >
+              <svg lucideChevronLeft [size]="20" aria-hidden="true"></svg>
+            </button>
+            <button
+              type="button"
+              class="next round-button"
+              aria-label="Próxima foto"
+              (click)="moveImage(1)"
+            >
+              <svg lucideChevronRight [size]="20" aria-hidden="true"></svg>
+            </button>
+            <span class="photo-count" aria-live="polite"
+              >{{ selectedImage() + 1 }} / {{ images().length }}</span
+            >
+          }
+        </div>
+        @if (images().length > 1) {
+          <div class="thumbnails" role="group" aria-label="Fotos do produto">
+            @for (image of images(); track $index) {
+              <button
+                type="button"
+                [attr.aria-label]="'Ver foto ' + ($index + 1) + ' de ' + product().name"
+                [attr.aria-pressed]="selectedImage() === $index"
+                (click)="selectedImage.set($index)"
+              >
+                @if (!failedImages().has(image.src)) {
+                  <img [src]="image.src" alt="" (error)="imageFailed(image.src)" />
+                } @else {
+                  <svg lucideInfo [size]="20" aria-hidden="true"></svg>
+                }
+              </button>
+            }
+          </div>
+        }
+      </div>
+
+      <div class="product-information">
+        <p class="eyebrow details-category">{{ categoryName() }}</p>
+        <h2 id="product-details-title">{{ product().name }}</h2>
+        <p class="details-description">
+          {{ product().details || product().description }}
+        </p>
+        <div class="price-section">
+          <p class="content-price">
+            <span>{{ priceLabel() }}</span
+            ><strong>{{ amount() }}</strong>
+          </p>
+          @if (priceNote()) {
+            <p class="price-note">{{ priceNote() }}</p>
+          }
+        </div>
+        @if (product().information?.length) {
+          <section class="good-to-know" aria-labelledby="good-to-know-title">
+            <h3 id="good-to-know-title">Bom saber</h3>
+            <ul>
+              @for (item of product().information; track $index) {
+                <li>
+                  <span class="info-icon" aria-hidden="true">
+                    @switch (item.icon) {
+                      @case ('clock') {
+                        <svg lucideClock [size]="16"></svg>
+                      }
+                      @case ('snowflake') {
+                        <svg lucideSnowflake [size]="16"></svg>
+                      }
+                      @case ('info') {
+                        <svg lucideInfo [size]="16"></svg>
+                      }
+                    }
+                  </span>
+                  {{ item.text }}
+                </li>
+              }
+            </ul>
+          </section>
+        }
+      </div>
+    </div>
+
+    <footer class="details-footer">
+      <p class="footer-price">
+        <span>{{ priceLabel() }}</span
+        ><strong>{{ amount() }}</strong>
+      </p>
+      <a
+        role="link"
+        class="details-order"
+        [attr.href]="whatsappLink()"
+        [attr.aria-disabled]="!whatsappLink() ? 'true' : null"
+        [attr.aria-label]="
+          whatsappLink()
+            ? 'Pedir ' + product().name + ' pelo WhatsApp (abre em nova aba)'
+            : 'WhatsApp indisponível'
+        "
+        target="_blank"
+        rel="noopener noreferrer"
+      >
+        <img src="icons/whatsapp.svg" alt="" width="20" height="20" aria-hidden="true" />
+        {{ whatsappLink() ? 'Pedir pelo WhatsApp' : 'WhatsApp indisponível' }}
+      </a>
+      <p class="order-caption">Você conversa direto com a Mary — sem compromisso.</p>
+    </footer>
+  </div>
+</dialog>
