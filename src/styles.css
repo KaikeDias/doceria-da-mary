@@ -42,6 +42,52 @@
   color: var(--color-neutral-content);
 }
 
+.mary-site :is(button, .btn, .product-order, .details-order) {
+  transition:
+    background-color 160ms ease,
+    border-color 160ms ease,
+    color 160ms ease;
+}
+.mary-site :is(.product-photo, .thumbnails button) img {
+  transition: filter 160ms ease;
+}
+.mary-site :is(button, .btn, .product-order, .details-order)[aria-disabled='true'] {
+  pointer-events: none;
+}
+@media (hover: hover) and (pointer: fine) {
+  .mary-site
+    :is(button, .btn, .product-order, .details-order):not(:disabled, [aria-disabled='true']):hover {
+    background-color: var(--color-base-300);
+    border-color: var(--color-primary);
+    color: var(--color-brand-text);
+  }
+  .mary-site :is(.btn-primary, .details-order):not(:disabled, [aria-disabled='true']):hover {
+    background-color: color-mix(in srgb, var(--color-primary), #000 12%);
+    border-color: color-mix(in srgb, var(--color-primary), #000 12%);
+    color: var(--color-primary-content);
+  }
+  .mary-site :is(.btn-neutral, .filter-group .active):not(:disabled, [aria-disabled='true']):hover {
+    background-color: color-mix(in srgb, var(--color-neutral), #000 12%);
+    border-color: color-mix(in srgb, var(--color-neutral), #000 12%);
+    color: var(--color-neutral-content);
+  }
+  .mary-site :is(.product-name, .product-order):not(:disabled, [aria-disabled='true']):hover {
+    background-color: transparent;
+    color: color-mix(in srgb, var(--color-brand-text), #000 12%);
+  }
+  .mary-site
+    :is(.product-photo, .thumbnails button):not(:disabled, [aria-disabled='true']):hover
+    img {
+    filter: brightness(0.9);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .mary-site :is(button, .btn, .product-order, .details-order),
+  .mary-site :is(.product-photo, .thumbnails button) img {
+    transition: none;
+  }
+}
+
 @layer base {
   body {
     margin: 0;
