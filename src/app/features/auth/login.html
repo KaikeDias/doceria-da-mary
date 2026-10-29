@@ -1,0 +1,208 @@
+<div
+  class="relative isolate grid min-h-dvh overflow-x-clip bg-base-100 font-body text-base-content lg:grid-cols-[minmax(0,1fr)_min(700px,48%)]"
+>
+  <div aria-hidden="true" class="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
+    <span
+      class="absolute -top-[260px] right-[-120px] size-[420px] rounded-full border border-base-300 lg:top-[-140px] lg:right-auto lg:left-[-120px] lg:size-[400px]"
+    ></span>
+    <span
+      class="absolute -top-[220px] right-[-60px] size-[300px] rounded-full border border-base-300 lg:top-[100px] lg:right-auto lg:left-[-240px] lg:size-[320px]"
+    ></span>
+    <span
+      class="absolute bottom-[-110px] left-[-60px] size-[190px] rounded-full bg-base-200 lg:bottom-[-300px] lg:left-[420px] lg:size-[300px]"
+    ></span>
+  </div>
+
+  <main class="flex min-h-dvh flex-col px-5 py-8 lg:px-14">
+    <a
+      routerLink="/"
+      class="inline-flex min-h-11 w-fit items-center gap-2.5 text-sm font-medium text-neutral hover:text-brand-text"
+    >
+      <svg lucideArrowLeft [size]="16" aria-hidden="true"></svg>
+      Voltar ao site
+    </a>
+
+    <div class="flex flex-1 items-center justify-center py-8">
+      <section
+        class="w-full max-w-[350px] rounded-3xl border border-base-300 bg-white p-6 shadow-[0_20px_50px_rgb(166_90_106_/_0.12)] lg:max-w-[440px] lg:p-10"
+        aria-labelledby="login-title"
+      >
+        <img
+          src="logo.png"
+          alt="Doceria da Mary"
+          width="64"
+          height="64"
+          class="mx-auto size-[60px] lg:size-[68px]"
+        />
+        <h1
+          id="login-title"
+          class="mt-2 text-center font-display text-[32px] leading-tight font-medium text-neutral lg:mt-3 lg:text-[36px]"
+        >
+          Bem-vinda de volta!
+        </h1>
+        <p class="mt-1 text-center text-sm text-neutral lg:text-[15px]">
+          Acesse o painel para gerenciar sua doceria
+        </p>
+        <div
+          aria-hidden="true"
+          class="mx-auto mt-4 hidden w-26 items-center gap-2 text-primary lg:flex"
+        >
+          <span class="h-px flex-1 bg-base-300"></span>
+          <svg lucideHeart [size]="10" fill="currentColor"></svg>
+          <span class="h-px flex-1 bg-base-300"></span>
+        </div>
+
+        <form
+          novalidate
+          method="post"
+          class="mt-6 lg:mt-7"
+          [attr.aria-busy]="pending()"
+          (submit)="submit($event)"
+        >
+          <label for="login-email" class="mb-2 block text-[13px] font-semibold text-base-content"
+            >E-mail</label
+          >
+          <div
+            class="input h-[50px] w-full gap-3 rounded-xl border-base-300 bg-base-100 text-neutral"
+            [class.border-error]="emailMessage()"
+            [class.input-error]="emailMessage()"
+          >
+            <svg lucideMail [size]="18" aria-hidden="true"></svg>
+            <input
+              #emailInput
+              id="login-email"
+              name="email"
+              type="email"
+              inputmode="email"
+              autocomplete="username"
+              placeholder="seuemail@exemplo.com"
+              class="grow"
+              [value]="email()"
+              [disabled]="pending()"
+              [attr.aria-invalid]="emailMessage() ? 'true' : null"
+              [attr.aria-describedby]="emailMessage() ? 'login-email-error' : null"
+              (input)="setEmail($any($event.target).value)"
+              (blur)="touchEmail()"
+            />
+          </div>
+          @if (emailMessage(); as message) {
+            <p id="login-email-error" class="mt-2 flex items-center gap-1.5 text-xs text-error">
+              <svg lucideCircleAlert [size]="14" aria-hidden="true"></svg>{{ message }}
+            </p>
+          }
+
+          <label
+            for="login-password"
+            class="mt-4 mb-2 block text-[13px] font-semibold text-base-content"
+            >Senha</label
+          >
+          <div
+            class="input h-[50px] w-full gap-3 rounded-xl border-base-300 bg-base-100 pr-1 text-neutral"
+            [class.border-error]="passwordMessage()"
+            [class.input-error]="passwordMessage()"
+          >
+            <svg lucideLock [size]="18" aria-hidden="true"></svg>
+            <input
+              #passwordInput
+              id="login-password"
+              name="password"
+              [type]="showPassword() ? 'text' : 'password'"
+              autocomplete="current-password"
+              placeholder="Digite sua senha"
+              class="grow"
+              [value]="password()"
+              [disabled]="pending()"
+              [attr.aria-invalid]="passwordMessage() ? 'true' : null"
+              [attr.aria-describedby]="passwordMessage() ? 'login-password-error' : null"
+              (input)="setPassword($any($event.target).value)"
+              (blur)="touchPassword()"
+            />
+            <button
+              type="button"
+              class="btn btn-ghost btn-circle size-11 min-h-11 border-0 text-neutral disabled:bg-transparent disabled:text-neutral/40"
+              [attr.aria-label]="showPassword() ? 'Ocultar senha' : 'Mostrar senha'"
+              [disabled]="pending()"
+              (click)="toggleVisibility()"
+            >
+              @if (showPassword()) {
+                <svg lucideEyeOff [size]="18" aria-hidden="true"></svg>
+              } @else {
+                <svg lucideEye [size]="18" aria-hidden="true"></svg>
+              }
+            </button>
+          </div>
+          @if (passwordMessage(); as message) {
+            <p id="login-password-error" class="mt-2 flex items-center gap-1.5 text-xs text-error">
+              <svg lucideCircleAlert [size]="14" aria-hidden="true"></svg>{{ message }}
+            </p>
+          }
+
+          <div role="status" aria-live="polite" class="sr-only">
+            @if (pending()) {
+              Entrando...
+            }
+          </div>
+          <div role="alert" aria-live="assertive">
+            @if (failure(); as message) {
+              <p class="mt-5 flex items-start gap-2 rounded-xl bg-base-200 p-3 text-sm text-error">
+                <svg lucideCircleAlert [size]="16" class="mt-0.5 shrink-0" aria-hidden="true"></svg>
+                {{ message }}
+              </p>
+            }
+          </div>
+
+          <button
+            type="submit"
+            class="btn btn-primary mt-6 h-[52px] min-h-[52px] w-full rounded-full text-[15px] font-bold shadow-[0_10px_24px_rgb(166_90_106_/_0.3)] mouse:hover:border-primary-hover mouse:hover:bg-primary-hover disabled:border-primary/70 disabled:bg-primary/70 disabled:text-primary-content disabled:shadow-none"
+            [disabled]="pending()"
+          >
+            @if (pending()) {
+              <svg
+                lucideLoaderCircle
+                [size]="18"
+                class="animate-spin motion-reduce:animate-none"
+                aria-hidden="true"
+              ></svg>
+              Entrando...
+            } @else {
+              Entrar
+            }
+          </button>
+        </form>
+
+        <p class="mt-5 flex items-center justify-center gap-2 text-xs text-neutral">
+          <svg lucideShieldCheck [size]="14" aria-hidden="true"></svg>
+          Acesso restrito à administração da doceria
+        </p>
+      </section>
+    </div>
+
+    <footer class="text-center text-xs text-neutral lg:text-left">
+      © {{ year }} Doceria da Mary<span class="hidden lg:inline"> · Painel administrativo</span>
+    </footer>
+  </main>
+
+  <aside
+    aria-hidden="true"
+    class="relative m-5 hidden overflow-hidden rounded-[32px] border-[12px] border-base-300 bg-base-200 lg:block"
+  >
+    @if (!photoFailed()) {
+      <img
+        src="images/hero.webp"
+        alt=""
+        class="size-full object-cover"
+        (error)="photoFailed.set(true)"
+      />
+    }
+    <div
+      class="absolute bottom-7 left-7 rounded-2xl bg-base-100 px-5 py-3.5 shadow-[0_10px_30px_rgb(0_0_0_/_0.1)]"
+    >
+      <p class="font-display text-[22px] leading-none text-neutral">Feito à mão</p>
+      <p
+        class="mt-2 flex items-center gap-1.5 text-[10px] font-medium tracking-[2px] text-brand-text"
+      >
+        COM TODO CARINHO <svg lucideHeart [size]="11"></svg>
+      </p>
+    </div>
+  </aside>
+</div>
