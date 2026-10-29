@@ -2,38 +2,41 @@
 
 Atualizado em 2026-10-29.
 
-Repositório publicado em main no origin (GitHub KaikeDias/doceria-landing-page), com commits separados de assets, aplicação e documentação. Registro operacional em [commits e push](tasks/2026-10-14-commits-push.md).
+Repositório na branch `main`, com entregas separadas por funcionalidade. Os registros em `docs/tasks/` descrevem as primeiras entregas; as especificações e evidências atuais ficam em `specs/`.
 
-## Existente
+## Implementado
 
 - Landing page responsiva em `/`: apresentação, categorias, cardápio, sobre, encomendas, contato e rodapé.
-- Seis produtos demonstrativos reproduzidos da referência, filtro por categoria, CTA de pedido no cabeçalho mobile e navegação por âncoras.
-- Logo original em `public/logo.png`; fotos extraídas das exportações e otimizadas em WebP.
-- Cormorant Garamond e DM Sans locais em WOFF2, com licenças OFL.
-- Angular 22.2.2 standalone OnPush, Signals, TypeScript strict, Tailwind 4, daisyUI 5 e SSG.
-- WhatsApp e Instagram ativos com valores fornecidos pelo usuário; mensagens específicas para cabeçalho, hero, encomendas, dúvidas e cada produto. Demais contatos e API permanecem `null`.
+- Seis produtos demonstrativos e filtro por categoria. WhatsApp e Instagram reais preservados, com mensagens contextuais e abertura segura dos links externos.
+- Detalhes de produtos com preços fixos/variáveis, descrição complementar, galeria opcional e CTA de WhatsApp. Fechamento por botão, Escape e fundo; foco, fundo inerte e rolagem gerenciados pelo diálogo nativo.
+- Hover de ampliação/elevação nos cards, entrada suave dos modais e hover de cor nos controles. Preferência de movimento reduzido, toque e estados indisponíveis respeitados.
+- Tailwind para apresentação e responsividade; DaisyUI para botões, modal e estados. CSS de fonte reduzido de 1.468 para 175 linhas, restrito a fontes/tema, padrões compartilhados e animações necessárias.
+- Logo, fotos WebP, ícone do WhatsApp e fontes Cormorant Garamond/DM Sans locais. As referências em `public/design/landing-page/` não integram a publicação.
+- Angular 22 standalone, OnPush, Signals, TypeScript strict e pré-renderização estática. Sem checkout, administração ou backend.
 
-## Atualização visual de 2026-10-29
+## Especificações e evidências
 
-Desktop e mobile adequados às novas referências em `public/design/landing-page`: cabeçalho mobile com CTA Pedir, hero com texto completo e selo, categorias com foto superior no mobile, descrições visíveis nos produtos, sobre completo e contato em cards clicáveis. WhatsApp e Instagram reais preservados.
-
-Especificação e evidências: [especificação](../specs/atualizacao-design-landing-page/spec.md) e [tarefas](../specs/atualizacao-design-landing-page/tasks.md).
-
-Build estático aprovado e 17 testes aprovados; cobertura de 100% nas unidades Home e ProductCard. Validação visual e de overflow em navegador pendente, pois não há navegador disponível nesta sessão. As verificações de navegador descritas abaixo referem-se à entrega anterior.
-
-## Trabalho concluído
-
-Implementação das exportações desktop/mobile fornecidas pelo usuário. O MCP do Paper permaneceu limitado; os PNGs foram usados com autorização do usuário.
-
-Plano e evidências: [tarefa das telas](tasks/2026-10-14-telas-paper.md).
-Decisão: [referências e assets](decisions/ADR-0001-referencias-exportadas.md).
+- [Atualização do design](../specs/atualizacao-design-landing-page/tasks.md).
+- [Modais de detalhes](../specs/modais-detalhes-produtos/tasks.md).
+- [Animações dos produtos](../specs/animacoes-produtos/tasks.md).
+- [Hover padrão dos botões](../specs/hover-padrao-botoes/tasks.md).
+- [Refatoração Tailwind e DaisyUI](../specs/refatoracao-tailwind-daisyui/tasks.md).
 
 ## Validação
 
-Build de produção e pré-renderização aprovados; nove testes aprovados; formatação aprovada.
-Navegador verificado em 320, 390, 768, 1024 e 1440 px sem overflow horizontal.
-Menu mobile, âncoras e filtro conferidos na entrega visual; destinos e mensagens dos CTAs ativos conferidos na tarefa de [contatos reais](tasks/2026-10-14-contatos-reais.md).
+- Build estático aprovado, com uma rota pré-renderizada, seis produtos e modal inicialmente fechado.
+- 30 testes unitários aprovados; cobertura global de 99,8% de statements e 100% de linhas.
+- 21 testes Playwright aprovados no Chrome para detalhes, hover, animações, foco, teclado, rolagem, toque e movimento reduzido.
+- Página e modais comparados visualmente em 320, 390, 768, 1024 e 1440 px. Grades corretas e ausência de overflow externo verificadas.
+- Formatação conferida com Prettier; whitespace conferido com `git diff --check`.
+- Node 26.5.0 usado nas validações recentes. Firefox e Safari não foram executados.
 
-## Pendências e próxima ação
+## Pendências
 
-Revisar visualmente a página implementada. Quando disponíveis, conferir os valores CSS diretamente no Paper e substituir os recortes por fotos originais. E-mail, endereço, localização, horários e hospedagem ainda não foram fornecidos. Não há administração, modal, backend ou e-commerce.
+- Fornecer fotos originais/adicionais dos produtos e confirmar antecedência de encomenda, conservação e alérgenos antes de cadastrá-los como informações reais.
+- E-mail, endereço, localização, horários e API continuam não configurados.
+- Definir hospedagem e validar publicação. O push do código ao GitHub não constitui publicação em hospedagem.
+
+## Histórico
+
+As primeiras telas e contatos estão registrados em [telas do Paper](tasks/2026-10-14-telas-paper.md), [contatos reais](tasks/2026-10-14-contatos-reais.md) e [commits iniciais](tasks/2026-10-14-commits-push.md). A decisão sobre os recortes e assets locais está em [ADR-0001](decisions/ADR-0001-referencias-exportadas.md).

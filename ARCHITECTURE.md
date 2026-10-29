@@ -4,18 +4,19 @@
 
 ## 1. Visão geral
 
-### Estado implementado no setup
+### Estado implementado
 
 - Angular/CLI/Router 22.2.2, TypeScript 6.0.3 strict, componentes standalone OnPush e execução zoneless.
 - Tailwind 4.3.3 via PostCSS, daisyUI 5.7.50 com tema claro `doceria-mary` e `@lucide/angular` 1.57.0 com ícones individuais. O pacote atual do Lucide substitui o legado para compatibilidade com Angular 22.
-- Rota `/` lazy com landing page responsiva: apresentação, categorias, cardápio, sobre, encomendas, contato e rodapé. Menu mobile e navegação por âncoras.
-- `features/catalog/catalog.ts` contém contratos Product/Category, seis produtos demonstrativos, filtro puro e preços em centavos. `product-card` reutiliza a apresentação dos produtos; Home usa Signals e computed para filtro e menu. Não há modal representado nas referências fornecidas.
+- Rota `/` lazy com landing page responsiva: apresentação, categorias, cardápio, sobre, encomendas, contato e rodapé. CTA compacto no cabeçalho mobile e navegação por âncoras.
+- `features/catalog/catalog.ts` contém contratos Product/Category, seis produtos demonstrativos, filtro puro e preços em centavos. `product-card` reutiliza a apresentação dos produtos; Home usa Signals e computed para filtro e produto selecionado. `product-details` apresenta diálogo nativo com DaisyUI, preço fixo/variável, fotos e informações opcionais, com foco/rolagem gerenciados no navegador.
 - `outputMode: "static"` e `RenderMode.Prerender` para `/`. Entrada server Angular apenas para geração estática; nenhum servidor Express ou SSR dinâmico em produção.
 - Configuração tipada em `src/app/core/config/public-config.ts`, com WhatsApp/Instagram fornecidos pelo usuário; demais contatos e API continuam `null`. `core/config/contact-links.ts` centraliza mensagens por contexto, validação do número e codificação dos links wa.me. Os produtos incluem o nome na mensagem. Sem envio automático ou API de mensagens.
-- Assets em `public/`: logo original, recortes das fotos das exportações em WebP e fontes Cormorant Garamond/DM Sans locais em WOFF2. PNGs @4x são referências e ficam fora do build. Favicon original ainda não fornecido.
-- Vitest pelo builder Angular e Prettier; comandos e versões no README. Não há lint instalado.
+- Assets em `public/`: logo original, recortes das fotos das exportações em WebP e fontes Cormorant Garamond/DM Sans locais em WOFF2. As referências desktop/mobile e dos modais ficam em `public/design/landing-page/` e são excluídas do build. Favicon original ainda não fornecido.
+- Vitest com cobertura V8 pelo builder Angular, Playwright no Chrome e Prettier; comandos e versões no README. Não há lint instalado.
+- Tailwind controla layout, medidas, tipografia, responsividade e hover nos templates. DaisyUI fornece botões, modal e estados; CSS específico fica restrito a fontes/tema, padrões compartilhados e animações do diálogo. Especificações e tarefas ficam em `specs/<funcionalidade>/`.
 
-As seções abaixo descrevem a arquitetura-alvo; detalhes ainda ausentes (modal, disponibilidade de produtos e administração) são futuros, sujeitos à autorização e aos designs do Paper. O estado vigente e validações estão em `docs/PROJECT_STATUS.md`; a origem das referências está em `docs/decisions/ADR-0001-referencias-exportadas.md`.
+As seções abaixo descrevem a arquitetura-alvo; detalhes ainda ausentes (disponibilidade de produtos e administração) são futuros, sujeitos à autorização e aos designs do Paper. O estado vigente e validações estão em `docs/PROJECT_STATUS.md`; a origem das referências está em `docs/decisions/ADR-0001-referencias-exportadas.md`.
 
 A **Doceria da Mary** será uma aplicação web de apresentação de confeitaria artesanal. A experiência pública é uma landing page com catálogo digital de produtos. Ao selecionar um doce ou uma encomenda, o visitante é direcionado ao WhatsApp, que é o canal externo de atendimento e fechamento do pedido.
 
