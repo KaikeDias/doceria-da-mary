@@ -47,3 +47,68 @@ test('toggling publication updates the indicator and filters', async ({ page }) 
   await page.getByRole('searchbox').fill('zzz');
   await expect(page.getByText('Nenhum doce encontrado')).toBeVisible();
 });
+
+test('delete confirmation focuses Cancelar, closes on Escape and deletes on confirm', async ({
+  page,
+}) => {
+  await page.goto('/admin/cardapio');
+  await page.waitForLoadState('networkidle');
+  const ask = page.locator('tbody').getByRole('button', { name: 'Excluir Brownie Recheado' });
+  await ask.click();
+  const dialog = page.getByRole('dialog', { name: 'Excluir Brownie Recheado?' });
+  await expect(dialog).toBeVisible();
+  await expect(dialog.getByRole('button', { name: 'Cancelar' })).toBeFocused();
+  await page.keyboard.press('Escape');
+  await expect(dialog).toBeHidden();
+  await expect(ask).toBeFocused();
+  await ask.click();
+  await dialog.getByRole('button', { name: 'Sim, excluir' }).click();
+  await expect(dialog).toBeHidden();
+  await expect(page.locator('tbody tr')).toHaveCount(5);
+  await expect(page.getByRole('status')).toContainText(
+    'Brownie Recheado foi excluído do cardápio.',
+  );
+});
+
+test('toggling shows the saving state and then a closable success message', async ({ page }) => {
+  await page.goto('/admin/cardapio');
+  await page.waitForLoadState('networkidle');
+  const row = page.locator('tbody tr', { hasText: 'Caixa de Docinhos' });
+  await row.getByRole('switch').click();
+  await expect(row).toContainText('Salvando…');
+  await expect(page.getByRole('status')).toContainText('Salvando alterações…');
+  await expect(row).toContainText('Publicado');
+  const status = page.getByRole('status');
+  await expect(status).toContainText('Caixa de Docinhos agora aparece no site.');
+  await status.getByRole('button', { name: 'Fechar aviso' }).click();
+  await expect(status).toBeEmpty();
+});
+
+for (const width of [320, 1440]) {
+  test(`modal and messages fit at ${width}px`, async ({ page }) => {
+    await page.setViewportSize({ width, height: 900 });
+    await page.goto('/admin/cardapio');
+    await page.waitForLoadState('networkidle');
+    const noScroll = async () =>
+      expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(
+        width,
+      );
+    await page.getByRole('switch').first().click();
+    await expect(page.getByRole('status')).toContainText('saiu do site.');
+    await noScroll();
+    if (width < 1024) {
+      const close = page.getByRole('button', { name: 'Fechar aviso' });
+      // Espera a animação de entrada do aviso terminar antes de medir.
+      await expect.poll(async () => (await close.boundingBox())!.height).toBeGreaterThanOrEqual(44);
+    }
+    await page
+      .getByRole('button', { name: /^Excluir / })
+      .locator('visible=true')
+      .first()
+      .click();
+    await expect(page.getByRole('dialog')).toBeVisible();
+    await noScroll();
+    const cancel = await page.getByRole('button', { name: 'Cancelar' }).boundingBox();
+    expect(cancel!.height).toBeGreaterThanOrEqual(44);
+  });
+}
