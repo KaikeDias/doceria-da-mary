@@ -150,7 +150,31 @@ function seed() {
     alt: item.nome,
     posicao: 0,
   }));
-  return { categories, products, images };
+  // Linha única de configuracoes_site, como fica depois das migrations.
+  const config: Record<string, string | number | null> = {
+    id: 1,
+    nome_doceria: 'Doceria da Mary',
+    texto_apresentacao: 'Doces artesanais',
+    descricao: 'Doces artesanais para momentos especiais.',
+    logo_path: null,
+    whatsapp: '89994259584',
+    instagram: 'doceriadamarypl',
+    email_contato: null,
+    mensagem_whatsapp: 'Olá, Mary! Gostaria de fazer uma encomenda.',
+    horario_atendimento: 'Segunda a sábado, das 9h às 18h',
+    regiao_atendida: 'Toda a cidade e região',
+    endereco: null,
+    texto_encomendas:
+      'Encomendas com pelo menos 2 dias de antecedência. Para festas e datas especiais, fale com a gente com uma semana de antecedência.',
+    hero_titulo: 'Adoçando seus momentos mais especiais.',
+    hero_subtitulo:
+      'Doces artesanais feitos com afeto, ingredientes escolhidos com cuidado e aquele sabor que transforma qualquer ocasião em memória.',
+    hero_imagem_path: null,
+    sobre_texto:
+      'A Doceria da Mary nasceu do prazer de transformar ingredientes simples em momentos cheios de afeto. Cada doce é preparado com cuidado, da escolha dos sabores ao último detalhe da apresentação.',
+    cta_encomendas_titulo: 'Tem uma ocasião especial chegando?',
+  };
+  return { categories, products, images, config };
 }
 
 export type MockDb = ReturnType<typeof seed>;
@@ -240,6 +264,13 @@ export async function mockSupabase(
     const imagesOf = (id: string) =>
       db.images.filter((image) => image.produto_id === id).sort((a, b) => a.posicao - b.posicao);
 
+    if (table === 'configuracoes_site') {
+      if (method === 'PATCH') {
+        Object.assign(db.config, request.postDataJSON());
+        return route.fulfill({ status: 204 });
+      }
+      return respond([db.config]);
+    }
     if (table === 'administradores') {
       return respond(logged || eq(url, 'user_id') === user.id ? [{ user_id: user.id }] : []);
     }

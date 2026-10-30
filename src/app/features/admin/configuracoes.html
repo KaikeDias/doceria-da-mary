@@ -1,0 +1,533 @@
+<ng-template
+  #field
+  let-key
+  let-label="label"
+  let-help="help"
+  let-rows="rows"
+  let-optional="optional"
+  let-placeholder="placeholder"
+  let-prefix="prefix"
+>
+  <div class="min-w-0">
+    <label [for]="'config-' + key" class="text-sm font-semibold text-base-content"
+      >{{ label }}
+      @if (optional) {
+        <span class="font-normal text-brand-text">(opcional)</span>
+      }
+    </label>
+    @if (rows) {
+      <textarea
+        [id]="'config-' + key"
+        [rows]="rows"
+        [attr.maxlength]="limit(key) ?? null"
+        [placeholder]="placeholder ?? ''"
+        class="textarea mt-2 w-full rounded-xl border-primary/60 bg-white text-[15px]"
+        [class.textarea-error]="submitted() && error(key)"
+        [attr.aria-invalid]="submitted() && !!error(key)"
+        [attr.aria-describedby]="
+          (submitted() && error(key) ? 'config-' + key + '-error ' : '') +
+          (help || limit(key) ? 'config-' + key + '-help' : '')
+        "
+        [value]="value(key)"
+        (input)="edit(key, $any($event.target))"
+      ></textarea>
+    } @else {
+      <label
+        class="input mt-2 h-12 w-full rounded-xl border-primary/60 bg-white text-[15px]"
+        [class.input-error]="submitted() && error(key)"
+      >
+        @if (prefix) {
+          <span class="text-neutral">{{ prefix }}</span>
+        }
+        <input
+          [id]="'config-' + key"
+          [type]="key === 'email' ? 'email' : key === 'whatsapp' ? 'tel' : 'text'"
+          [attr.inputmode]="key === 'whatsapp' ? 'numeric' : null"
+          [attr.maxlength]="limit(key) ?? null"
+          [placeholder]="placeholder ?? ''"
+          [attr.aria-invalid]="submitted() && !!error(key)"
+          [attr.aria-describedby]="
+            (submitted() && error(key) ? 'config-' + key + '-error ' : '') +
+            (help || limit(key) ? 'config-' + key + '-help' : '')
+          "
+          [value]="key === 'whatsapp' ? phone() : value(key)"
+          (input)="edit(key, $any($event.target))"
+        />
+      </label>
+    }
+    @if (submitted() && error(key)) {
+      <p [id]="'config-' + key + '-error'" class="mt-1.5 text-sm text-error">
+        {{ error(key) }}
+      </p>
+    }
+    @if (help || limit(key)) {
+      <p [id]="'config-' + key + '-help'" class="mt-1.5 text-xs text-neutral">
+        {{ help }}
+        @if (limit(key)) {
+          {{ value(key).length }}/{{ limit(key) }}
+        }
+      </p>
+    }
+  </div>
+</ng-template>
+
+<ng-template #image let-key let-label="label" let-help="help" let-accept="accept">
+  <div class="flex flex-wrap items-center gap-x-4 gap-y-2">
+    <label
+      class="btn btn-outline h-11 min-h-11 gap-2 rounded-full border-primary px-5 text-brand-text focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-primary"
+    >
+      <svg lucideUpload [size]="16" aria-hidden="true"></svg>{{ label }}
+      <input
+        [id]="'config-' + key"
+        type="file"
+        [accept]="accept"
+        class="sr-only"
+        [attr.aria-invalid]="!!notice(key)"
+        [attr.aria-describedby]="
+          (notice(key) ? 'config-' + key + '-error ' : '') + 'config-' + key + '-help'
+        "
+        (change)="pick(key, $any($event.target))"
+      />
+    </label>
+    @if (value(key)) {
+      <button
+        type="button"
+        class="btn btn-ghost h-11 min-h-11 rounded-full px-3 font-semibold text-brand-text"
+        (click)="remove(key)"
+      >
+        Remover
+      </button>
+    }
+  </div>
+  <!-- prettier-ignore -->
+  <p [id]="'config-' + key + '-error'" role="status" class="mt-1.5 text-sm text-error empty:hidden">{{ notice(key) }}</p>
+  <p [id]="'config-' + key + '-help'" class="mt-1.5 text-xs text-neutral">{{ help }}</p>
+</ng-template>
+
+<div class="mx-auto max-w-[1120px] pb-28">
+  <h1 class="font-display text-[34px] leading-tight font-medium text-neutral lg:text-[40px]">
+    Configurações do site
+  </h1>
+  <p class="mt-1 text-[15px] text-neutral">
+    Atualize as informações que seus clientes encontram na landing page.
+  </p>
+
+  @if (state() === 'loading') {
+    <p class="mt-6 flex items-center justify-center gap-3 py-16 text-[15px] text-neutral">
+      <span aria-hidden="true" class="loading loading-spinner loading-md text-primary"></span>
+      Carregando configurações…
+    </p>
+  } @else if (state() === 'error') {
+    <div
+      role="alert"
+      class="mt-6 flex flex-col items-center gap-4 rounded-2xl border border-base-300 bg-white px-6 py-16 text-center text-[15px] text-neutral"
+    >
+      <p>{{ loadError }}</p>
+      <button
+        type="button"
+        class="btn btn-outline h-11 min-h-11 rounded-full border-primary px-5 text-brand-text"
+        (click)="load()"
+      >
+        Tentar de novo
+      </button>
+    </div>
+  } @else {
+    <div class="mt-6 lg:mt-8 lg:grid lg:grid-cols-[150px_minmax(0,1fr)] lg:gap-10">
+      <nav aria-labelledby="config-nav-title" class="lg:sticky lg:top-9 lg:self-start">
+        <p
+          id="config-nav-title"
+          class="sr-only text-[11px] font-semibold tracking-[1.5px] text-neutral uppercase lg:not-sr-only"
+        >
+          Nesta página
+        </p>
+        <ol
+          class="-mx-5 flex gap-2 overflow-x-auto px-5 pb-1 lg:mx-0 lg:mt-3 lg:flex-col lg:gap-1 lg:overflow-visible lg:p-0"
+        >
+          @for (section of sections; track section.id; let i = $index) {
+            <li class="shrink-0">
+              <a
+                [href]="'/admin/configuracoes#' + section.id"
+                class="flex min-h-11 items-center gap-3 rounded-full border border-base-300 bg-white px-4 text-sm whitespace-nowrap text-base-content lg:min-h-9 lg:border-0 lg:bg-transparent lg:px-0 mouse:hover:text-brand-text"
+              >
+                <span
+                  aria-hidden="true"
+                  class="hidden size-5 place-items-center rounded-full bg-base-200 text-[11px] text-brand-text lg:grid"
+                  >{{ i + 1 }}</span
+                >{{ section.label }}
+              </a>
+            </li>
+          }
+        </ol>
+      </nav>
+
+      <form
+        novalidate
+        class="mt-5 min-w-0 lg:mt-0"
+        [attr.aria-busy]="saving()"
+        (submit)="$event.preventDefault(); save()"
+      >
+        @if (saveFailed()) {
+          <div
+            role="alert"
+            class="mb-4 flex flex-wrap items-center gap-3 rounded-2xl border border-error/40 bg-[#fbeceb] px-4 py-3 text-sm text-brand-text"
+          >
+            <svg lucideWifiOff [size]="18" aria-hidden="true" class="shrink-0"></svg>
+            <p class="min-w-0 flex-1">
+              Não conseguimos salvar agora. Suas alterações continuam aqui. Verifique a internet e
+              tente de novo.
+            </p>
+            <button
+              type="button"
+              class="btn btn-outline h-11 min-h-11 rounded-full border-primary bg-white px-4 text-brand-text"
+              [disabled]="saving()"
+              (click)="save()"
+            >
+              Tentar de novo
+            </button>
+          </div>
+        } @else if (submitted() && errorCount()) {
+          <p
+            role="alert"
+            class="mb-4 flex items-center gap-3 rounded-2xl border border-error/40 bg-[#fbeceb] px-4 py-3 text-sm text-brand-text"
+          >
+            <svg lucideCircleAlert [size]="18" aria-hidden="true" class="shrink-0"></svg>
+            Falta corrigir {{ errorCount() === 1 ? '1 campo' : errorCount() + ' campos' }} antes de
+            salvar.
+          </p>
+        }
+
+        <!-- contents: o fieldset só bloqueia os campos; o layout é do form. -->
+        <fieldset [disabled]="saving()" class="contents">
+          <section
+            id="identidade"
+            aria-labelledby="identidade-title"
+            class="scroll-mt-6 rounded-3xl border border-base-300 bg-white p-5 lg:p-6"
+          >
+            <h2 id="identidade-title" class="text-lg font-semibold text-neutral">
+              1. Identidade da doceria
+            </h2>
+            <p class="text-sm text-neutral">
+              Como a sua marca aparece no topo e no rodapé do site.
+            </p>
+            <div
+              class="mt-4 flex flex-col gap-4 rounded-2xl border border-base-300 bg-base-100 p-4 sm:flex-row sm:items-center"
+            >
+              <img
+                [src]="form().logo || defaultImages.logo"
+                alt="Logo atual"
+                width="80"
+                height="80"
+                class="size-20 shrink-0 rounded-full border-2 border-primary/30 object-cover"
+              />
+              <div class="min-w-0">
+                <p class="text-sm font-semibold text-base-content">Logo</p>
+                <div class="mt-2">
+                  <ng-container
+                    [ngTemplateOutlet]="image"
+                    [ngTemplateOutletContext]="{
+                      $implicit: 'logo',
+                      label: 'Trocar logo',
+                      accept: 'image/png,image/jpeg',
+                      help: 'PNG ou JPG quadrado, até 2 MB. Fundo transparente fica melhor.',
+                    }"
+                  />
+                </div>
+              </div>
+            </div>
+            <div class="mt-5 grid gap-5 lg:grid-cols-2">
+              <ng-container
+                [ngTemplateOutlet]="field"
+                [ngTemplateOutletContext]="{ $implicit: 'name', label: 'Nome da doceria' }"
+              />
+              <ng-container
+                [ngTemplateOutlet]="field"
+                [ngTemplateOutletContext]="{
+                  $implicit: 'tagline',
+                  label: 'Texto de apresentação',
+                  help: 'Frase curta que aparece abaixo do nome, no topo do site.',
+                }"
+              />
+            </div>
+            <div class="mt-5">
+              <ng-container
+                [ngTemplateOutlet]="field"
+                [ngTemplateOutletContext]="{
+                  $implicit: 'description',
+                  label: 'Descrição sobre a doceria',
+                  rows: 2,
+                  help: 'Aparece no rodapé e quando alguém compartilha o link do site.',
+                }"
+              />
+            </div>
+          </section>
+
+          <section
+            id="contato"
+            aria-labelledby="contato-title"
+            class="mt-4 scroll-mt-6 rounded-3xl border border-base-300 bg-white p-5 lg:p-6"
+          >
+            <h2 id="contato-title" class="text-lg font-semibold text-neutral">2. Contato</h2>
+            <p class="text-sm text-neutral">
+              Para onde vão os clientes quando tocam nos botões do site.
+            </p>
+            <div class="mt-5 grid gap-5 lg:grid-cols-2">
+              <ng-container
+                [ngTemplateOutlet]="field"
+                [ngTemplateOutletContext]="{
+                  $implicit: 'whatsapp',
+                  label: 'Número de WhatsApp',
+                  prefix: '+55',
+                  placeholder: '(11) 98765-4321',
+                  help: 'Com DDD. É o número que recebe os pedidos.',
+                }"
+              />
+              <ng-container
+                [ngTemplateOutlet]="field"
+                [ngTemplateOutletContext]="{
+                  $implicit: 'instagram',
+                  label: 'Instagram',
+                  prefix: 'instagram.com/',
+                  help: 'Pode colar o link inteiro ou só o @ do perfil.',
+                }"
+              />
+              <ng-container
+                [ngTemplateOutlet]="field"
+                [ngTemplateOutletContext]="{
+                  $implicit: 'email',
+                  label: 'E-mail de contato',
+                  optional: true,
+                  placeholder: 'contato@exemplo.com',
+                }"
+              />
+            </div>
+            <div class="mt-5 grid gap-5 lg:grid-cols-[minmax(0,1fr)_280px]">
+              <ng-container
+                [ngTemplateOutlet]="field"
+                [ngTemplateOutletContext]="{
+                  $implicit: 'whatsappMessage',
+                  label: 'Mensagem padrão do WhatsApp',
+                  rows: 3,
+                  help: 'Usada nos botões gerais, como “Fazer pedido”. Nos botões de cada doce, o nome do produto entra automaticamente.',
+                }"
+              />
+              <figure
+                class="self-start overflow-hidden rounded-2xl border border-base-300 bg-base-200 lg:mt-7"
+              >
+                <div class="flex items-center gap-3 bg-neutral px-4 py-2.5 text-neutral-content">
+                  <img
+                    [src]="form().logo || defaultImages.logo"
+                    alt=""
+                    width="28"
+                    height="28"
+                    class="size-7 rounded-full bg-base-100 object-cover"
+                  />
+                  <span class="min-w-0 text-xs">
+                    <span class="block truncate text-sm font-semibold">{{ form().name }}</span>
+                    +55 {{ phone() }}
+                  </span>
+                </div>
+                <div class="p-3">
+                  <p
+                    class="ml-auto max-w-[90%] rounded-xl wrap-anywhere bg-[#e3eedb] px-3 py-2 text-sm whitespace-pre-line text-base-content"
+                  >
+                    {{ form().whatsappMessage
+                    }}<span class="mt-1 block text-right text-[10px] text-neutral">agora</span>
+                  </p>
+                </div>
+                <figcaption class="px-3 pb-3 text-[11px] text-neutral">
+                  Prévia de como o cliente envia a mensagem.
+                </figcaption>
+              </figure>
+            </div>
+          </section>
+
+          <section
+            id="atendimento"
+            aria-labelledby="atendimento-title"
+            class="mt-4 scroll-mt-6 rounded-3xl border border-base-300 bg-white p-5 lg:p-6"
+          >
+            <h2 id="atendimento-title" class="text-lg font-semibold text-neutral">
+              3. Informações de atendimento
+            </h2>
+            <p class="text-sm text-neutral">Ajuda o cliente a saber quando e onde você atende.</p>
+            <div class="mt-5 grid gap-5 lg:grid-cols-2">
+              <ng-container
+                [ngTemplateOutlet]="field"
+                [ngTemplateOutletContext]="{
+                  $implicit: 'hours',
+                  label: 'Horário de atendimento',
+                }"
+              />
+              <ng-container
+                [ngTemplateOutlet]="field"
+                [ngTemplateOutletContext]="{
+                  $implicit: 'region',
+                  label: 'Cidade ou região atendida',
+                }"
+              />
+            </div>
+            <div class="mt-5 grid gap-5">
+              <ng-container
+                [ngTemplateOutlet]="field"
+                [ngTemplateOutletContext]="{
+                  $implicit: 'address',
+                  label: 'Endereço',
+                  optional: true,
+                  placeholder: 'Rua, número e bairro',
+                  help: 'Deixe em branco se você não recebe clientes no local.',
+                }"
+              />
+              <ng-container
+                [ngTemplateOutlet]="field"
+                [ngTemplateOutletContext]="{
+                  $implicit: 'ordersText',
+                  label: 'Texto sobre encomendas',
+                  rows: 3,
+                  help: 'Antecedência, retirada, entrega… o que for importante saber antes de pedir.',
+                }"
+              />
+            </div>
+          </section>
+
+          <section
+            id="conteudo"
+            aria-labelledby="conteudo-title"
+            class="mt-4 scroll-mt-6 rounded-3xl border border-base-300 bg-white p-5 lg:p-6"
+          >
+            <h2 id="conteudo-title" class="text-lg font-semibold text-neutral">
+              4. Conteúdo da landing page
+            </h2>
+            <p class="text-sm text-neutral">Os textos e a foto principal das seções do site.</p>
+            <div class="mt-5 grid gap-5">
+              <ng-container
+                [ngTemplateOutlet]="field"
+                [ngTemplateOutletContext]="{
+                  $implicit: 'heroTitle',
+                  label: 'Título principal',
+                  help: 'A primeira frase que o cliente lê.',
+                }"
+              />
+              <ng-container
+                [ngTemplateOutlet]="field"
+                [ngTemplateOutletContext]="{
+                  $implicit: 'heroSubtitle',
+                  label: 'Subtítulo',
+                  rows: 2,
+                }"
+              />
+              <div>
+                <p class="text-sm font-semibold text-base-content">Imagem principal</p>
+                <div class="mt-2 flex flex-col gap-4 sm:flex-row sm:items-center">
+                  <img
+                    [src]="form().heroImage || defaultImages.heroImage"
+                    alt="Imagem principal atual"
+                    width="320"
+                    height="200"
+                    class="aspect-[1.6] w-full shrink-0 rounded-2xl border-4 border-secondary object-cover sm:w-80"
+                  />
+                  <div class="min-w-0">
+                    <ng-container
+                      [ngTemplateOutlet]="image"
+                      [ngTemplateOutletContext]="{
+                        $implicit: 'heroImage',
+                        label: 'Trocar imagem',
+                        accept: 'image/jpeg,image/png,image/webp',
+                        help: 'Foto na horizontal, com pelo menos 1600 px de largura. Até 5 MB.',
+                      }"
+                    />
+                  </div>
+                </div>
+              </div>
+              <ng-container
+                [ngTemplateOutlet]="field"
+                [ngTemplateOutletContext]="{
+                  $implicit: 'about',
+                  label: 'Texto da seção “Sobre nós”',
+                  rows: 4,
+                }"
+              />
+              <ng-container
+                [ngTemplateOutlet]="field"
+                [ngTemplateOutletContext]="{
+                  $implicit: 'ordersTitle',
+                  label: 'Título da chamada para encomendas',
+                  help: 'A faixa rosada que convida para encomendas especiais.',
+                }"
+              />
+            </div>
+          </section>
+
+          <div
+            class="fixed inset-x-0 bottom-0 z-40 flex items-center gap-3 border-t border-base-300 bg-base-100 px-5 py-3 max-lg:flex-wrap lg:left-60 lg:px-10"
+          >
+            <p
+              id="config-status"
+              role="status"
+              class="flex min-w-0 items-center gap-2 text-sm text-neutral max-lg:basis-full lg:flex-1"
+            >
+              @switch (status()) {
+                @case ('saving') {
+                  Salvando alterações…
+                }
+                @case ('dirty') {
+                  <span aria-hidden="true" class="size-2 shrink-0 rounded-full bg-[#c98a4b]"></span
+                  >Alterações não salvas<span class="hidden lg:inline">
+                    · o site ainda mostra a versão anterior</span
+                  >
+                }
+                @case ('saved') {
+                  <svg lucideCheck [size]="16" aria-hidden="true" class="text-success"></svg>Tudo
+                  salvo
+                }
+                @default {
+                  Nenhuma alteração pendente
+                }
+              }
+            </p>
+            <a
+              href="/"
+              target="_blank"
+              rel="noopener"
+              class="btn btn-outline h-12 min-h-12 gap-2 rounded-full border-neutral/40 px-4 max-lg:w-12 max-lg:px-0 lg:px-5"
+            >
+              <svg lucideExternalLink [size]="18" aria-hidden="true"></svg
+              ><span class="max-lg:sr-only">Visualizar site</span
+              ><span class="sr-only"> (abre em nova aba)</span>
+            </a>
+            <button
+              type="submit"
+              class="btn btn-primary h-12 min-h-12 flex-1 rounded-full px-7 font-bold lg:flex-none"
+              [disabled]="status() === 'clean' || status() === 'saved'"
+              [attr.aria-busy]="saving()"
+            >
+              @if (saving()) {
+                <span aria-hidden="true" class="loading loading-spinner loading-sm"></span>Salvando…
+              } @else {
+                Salvar alterações
+              }
+            </button>
+          </div>
+        </fieldset>
+      </form>
+    </div>
+  }
+</div>
+
+<div role="status" class="toast toast-top toast-end z-50 max-w-[calc(100vw_-_16px)]">
+  @if (message()) {
+    <div
+      class="alert flex rounded-2xl border-success/40 bg-[#eef3ea] py-2 pr-2 pl-5 text-[15px] whitespace-normal shadow-lg"
+    >
+      <svg lucideCircleCheck [size]="18" aria-hidden="true" class="shrink-0 text-success"></svg>
+      <span class="min-w-0 flex-1">{{ message() }}</span>
+      <button
+        type="button"
+        class="btn btn-ghost btn-square size-11 min-h-11"
+        aria-label="Fechar aviso"
+        (click)="message.set('')"
+      >
+        <svg lucideX [size]="16" aria-hidden="true"></svg>
+      </button>
+    </div>
+  }
+</div>
