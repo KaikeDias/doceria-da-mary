@@ -1,6 +1,6 @@
-import { ChangeDetectionStrategy, Component, ElementRef, viewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, ElementRef, inject, viewChild } from '@angular/core';
 import { NgTemplateOutlet } from '@angular/common';
-import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
+import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import {
   LucideCakeSlice,
   LucideExternalLink,
@@ -10,6 +10,7 @@ import {
   LucideTags,
   LucideX,
 } from '@lucide/angular';
+import { Auth } from '../../core/auth/auth';
 
 @Component({
   selector: 'app-admin',
@@ -30,7 +31,14 @@ import {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class Admin {
+  private readonly auth = inject(Auth);
+  private readonly router = inject(Router);
   private readonly drawer = viewChild.required<ElementRef<HTMLDialogElement>>('drawer');
+
+  protected async signOut(): Promise<void> {
+    await this.auth.signOut();
+    await this.router.navigateByUrl('/login');
+  }
 
   protected openDrawer(): void {
     this.drawer().nativeElement.showModal();

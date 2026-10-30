@@ -21,23 +21,20 @@ import {
   LucideMail,
   LucideShieldCheck,
 } from '@lucide/angular';
+import { Auth, InvalidCredentials, Offline } from '../../core/auth/auth';
 
 export interface LoginCredentials {
   email: string;
   password: string;
 }
 
-export class InvalidCredentials extends Error {}
-
-// shortcut: credencial fixa admin/admin no bundle, substituir pela API quando o banco existir.
 export const LOGIN_REQUEST = new InjectionToken<(credentials: LoginCredentials) => Promise<void>>(
   'LOGIN_REQUEST',
   {
-    factory:
-      () =>
-      async ({ email, password }) => {
-        if (email !== 'admin' || password !== 'admin') throw new InvalidCredentials();
-      },
+    factory: () => {
+      const auth = inject(Auth);
+      return ({ email, password }) => auth.signIn(email, password);
+    },
   },
 );
 
@@ -45,10 +42,7 @@ const EMAIL_FORMAT = /^[^\s@]+@[^\s@.]+(\.[^\s@.]+)+$/;
 
 export function emailError(email: string): string | null {
   if (!email) return 'Informe seu e-mail para continuar.';
-  // shortcut: 'admin' aceito sem formato de e-mail enquanto o login é provisório.
-  return EMAIL_FORMAT.test(email) || email === 'admin'
-    ? null
-    : 'Digite um e-mail válido, como nome@email.com.';
+  return EMAIL_FORMAT.test(email) ? null : 'Digite um e-mail válido, como nome@email.com.';
 }
 
 export function passwordError(password: string): string | null {
@@ -141,7 +135,9 @@ export class Login {
       this.failure.set(
         error instanceof InvalidCredentials
           ? 'E-mail ou senha incorretos.'
-          : 'Login indisponível no momento. Tente novamente mais tarde.',
+          : error instanceof Offline
+            ? 'Sem conexão com a internet. Verifique e tente de novo.'
+            : 'Login indisponível no momento. Tente novamente mais tarde.',
       );
       this.resetAfterFailure();
       return;

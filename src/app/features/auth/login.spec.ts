@@ -4,6 +4,8 @@ import { RouterTestingHarness } from '@angular/router/testing';
 import { routes } from '../../app.routes';
 import { publicConfig } from '../../core/config/public-config';
 import { LOGIN_REQUEST, Login, LoginCredentials, emailError, passwordError } from './login';
+import { Auth, InvalidCredentials, Offline } from '../../core/auth/auth';
+import { provideAdmin } from '../admin/admin.fixture';
 
 const UNAVAILABLE = 'Login indisponível no momento. Tente novamente mais tarde.';
 
@@ -11,6 +13,7 @@ async function setup(request?: (c: LoginCredentials) => Promise<void>) {
   TestBed.configureTestingModule({
     providers: [
       provideRouter(routes),
+      ...provideAdmin(undefined, false),
       ...(request ? [{ provide: LOGIN_REQUEST, useValue: request }] : []),
     ],
   });
@@ -122,27 +125,49 @@ describe('Login', () => {
     expect(page.querySelector('[role=alert]')?.textContent?.trim()).toBe('');
   });
 
-  it('logs in with admin/admin and redirects to the admin panel', async () => {
+  it('Autenticação CA01: entra pelo Auth e abre o painel', async () => {
+    const signIn = vi.fn(async () => {});
+    TestBed.overrideProvider(Auth, {
+      useValue: { signIn, isAdmin: vi.fn().mockResolvedValueOnce(false).mockResolvedValue(true) },
+    });
     const { harness, email, password, type, submit } = await setup();
-    await type(email, 'admin');
-    await type(password, 'admin');
+    await type(email, ' mary@email.com ');
+    await type(password, 'segredo');
     await submit();
     await harness.fixture.whenStable();
+    expect(signIn).toHaveBeenCalledWith('mary@email.com', 'segredo');
     expect(TestBed.inject(Router).url).toBe('/admin/cardapio');
   });
 
-  it('rejects other credentials with a specific message and stays on /login', async () => {
-    const { harness, page, email, password, type, submit } = await setup();
-    await type(email, 'admin');
-    await type(password, 'errada');
-    await submit();
-    await new Promise((resolve) => setTimeout(resolve));
-    harness.detectChanges();
-    expect(page.querySelector('[role=alert]')?.textContent).toContain(
+  it('Autenticação CA02–CA04: traduz credenciais inválidas e falta de conexão', async () => {
+    const request = vi
+      .fn<(c: LoginCredentials) => Promise<void>>()
+      .mockRejectedValueOnce(new InvalidCredentials())
+      .mockRejectedValueOnce(new Offline());
+    const { harness, page, email, password, type, submit } = await setup(request);
+    for (const message of [
       'E-mail ou senha incorretos.',
-    );
-    expect(password.value).toBe('');
+      'Sem conexão com a internet. Verifique e tente de novo.',
+    ]) {
+      await type(email, 'mary@email.com');
+      await type(password, 'errada');
+      await submit();
+      await new Promise((resolve) => setTimeout(resolve));
+      harness.detectChanges();
+      expect(page.querySelector('[role=alert]')?.textContent).toContain(message);
+      expect(password.value).toBe('');
+    }
     expect(TestBed.inject(Router).url).toBe('/login');
+  });
+
+  it('Autenticação CA05: "admin" deixa de ser aceito como e-mail', () => {
+    expect(emailError('admin')).toBe('Digite um e-mail válido, como nome@email.com.');
+  });
+
+  it('Autenticação CA06: com sessão de admin, /login leva ao painel', async () => {
+    TestBed.configureTestingModule({ providers: [provideRouter(routes), ...provideAdmin()] });
+    await RouterTestingHarness.create('/login');
+    expect(TestBed.inject(Router).url).toBe('/admin/cardapio');
   });
 
   it('CA08: unexpected rejection shows the unavailable message and resets the password', async () => {
