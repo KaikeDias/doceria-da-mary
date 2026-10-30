@@ -59,4 +59,9 @@ export const routes: Routes = [
       },
     ],
   },
+  {
+    path: '**',
+    title: 'Página não encontrada | Doceria da Mary',
+    loadComponent: () => import('./features/not-found/not-found').then((m) => m.NotFound),
+  },
 ];
