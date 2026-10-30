@@ -1,4 +1,5 @@
 import { expect, Locator, Page, test } from '@playwright/test';
+import { mockSupabase } from './supabase-mock';
 
 async function settle(control: Locator) {
   await control.evaluate(async (element) => {
@@ -38,6 +39,7 @@ async function checkHover(page: Page, control: Locator) {
 
 test.beforeEach(async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'no-preference' });
+  await mockSupabase(page, { allPublished: true });
   await page.goto('/');
   await page.waitForFunction(() =>
     (window as any).ng?.getComponent(document.querySelector('app-home')),
@@ -145,6 +147,7 @@ test('Hover CA03: toque em filtro ativo não deixa cor de hover persistente', as
     isMobile: true,
   });
   const page = await context.newPage();
+  await mockSupabase(page, { allPublished: true });
   await page.goto('/');
   const filter = page.getByRole('button', { name: 'Todos', exact: true });
   const initial = await appearance(filter);

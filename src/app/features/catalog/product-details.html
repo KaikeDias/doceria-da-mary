@@ -10,7 +10,7 @@
 >
   <div
     class="details-panel modal-box relative grid h-[min(560px,calc(100dvh_-_48px))] w-full max-w-none max-h-none grid-cols-2 grid-rows-[minmax(0,1fr)_auto] overflow-visible rounded-[inherit] p-4 opacity-100 [scale:1] [translate:0] shadow-none transition-none [&.variable-price]:h-[min(680px,calc(100dvh_-_48px))] max-desktop:flex max-desktop:h-[min(784px,calc(100dvh_-_24px))] max-desktop:flex-col max-desktop:px-0 max-desktop:pt-6 max-desktop:pb-0 max-desktop:[&.variable-price]:h-[min(784px,calc(100dvh_-_24px))]"
-    [class.variable-price]="product().price.kind === 'starting-at'"
+    [class.variable-price]="product().price?.kind === 'starting-at'"
   >
     <span
       class="sheet-handle absolute top-2.5 left-[calc(50%_-_20px)] hidden h-1 w-10 rounded bg-[#e5c5bb] max-desktop:block"
@@ -33,7 +33,7 @@
         <div
           class="main-photo relative min-h-0 flex-1 overflow-hidden rounded-[20px] bg-base-200 max-desktop:h-[280px] max-desktop:flex-none"
         >
-          @if (failedImages().has(currentImage().src)) {
+          @if (!currentImage().src || failedImages().has(currentImage().src)) {
             <div
               class="photo-unavailable flex size-full flex-col items-center justify-center gap-2 p-4 text-center"
               role="img"

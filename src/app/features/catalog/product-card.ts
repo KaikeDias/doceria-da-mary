@@ -17,14 +17,18 @@ import { productWhatsappUrl } from '../../core/config/contact-links';
         [attr.aria-label]="'Ver detalhes de ' + product().name"
         (click)="details.emit(product())"
       >
-        <img
-          [src]="'images/' + product().image + '.webp'"
-          [alt]="product().name"
-          width="808"
-          height="462"
-          loading="lazy"
-          class="block aspect-[1.725] w-full object-cover max-desktop:aspect-[1.6]"
-        />
+        @if (product().image) {
+          <img
+            [src]="product().image"
+            [alt]="product().name"
+            width="808"
+            height="462"
+            loading="lazy"
+            class="block aspect-[1.725] w-full object-cover max-desktop:aspect-[1.6]"
+          />
+        } @else {
+          <span class="block aspect-[1.725] w-full bg-base-200 max-desktop:aspect-[1.6]"></span>
+        }
       </button>
       <div
         class="product-content p-6 max-desktop:px-5 max-desktop:pt-4.5 max-desktop:pb-4 max-[361px]:px-4"

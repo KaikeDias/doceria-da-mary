@@ -156,20 +156,27 @@
         <div
           class="category-grid mt-11 grid grid-cols-4 gap-6 desktop:max-[1101px]:grid-cols-2 max-desktop:mt-6 max-desktop:grid-cols-2 max-desktop:gap-3"
         >
-          @for (category of categories; track category.id) {
+          @if (state() === 'loading') {
+            @for (n of [1, 2, 3, 4]; track n) {
+              <div class="skeleton h-[104px] rounded-[20px] max-desktop:h-[150px]"></div>
+            }
+          }
+          @for (category of categories(); track category.id) {
             <a
               class="category-link flex items-center gap-4.5 rounded-[20px] bg-white p-3.5 max-desktop:block max-desktop:overflow-hidden max-desktop:rounded-[18px] max-desktop:p-0"
               href="#cardapio"
               (click)="selectCategory(category.id)"
             >
-              <img
-                [src]="'images/' + category.image + '.webp'"
-                alt=""
-                width="80"
-                height="80"
-                loading="lazy"
-                class="size-[76px] rounded-xl object-cover max-desktop:block max-desktop:aspect-[1.92] max-desktop:h-auto max-desktop:w-full max-desktop:rounded-none"
-              />
+              @if (category.image) {
+                <img
+                  [src]="category.image"
+                  alt=""
+                  width="80"
+                  height="80"
+                  loading="lazy"
+                  class="size-[76px] rounded-xl object-cover max-desktop:block max-desktop:aspect-[1.92] max-desktop:h-auto max-desktop:w-full max-desktop:rounded-none"
+                />
+              }
               <span
                 class="font-display text-2xl leading-[1.2] font-medium text-neutral max-desktop:block max-desktop:px-3.5 max-desktop:pt-3 max-desktop:pb-3.5 max-desktop:text-[clamp(18px,5.4vw,21px)]"
                 >{{ category.label
@@ -225,7 +232,7 @@
           >
             Todos
           </button>
-          @for (category of categories; track category.id) {
+          @for (category of categories(); track category.id) {
             <button
               type="button"
               [class.active]="selectedCategory() === category.id"
@@ -242,15 +249,43 @@
           class="product-grid grid grid-cols-3 gap-6 desktop:max-[1101px]:grid-cols-2 max-desktop:grid-cols-1 max-desktop:gap-5"
           aria-live="polite"
           aria-relevant="additions removals"
+          [attr.aria-busy]="state() === 'loading'"
         >
-          @for (product of visibleProducts(); track product.id) {
-            <app-product-card
-              [product]="product"
-              [categoryName]="product.categoryId"
-              (details)="selectedProduct.set($event)"
-            />
-          } @empty {
-            <p class="empty-catalog col-span-full">Nenhum doce nesta categoria por enquanto.</p>
+          @switch (state()) {
+            @case ('loading') {
+              @for (n of [1, 2, 3]; track n) {
+                <div class="skeleton h-[420px] rounded-[20px]"></div>
+              }
+            }
+            @case ('error') {
+              <div role="alert" class="col-span-full flex flex-col items-start gap-4">
+                <p>{{ loadError }}</p>
+                <button
+                  type="button"
+                  class="btn btn-outline min-h-11 rounded-full border-primary px-5 text-brand-text"
+                  (click)="load()"
+                >
+                  Tentar de novo
+                </button>
+              </div>
+            }
+            @default {
+              @for (product of visibleProducts(); track product.id) {
+                <app-product-card
+                  [product]="product"
+                  [categoryName]="product.categoryLabel"
+                  (details)="selectedProduct.set($event)"
+                />
+              } @empty {
+                <p class="empty-catalog col-span-full">
+                  {{
+                    products().length
+                      ? 'Nenhum doce nesta categoria por enquanto.'
+                      : 'Em breve, novos doces por aqui.'
+                  }}
+                </p>
+              }
+            }
           }
         </div>
       </div>

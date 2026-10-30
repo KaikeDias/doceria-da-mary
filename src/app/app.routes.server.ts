@@ -1,16 +1,7 @@
 import { RenderMode, ServerRoute } from '@angular/ssr';
-import { products } from './features/catalog/catalog';
 
 export const serverRoutes: ServerRoute[] = [
+  // Só a casca da landing é pré-renderizada; login e painel dependem da sessão e do banco.
   { path: '', renderMode: RenderMode.Prerender },
-  { path: 'login', renderMode: RenderMode.Prerender },
-  { path: 'admin', renderMode: RenderMode.Prerender },
-  { path: 'admin/cardapio', renderMode: RenderMode.Prerender },
-  { path: 'admin/cardapio/novo', renderMode: RenderMode.Prerender },
-  {
-    path: 'admin/cardapio/:id/editar',
-    renderMode: RenderMode.Prerender,
-    getPrerenderParams: async () => products.map((product) => ({ id: product.id })),
-  },
-  { path: 'admin/categorias', renderMode: RenderMode.Prerender },
+  { path: '**', renderMode: RenderMode.Client },
 ];
