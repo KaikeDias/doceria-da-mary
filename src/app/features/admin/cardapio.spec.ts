@@ -4,10 +4,19 @@ import { RouterTestingHarness } from '@angular/router/testing';
 import { routes } from '../../app.routes';
 import { StatusFilter, matches, normalize } from './cardapio';
 import { MenuStore } from './menu-store';
+import { FakeAdminMenuRepository, provideAdmin } from './admin.fixture';
+import { loadError, saveError } from '../../core/supabase/supabase';
 
-async function setup(url = '/admin/cardapio') {
-  TestBed.configureTestingModule({ providers: [provideRouter(routes)] });
+async function setup(url = '/admin/cardapio', repository = new FakeAdminMenuRepository()) {
+  TestBed.configureTestingModule({
+    providers: [provideRouter(routes), ...provideAdmin(repository)],
+  });
   const harness = await RouterTestingHarness.create(url);
+  const settle = async () => {
+    await harness.fixture.whenStable();
+    harness.detectChanges();
+  };
+  await settle();
   const page = harness.routeNativeElement as HTMLElement;
   const text = (element: Element) => element.textContent?.replaceAll('\u00a0', ' ') ?? '';
   const rows = () => Array.from(page.querySelectorAll('tbody tr'));
@@ -18,7 +27,7 @@ async function setup(url = '/admin/cardapio') {
     search.dispatchEvent(new Event('input'));
     harness.detectChanges();
   };
-  return { harness, page, text, rows, names, type };
+  return { harness, page, text, rows, names, type, settle, repository };
 }
 
 describe('Cardápio', () => {
@@ -81,7 +90,7 @@ describe('Cardápio', () => {
     const select = page.querySelector<HTMLSelectElement>(
       'select[aria-label="Filtrar por categoria"]',
     )!;
-    select.value = 'sobremesas';
+    select.value = 'c-sobremesas';
     select.dispatchEvent(new Event('change'));
     harness.detectChanges();
     expect(names()).toEqual(['Brownie Recheado', 'Copo da Felicidade']);
@@ -93,18 +102,15 @@ describe('Cardápio', () => {
   });
 
   it('CA06: toggling updates label, indicator and removes it under a status filter', async () => {
-    const { harness, page, rows } = await setup();
+    const { harness, page, rows, settle } = await setup();
     const publishedFilter = page.querySelectorAll<HTMLButtonElement>('[role=group] button')[1];
     publishedFilter.click();
     harness.detectChanges();
     expect(rows()).toHaveLength(5);
     const toggle = rows()[0].querySelector<HTMLInputElement>('input[role=switch]')!;
     expect(toggle.getAttribute('aria-label')).toBe('Publicar Bolo de Chocolate no site');
-    vi.useFakeTimers();
     toggle.click();
-    harness.detectChanges();
-    vi.advanceTimersByTime(600);
-    harness.detectChanges();
+    await settle();
     expect(rows()).toHaveLength(4);
     expect(page.textContent).toMatch(/Publicados no site\s*4\s*de 6/);
     expect(publishedFilter.getAttribute('aria-pressed')).toBe('true');
@@ -132,7 +138,7 @@ describe('Cardápio', () => {
     const select = page.querySelector<HTMLSelectElement>(
       'select[aria-label="Filtrar por categoria"]',
     )!;
-    select.value = 'bolos';
+    select.value = 'c-bolos';
     select.dispatchEvent(new Event('change'));
     harness.detectChanges();
     expect(page.textContent).toContain('Nenhum doce encontrado');
@@ -144,7 +150,7 @@ describe('Cardápio', () => {
   });
 
   it('estados CA01–CA03: "…" opens the delete confirmation; cancel keeps, confirm deletes', async () => {
-    const { harness, page, names } = await setup();
+    const { harness, page, names, settle } = await setup();
     const dialog = page.querySelector('dialog')!;
     const ask = (name: string) =>
       page.querySelector<HTMLButtonElement>(`tbody button[aria-label="Excluir ${name}"]`)!.click();
@@ -166,7 +172,7 @@ describe('Cardápio', () => {
     ask('Brownie Recheado');
     harness.detectChanges();
     confirm.click();
-    harness.detectChanges();
+    await settle();
     expect(dialog.open).toBe(false);
     expect(names()).not.toContain('Brownie Recheado');
     expect(page.textContent).toMatch(/Total de produtos\s*5/);
@@ -177,14 +183,14 @@ describe('Cardápio', () => {
   });
 
   it('estados CA04: deleting every product shows the empty menu', async () => {
-    const { harness, page } = await setup();
+    const { harness, page, settle } = await setup();
     const confirm = page.querySelectorAll<HTMLButtonElement>('dialog button')[1];
     let next: HTMLButtonElement | null;
     while ((next = page.querySelector<HTMLButtonElement>('tbody button[aria-label^="Excluir"]'))) {
       next.click();
       harness.detectChanges();
       confirm.click();
-      harness.detectChanges();
+      await settle();
     }
     expect(page.textContent).toContain('Seu cardápio ainda está vazio');
     expect(page.textContent).toContain('Adicione o primeiro doce e ele já aparece no seu site');
@@ -197,30 +203,37 @@ describe('Cardápio', () => {
     expect(page.textContent).toMatch(/Publicados no site\s*0\s*de 0/);
   });
 
-  it('estados CA06/CA07: saving state, then a success message that closes', async () => {
-    const { harness, page, rows } = await setup();
+  it('estados CA06/CA07 + Supabase CA04: grava e mostra o salvamento e a mensagem de sucesso', async () => {
+    const repository = new FakeAdminMenuRepository();
+    let finish!: () => void;
+    const setPublished = vi.spyOn(repository, 'setPublished');
+    setPublished.mockImplementationOnce(() => new Promise<void>((done) => (finish = done)));
+    const { harness, page, rows, settle } = await setup(undefined, repository);
     const status = page.querySelector('[role=status]')!;
     const switches = () => Array.from(page.querySelectorAll<HTMLInputElement>('tbody input'));
-    vi.useFakeTimers();
     switches()[5].click();
     harness.detectChanges();
+    expect(switches()[5].checked).toBe(false);
     expect(rows()[5].textContent).toContain('Salvando…');
     expect(switches()[5].getAttribute('aria-busy')).toBe('true');
     expect(switches().every((input) => input.getAttribute('aria-disabled') === 'true')).toBe(true);
     expect(status.textContent).toContain('Salvando alterações…');
     expect(page.textContent).toMatch(/Publicados no site\s*5\s*de 6/);
     switches()[0].click();
-    vi.advanceTimersByTime(600);
-    harness.detectChanges();
+    expect(setPublished).toHaveBeenCalledTimes(1);
+    expect(setPublished).toHaveBeenCalledWith('caixa-docinhos', true);
+    finish();
+    await settle();
+    expect(switches()[5].checked).toBe(true);
     expect(rows()[5].textContent).toContain('Publicado');
-    expect(rows()[0].textContent).toContain('Publicado');
     expect(page.textContent).toMatch(/Publicados no site\s*6\s*de 6/);
     expect(status.textContent).toContain('Caixa de Docinhos agora aparece no site.');
     status.querySelector<HTMLButtonElement>('button[aria-label="Fechar aviso"]')!.click();
     harness.detectChanges();
     expect(status.textContent?.trim()).toBe('');
+    vi.useFakeTimers();
     switches()[0].click();
-    vi.advanceTimersByTime(600);
+    await vi.advanceTimersByTimeAsync(0);
     harness.detectChanges();
     expect(status.textContent).toContain('Bolo de Chocolate saiu do site.');
     vi.advanceTimersByTime(5000);
@@ -228,19 +241,69 @@ describe('Cardápio', () => {
     expect(status.textContent?.trim()).toBe('');
   });
 
-  it('estados: a product deleted while saving is not brought back', async () => {
-    const { harness, page, names } = await setup();
-    vi.useFakeTimers();
-    page.querySelector<HTMLInputElement>('tbody input')!.click();
-    harness.detectChanges();
+  it('Supabase CA05: falha ao gravar mantém a chave e mostra o aviso vermelho', async () => {
+    const repository = new FakeAdminMenuRepository();
+    vi.spyOn(repository, 'setPublished').mockRejectedValue(new Error('offline'));
+    const { page, rows, settle } = await setup(undefined, repository);
+    const toggle = page.querySelector<HTMLInputElement>('tbody input')!;
+    toggle.click();
+    await settle();
+    expect(toggle.checked).toBe(true);
+    expect(rows()[0].textContent).toContain('Publicado');
+    expect(page.querySelector('[role=status] [role=alert]')?.textContent).toContain(saveError);
+  });
+
+  it('Supabase CA06–CA07: "Excluindo…" durante a exclusão e aviso quando ela falha', async () => {
+    const repository = new FakeAdminMenuRepository();
+    let fail!: (error: Error) => void;
+    const deleteProduct = vi.spyOn(repository, 'deleteProduct');
+    deleteProduct.mockImplementationOnce(() => new Promise((_, reject) => (fail = reject)));
+    const { harness, page, names, settle } = await setup(undefined, repository);
+    const dialog = page.querySelector('dialog')!;
     page
-      .querySelector<HTMLButtonElement>('tbody button[aria-label="Excluir Bolo de Chocolate"]')!
+      .querySelector<HTMLButtonElement>('tbody button[aria-label="Excluir Brownie Recheado"]')!
       .click();
-    page.querySelectorAll<HTMLButtonElement>('dialog button')[1].click();
-    vi.advanceTimersByTime(600);
     harness.detectChanges();
-    expect(names()).not.toContain('Bolo de Chocolate');
-    expect(page.querySelector('[role=status]')?.textContent).toContain('foi excluído do cardápio.');
+    const [cancel, confirm] = Array.from(dialog.querySelectorAll('button'));
+    confirm.click();
+    harness.detectChanges();
+    expect(confirm.textContent).toContain('Excluindo…');
+    expect(confirm.disabled).toBe(true);
+    expect(cancel.disabled).toBe(true);
+    dialog.click();
+    const esc = new Event('cancel', { cancelable: true });
+    dialog.dispatchEvent(esc);
+    expect(esc.defaultPrevented).toBe(true);
+    expect(dialog.open).toBe(true);
+    fail(new Error('offline'));
+    await settle();
+    expect(dialog.open).toBe(false);
+    expect(names()).toContain('Brownie Recheado');
+    expect(page.querySelector('[role=status] [role=alert]')?.textContent).toContain(saveError);
+    expect(deleteProduct).toHaveBeenCalledWith(expect.objectContaining({ id: 'brownie' }));
+  });
+
+  it('Supabase CA03: carregando, erro e "Tentar de novo"', async () => {
+    const repository = new FakeAdminMenuRepository();
+    vi.spyOn(repository, 'listProducts').mockRejectedValueOnce(new Error('offline'));
+    let release!: () => void;
+    vi.spyOn(repository, 'listCategories')
+      .mockImplementationOnce(async () => [])
+      .mockImplementationOnce(async () => {
+        await new Promise<void>((done) => (release = done));
+        return [...repository.categories];
+      });
+    const { harness, page, rows, settle } = await setup(undefined, repository);
+    const alert = page.querySelector('[role=alert]')!;
+    expect(alert.textContent).toContain(loadError);
+    expect(page.textContent).toMatch(/Total de produtos\s*–/);
+    alert.querySelector('button')!.click();
+    harness.detectChanges();
+    expect(page.textContent).toContain('Carregando cardápio…');
+    release();
+    await new Promise((resolve) => setTimeout(resolve));
+    await settle();
+    expect(rows()).toHaveLength(6);
   });
 
   it('formulário CA01/CA09: add and edit link to the form; no price shows "Sob consulta"', async () => {
@@ -253,7 +316,9 @@ describe('Cardápio', () => {
     ).toBe('/admin/cardapio/bolo-chocolate/editar');
     expect(page.querySelectorAll('app-cardapio [aria-disabled=true]')).toHaveLength(0);
     const store = TestBed.inject(MenuStore);
-    store.save({ ...store.find('brownie')!, price: null, images: [] });
+    store.items.update((items) =>
+      items.map((item) => (item.id === 'brownie' ? { ...item, price: null, images: [] } : item)),
+    );
     harness.detectChanges();
     expect(text(rows()[2])).toContain('Sob consulta');
     expect(text(rows()[2])).not.toContain('Preço fixo');

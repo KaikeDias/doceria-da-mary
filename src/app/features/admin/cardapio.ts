@@ -12,6 +12,7 @@ import { RouterLink } from '@angular/router';
 import {
   LucideCake,
   LucideCakeSlice,
+  LucideCircleAlert,
   LucideCircleCheck,
   LucideEllipsis,
   LucideGlobe,
@@ -22,7 +23,8 @@ import {
   LucideTrash2,
   LucideX,
 } from '@lucide/angular';
-import { categories, formatPrice } from '../catalog/catalog';
+import { formatPrice } from '../catalog/catalog';
+import { loadError, saveError } from '../../core/supabase/supabase';
 import { MenuItem, MenuStore } from './menu-store';
 
 export type StatusFilter = 'todos' | 'publicados' | 'ocultos';
@@ -51,6 +53,7 @@ export function matches(
     RouterLink,
     LucideCake,
     LucideCakeSlice,
+    LucideCircleAlert,
     LucideCircleCheck,
     LucideEllipsis,
     LucideGlobe,
@@ -68,21 +71,25 @@ export class Cardapio {
   private readonly confirm = viewChild.required<ElementRef<HTMLDialogElement>>('confirm');
   private messageTimer?: ReturnType<typeof setTimeout>;
 
-  protected readonly categories = categories;
   protected readonly statuses: readonly { id: StatusFilter; label: string }[] = [
     { id: 'todos', label: 'Todos' },
     { id: 'publicados', label: 'Publicados' },
     { id: 'ocultos', label: 'Ocultos' },
   ];
-  private readonly store = inject(MenuStore);
+  protected readonly store = inject(MenuStore);
+  protected readonly loadError = loadError;
+  protected readonly state = this.store.state;
   protected readonly items = this.store.items;
+  protected readonly categories = this.store.categories;
   protected readonly query = signal('');
   protected readonly category = signal('todas');
   protected readonly status = signal<StatusFilter>('todos');
   protected readonly failedImages = signal<ReadonlySet<string>>(new Set());
   protected readonly saving = signal<string | null>(null);
   protected readonly message = signal('');
+  protected readonly failed = signal(false);
   protected readonly deleting = signal<MenuItem | null>(null);
+  protected readonly removing = signal(false);
 
   protected readonly publishedCount = computed(
     () => this.items().filter((item) => item.published).length,
@@ -92,10 +99,11 @@ export class Cardapio {
   );
 
   protected categoryLabel(id: string): string {
-    return categories.find((category) => category.id === id)?.label ?? '';
+    return this.store.categoryLabel(id);
   }
 
   constructor() {
+    this.store.load();
     const flash = this.store.flash();
     if (flash) {
       this.store.flash.set('');
@@ -107,21 +115,18 @@ export class Cardapio {
     return item.price ? formatPrice({ ...item.price, kind: 'fixed' }) : 'Sob consulta';
   }
 
-  protected toggle(item: MenuItem): void {
+  protected async toggle(item: MenuItem): Promise<void> {
     this.saving.set(item.id);
-    // shortcut: salvamento simulado (sem backend), trocar pela chamada à API quando houver.
-    setTimeout(() => {
-      this.saving.set(null);
-      if (!this.items().some((other) => other.id === item.id)) return;
-      this.items.update((items) =>
-        items.map((other) =>
-          other.id === item.id ? { ...other, published: !other.published } : other,
-        ),
-      );
+    try {
+      await this.store.setPublished(item);
       this.notify(
         item.published ? `${item.name} saiu do site.` : `${item.name} agora aparece no site.`,
       );
-    }, 600);
+    } catch {
+      this.notify(saveError, true);
+    } finally {
+      this.saving.set(null);
+    }
   }
 
   protected askDelete(item: MenuItem): void {
@@ -129,20 +134,29 @@ export class Cardapio {
     this.confirm().nativeElement.showModal();
   }
 
-  protected confirmDelete(): void {
+  protected async confirmDelete(): Promise<void> {
     const item = this.deleting()!;
-    this.items.update((items) => items.filter((other) => other.id !== item.id));
-    this.confirm().nativeElement.close();
-    this.notify(`${item.name} foi excluído do cardápio.`);
+    this.removing.set(true);
+    try {
+      await this.store.delete(item);
+      this.notify(`${item.name} foi excluído do cardápio.`);
+    } catch {
+      this.notify(saveError, true);
+    } finally {
+      this.removing.set(false);
+      this.confirm().nativeElement.close();
+    }
   }
 
-  // Fecha ao clicar no fundo escurecido (o próprio <dialog>).
+  // Fecha ao clicar no fundo escurecido (o próprio <dialog>), exceto durante a exclusão.
   protected confirmClick(event: MouseEvent): void {
-    if (event.target === this.confirm().nativeElement) this.confirm().nativeElement.close();
+    if (event.target === this.confirm().nativeElement && !this.removing())
+      this.confirm().nativeElement.close();
   }
 
-  protected notify(text: string): void {
+  protected notify(text: string, failed = false): void {
     clearTimeout(this.messageTimer);
+    this.failed.set(failed);
     this.message.set(text);
     this.messageTimer = setTimeout(() => this.message.set(''), 5000);
   }

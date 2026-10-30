@@ -1,6 +1,8 @@
 import { expect, test } from '@playwright/test';
+import { mockSupabase } from './supabase-mock';
 
 test('creates a product with a photo and shows it in the list', async ({ page }) => {
+  await mockSupabase(page, { session: true });
   await page.goto('/admin/cardapio');
   await page.waitForLoadState('networkidle');
   await page.getByRole('link', { name: 'Adicionar produto' }).click();
@@ -9,7 +11,7 @@ test('creates a product with a photo and shows it in the list', async ({ page })
   await page.getByRole('button', { name: 'Salvar produto' }).click();
   await expect(page.getByLabel('Nome do produto')).toBeFocused();
   await page.getByLabel('Nome do produto').fill('Pudim');
-  await page.getByLabel('Categoria').selectOption('sobremesas');
+  await page.getByLabel('Categoria').selectOption({ label: 'Sobremesas' });
   await page.getByLabel('Preço em reais').fill('25,50');
   await page.locator('input[type=file]').setInputFiles({
     name: 'pudim.png',
@@ -26,10 +28,15 @@ test('creates a product with a photo and shows it in the list', async ({ page })
   await expect(page).toHaveURL(/\/admin\/cardapio$/);
   await expect(page.locator('tbody tr')).toHaveCount(7);
   await expect(page.locator('tbody tr').last()).toContainText('Pudim');
+  await expect(page.locator('tbody tr').last().locator('img')).toHaveAttribute(
+    'src',
+    /\/storage\/v1\/object\/public\/produtos\/pudim\/[\w-]+\.png$/,
+  );
   await expect(page.getByRole('status')).toContainText('Pudim foi adicionado ao cardápio.');
 });
 
 test('edits a product from the list', async ({ page }) => {
+  await mockSupabase(page, { session: true });
   await page.goto('/admin/cardapio');
   await page.waitForLoadState('networkidle');
   await page.locator('tbody').getByRole('link', { name: 'Editar Brownie Recheado' }).click();
@@ -43,6 +50,7 @@ test('edits a product from the list', async ({ page }) => {
 for (const width of [320, 390, 768, 1024, 1440]) {
   test(`form has no horizontal scroll at ${width}px`, async ({ page }) => {
     await page.setViewportSize({ width, height: 844 });
+    await mockSupabase(page, { session: true });
     await page.goto('/admin/cardapio/bolo-chocolate/editar');
     await expect(page.locator('h1')).toHaveText('Editar produto');
     expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(
@@ -54,6 +62,7 @@ for (const width of [320, 390, 768, 1024, 1440]) {
 
 test('mobile: back link, collapsible preview and 44px targets', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
+  await mockSupabase(page, { session: true });
   await page.goto('/admin/cardapio/novo');
   await page.waitForLoadState('networkidle');
   const save = page.getByRole('button', { name: 'Salvar produto' });
@@ -74,6 +83,7 @@ test('mobile: back link, collapsible preview and 44px targets', async ({ page })
 });
 
 test('the price field keeps at most 5 whole digits while typing', async ({ page }) => {
+  await mockSupabase(page, { session: true });
   await page.goto('/admin/cardapio/novo');
   await page.waitForLoadState('networkidle');
   const price = page.getByLabel('Preço em reais');

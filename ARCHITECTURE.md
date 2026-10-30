@@ -1,26 +1,26 @@
 # ARCHITECTURE.md — Doceria da Mary
 
-> **Status:** landing page pública implementada a partir das exportações desktop/mobile do Paper fornecidas pelo usuário. Catálogo demonstrativo, filtros locais e links WhatsApp/Instagram ativos. Administração e backend continuam futuros.
+> **Status:** landing page pública e painel administrativo (login, cardápio, formulário de produto e categorias) integrados ao **Supabase** (banco Postgres com RLS, autenticação e armazenamento de imagens). O schema está versionado em `supabase/migrations/`; a ordem da integração está no [roadmap](docs/roadmap-integracao-supabase.md).
 
 ## 1. Visão geral
 
 ### Estado implementado
 
 - Angular/CLI/Router 22.2.2, TypeScript 6.0.3 strict, componentes standalone OnPush e execução zoneless.
-- Tailwind 4.3.3 via PostCSS, daisyUI 5.7.50 com tema claro `doceria-mary` e `@lucide/angular` 1.57.0 com ícones individuais. O pacote atual do Lucide substitui o legado para compatibilidade com Angular 22.
-- Rota `/` lazy com landing page responsiva: apresentação, categorias, cardápio, sobre, encomendas, contato e rodapé. CTA compacto no cabeçalho mobile e navegação por âncoras.
-- `features/catalog/catalog.ts` contém contratos Product/Category, seis produtos demonstrativos, filtro puro e preços em centavos. `product-card` reutiliza a apresentação dos produtos; Home usa Signals e computed para filtro e produto selecionado. `product-details` apresenta diálogo nativo com DaisyUI, preço fixo/variável, fotos e informações opcionais, com foco/rolagem gerenciados no navegador.
-- `outputMode: "static"` e `RenderMode.Prerender` para `/`. Entrada server Angular apenas para geração estática; nenhum servidor Express ou SSR dinâmico em produção.
-- Configuração tipada em `src/app/core/config/public-config.ts`, com WhatsApp/Instagram fornecidos pelo usuário; demais contatos e API continuam `null`. `core/config/contact-links.ts` centraliza mensagens por contexto, validação do número e codificação dos links wa.me. Os produtos incluem o nome na mensagem. Sem envio automático ou API de mensagens.
-- Assets em `public/`: logo original, recortes das fotos das exportações em WebP e fontes Cormorant Garamond/DM Sans locais em WOFF2. As referências desktop/mobile e dos modais ficam em `public/design/landing-page/` e são excluídas do build. Favicon original ainda não fornecido.
-- Vitest com cobertura V8 pelo builder Angular, Playwright no Chrome e Prettier; comandos e versões no README. Não há lint instalado.
-- Tailwind controla layout, medidas, tipografia, responsividade e hover nos templates. DaisyUI fornece botões, modal e estados; CSS específico fica restrito a fontes/tema, padrões compartilhados e animações do diálogo. Especificações e tarefas ficam em `specs/<funcionalidade>/`.
+- Tailwind 4.3.3 via PostCSS, daisyUI 5.7.50 com tema claro `doceria-mary` e `@lucide/angular` 1.57.0 com ícones individuais.
+- **Landing (`/`)**: rota lazy responsiva com apresentação, categorias, cardápio, sobre, encomendas, contato e rodapé. A casca é pré-renderizada e categorias e produtos são buscados no navegador por `CatalogRepository` (`features/catalog/catalog-repository.ts`), com skeleton, erro com "Tentar de novo" e cardápio vazio. `catalog.ts` guarda só contratos, filtro e formatação de preço; os dados de exemplo dos testes ficam em `catalog.fixture.ts`. `product-card` reutiliza a apresentação; `product-details` é um diálogo nativo com preço fixo/variável/"Sob consulta", observação de preço, galeria e "Bom saber".
+- **Login (`/login`)**: formulário com validação e estados de envio. Entra pelo Supabase Auth (`core/auth/auth.ts`), confere `administradores` e guarda a sessão no navegador. `adminGuard` protege `/admin/**` e `guestGuard` leva quem já está logado ao painel; "Sair" encerra a sessão.
+- **Painel (`/admin`)**: layout com menu lateral/gaveta. Cardápio (`/admin/cardapio`) com indicadores, busca, filtros, publicar/ocultar, exclusão e estados de carregamento, gravação e erro; formulário de produto (`/admin/cardapio/novo` e `/admin/cardapio/:id/editar`) com validação, até 5 fotos JPG/PNG/WEBP enviadas ao Storage e prévia; Categorias (`/admin/categorias`) com contagem do banco e mostrar/ocultar. O `MenuStore` (Signals) recarrega do banco a cada entrada nas telas por `AdminMenuRepository`. Configurações aparece no menu como indisponível.
+- **Renderização**: `outputMode: "static"`; só a `/` é pré-renderizada, demais rotas usam `RenderMode.Client` (`index.csr.html`). O client do Supabase só é criado no navegador; nenhuma chamada ao banco roda no build. Entrada server Angular apenas para geração estática; nenhum servidor em produção.
+- **Contato**: `core/config/public-config.ts` guarda WhatsApp e Instagram reais; `core/config/contact-links.ts` centraliza mensagens por contexto, validação do número e codificação dos links `wa.me`.
+- **Supabase**: `@supabase/supabase-js` 2.118; URL do projeto e chave publishable em `src/environments/environment*.ts`; projeto ligado pela CLI (`supabase/config.toml`), migrations em `supabase/migrations/` e tipos gerados em `core/supabase/database.types.ts`. Os guards e o `supabase-js` são carregados sob demanda, fora do bundle inicial.
+- Assets em `public/`: logo, fotos WebP e fontes Cormorant Garamond/DM Sans locais. Referências de design em `public/design/` excluídas do build.
+- Vitest com cobertura V8 pelo builder Angular, Playwright no Chrome (com o Supabase simulado em `tests/browser/supabase-mock.ts`) e Prettier. Não há lint instalado.
+- Especificações e tarefas em `specs/<funcionalidade>/` (fluxo do `AGENTS.md`).
 
-As seções abaixo descrevem a arquitetura-alvo; detalhes ainda ausentes (disponibilidade de produtos e administração) são futuros, sujeitos à autorização e aos designs do Paper. O estado vigente e validações estão em `docs/PROJECT_STATUS.md`; a origem das referências está em `docs/decisions/ADR-0001-referencias-exportadas.md`.
+A **Doceria da Mary** é uma aplicação web de apresentação de confeitaria artesanal. O visitante navega por uma landing page com catálogo digital e é direcionado ao WhatsApp para pedir. A administradora mantém o catálogo pelo painel.
 
-A **Doceria da Mary** será uma aplicação web de apresentação de confeitaria artesanal. A experiência pública é uma landing page com catálogo digital de produtos. Ao selecionar um doce ou uma encomenda, o visitante é direcionado ao WhatsApp, que é o canal externo de atendimento e fechamento do pedido.
-
-**Objetivo principal:** navegação rápida, boa apresentação de produtos e conversão para conversa no WhatsApp.
+**Objetivo principal:** navegação rápida, boa apresentação de produtos e conversão para conversa no WhatsApp, com o catálogo editável pela própria doceria.
 
 **Não contempla:** carrinho, checkout, pagamento online, entrega/frete calculado ou contas de clientes.
 
@@ -29,132 +29,139 @@ A **Doceria da Mary** será uma aplicação web de apresentação de confeitaria
 ```mermaid
 flowchart LR
     V[Visitante] --> LP[Landing page Angular]
-    LP --> CAT[Catálogo público]
     LP --> W[Link wa.me]
     W --> WA[WhatsApp da doceria]
-    CAT --> DATA[(Dados do catálogo)]
-    A[Administradora — fase futura] --> ADM[Painel /admin — futuro]
-    ADM --> API[API autenticada — futura]
-    API --> DB[(Persistência — futura)]
-    API --> DATA
+    A[Administradora] --> ADM[Painel /admin]
+    LP -- leitura anônima --> SB
+    ADM -- login + escrita --> SB
+    subgraph SB[Supabase]
+      AUTH[Auth]
+      DB[(Postgres + RLS)]
+      ST[(Storage: produtos, site)]
+    end
 ```
 
-**Na primeira versão**, `DATA` pode ser um arquivo local estático de produtos e categorias. As caixas de API, painel e banco ilustram uma **possível evolução**, não integrações já existentes.
+A landing lê de forma anônima e o painel escreve com a sessão da administradora.
 
-## 3. Stack prevista
+O front fala **diretamente** com o Supabase pelo `supabase-js`, sem API própria. A segurança vem das políticas de Row Level Security (RLS) no banco, não do front.
 
-| Camada                     | Tecnologia                  | Papel                                                    |
-| -------------------------- | --------------------------- | -------------------------------------------------------- |
-| Frontend                   | Angular + TypeScript strict | UI, composição e lógica de apresentação                  |
-| Componentes                | Angular standalone          | Organização e reutilização                               |
-| Estilos                    | Tailwind CSS v4             | Layout, responsividade e utilitários                     |
-| Design system              | daisyUI v5                  | Componentes e tokens semânticos                          |
-| Ícones                     | @lucide/angular             | Ícones vetoriais                                         |
-| Navegação                  | Angular Router              | Página pública; futura área administrativa               |
-| Estado local               | Angular Signals             | Filtros, modais e estado simples                         |
-| Conteúdo do catálogo (MVP) | Dados locais tipados        | Produtos e categorias sem API                            |
-| Atendimento                | Links públicos `wa.me`      | Abrir conversa no WhatsApp                               |
-| Renderização pública       | Preferência por SSG         | SEO e entrega estática, sujeito a validação no workspace |
+## 3. Stack
 
-As versões exatas devem ser registradas após instalação e validação em `package.json` e lockfile.
+| Camada             | Tecnologia                           | Papel                                            |
+| ------------------ | ------------------------------------ | ------------------------------------------------ |
+| Frontend           | Angular 22 + TypeScript strict       | UI, composição e lógica de apresentação          |
+| Componentes        | Angular standalone, OnPush, zoneless | Organização e reutilização                       |
+| Estilos            | Tailwind CSS v4 + daisyUI v5         | Layout, responsividade, tema semântico           |
+| Ícones             | @lucide/angular                      | Ícones vetoriais                                 |
+| Navegação          | Angular Router                       | Landing, login e painel                          |
+| Estado local       | Angular Signals                      | Filtros, modais, formulários e listas            |
+| Backend            | **Supabase**                         | Postgres, autenticação, armazenamento de imagens |
+| Cliente do backend | `@supabase/supabase-js` 2.x          | Consultas, login e upload a partir do navegador  |
+| Banco versionado   | Supabase CLI (`npx supabase`)        | Migrations em `supabase/migrations/`             |
+| Atendimento        | Links públicos `wa.me`               | Abrir conversa no WhatsApp                       |
+| Renderização       | SSG (`outputMode: "static"`)         | HTML estático; ver seção 5                       |
+| Testes             | Vitest + Playwright                  | Unidade e ponta a ponta                          |
 
-## 4. Organização de pastas proposta
+Versões exatas em `package.json` e no lockfile.
+
+## 4. Organização de pastas
 
 ```text
 src/
   app/
     core/
-      config/                 # configurações públicas, quando necessárias
-      services/               # serviços transversais reais
-    shared/
-      components/             # componentes de UI efetivamente compartilhados
-      utils/                  # funções utilitárias reutilizadas
+      config/               # configuração pública e links de contato (implementado)
+      auth/                 # Auth (Supabase Auth + administradores) e guards
+      supabase/             # client, tipos gerados, mapeamentos e mensagens de falha
     features/
-      home/
-        pages/                # página principal
-        components/           # seções exclusivas da landing page
-      catalog/
-        models/               # Product, Category etc.
-        services/             # acesso ao catálogo / filtros se necessário
-        components/           # card, filtros e modal de produto
+      home/                 # landing page
+      catalog/              # contratos, CatalogRepository, card e modal de produto
+      auth/                 # tela de login
+      admin/                # layout do painel, cardápio, formulário, categorias, MenuStore, AdminMenuRepository
     app.config.ts
     app.routes.ts
-  styles.css                 # Tailwind, plugin daisyUI e tema doceria-mary
+    app.routes.server.ts    # modo de renderização por rota
+  environments/             # URL do Supabase e chave publishable
+  styles.css                # Tailwind, plugin daisyUI e tema doceria-mary
+supabase/
+  config.toml               # projeto ligado pela CLI
+  migrations/               # histórico do banco (fonte da verdade do schema)
 ```
-
-**Nota:** esta é uma estrutura orientadora, não uma exigência de criar pastas vazias. Recursos estáticos podem ficar em `public/` ou outra pasta configurada pelo builder Angular; respeitar a configuração real do projeto.
 
 ### Regras de dependência
 
-- `features/*` podem utilizar `shared/*` e serviços globais de `core/*`.
-- `shared/*` não depende de features específicas.
+- `features/*` podem usar `shared/*` e `core/*`.
 - `core/*` não contém detalhes de páginas.
-- Código visual recebe dados tipados; regras de obtenção e transformação de dados ficam fora da camada de apresentação quando necessário.
+- **Telas não chamam o `supabase-js` diretamente.** O acesso a dados fica em repositórios com interface própria na feature correspondente (`CatalogRepository`, `AdminMenuRepository`), classes abstratas cuja implementação padrão usa o Supabase. Isso mantém os componentes simples e permite trocar a implementação por uma falsa nos testes.
+- O mapeamento entre colunas do banco (português, `snake_case`) e os contratos do front (`Product`, `Category`, `MenuItem`) acontece só nos repositórios.
 - Não criar serviços genéricos sem uso concreto.
 
 ## 5. Rotas e renderização
 
-| Rota                 | Propósito                       | Momento           | Estratégia                                        |
-| -------------------- | ------------------------------- | ----------------- | ------------------------------------------------- |
-| `/`                  | Landing page e cardápio público | MVP               | Página pública, preferencialmente pré-renderizada |
-| `/admin` e sub-rotas | Gerenciar produtos e conteúdo   | Futuro            | Rotas lazy, autenticadas, dependentes de backend  |
-| `**`                 | Página não encontrada           | Quando necessária | Fallback adequado à hospedagem                    |
+| Rota                         | Propósito                  | Renderização                                           |
+| ---------------------------- | -------------------------- | ------------------------------------------------------ |
+| `/`                          | Landing e cardápio público | Prerender da casca; cardápio buscado no navegador (D1) |
+| `/login`                     | Login da administradora    | Client; `guestGuard`                                   |
+| `/admin` → `/admin/cardapio` | Lista do cardápio          | Client; `adminGuard`                                   |
+| `/admin/cardapio/novo`       | Novo produto               | Client; `adminGuard` + `menuReady`                     |
+| `/admin/cardapio/:id/editar` | Editar produto             | Client; `adminGuard` + `menuReady`; `:id` = `uuid`     |
+| `/admin/categorias`          | Categorias                 | Client; `adminGuard`                                   |
 
-**SEO e renderização:** considerar metatags, título e descrição, semântica HTML, imagens otimizadas e HTML pré-renderizado para `/`. A configuração de SSG e de hospedagem deve ser verificada; se dados dinâmicos forem adicionados, reavaliar cache, geração estática e atualização do conteúdo.
+Com dados no banco, ids de produto não existem no momento do build e a sessão só existe no navegador; por isso login e painel renderizam no cliente. A hospedagem precisa servir `index.csr.html` para `/login` e `/admin/**`.
+
+**SEO:** com o cardápio buscado no navegador, o HTML pré-renderizado da `/` deixa de trazer os produtos. Pré-renderizar com os dados do banco fica para depois da escolha de hospedagem.
 
 ## 6. Componentes e funcionalidades
 
 ### Landing page (`home`)
 
-Seções previstas:
-
-1. Navbar com âncoras e CTA WhatsApp.
-2. Hero com apresentação e botão para o cardápio.
-3. Categorias.
-4. Cardápio com filtros.
-5. Sobre a doceria.
-6. Chamada para encomendas.
-7. Contato e redes sociais.
-8. Footer.
-
-O design aprovado no Paper define aparência, espaçamento e composição das seções. A arquitetura não substitui a especificação visual.
+Navbar com âncoras e CTA WhatsApp; hero; categorias; cardápio com filtros; sobre; chamada para encomendas; contato e redes; footer. O design aprovado define aparência e composição.
 
 ### Catálogo (`catalog`)
 
-Responsabilidades:
+- Categorias e produtos visíveis, com filtro por categoria no cliente.
+- Cards e modal de detalhes: descrição curta e longa, fotos, preço fixo / "A partir de" / "Sob consulta", observação de preço e "Bom saber".
+- Encaminhamento ao WhatsApp com o nome do produto na mensagem.
 
-- Oferecer coleção de categorias e produtos visíveis.
-- Permitir filtragem por categoria no cliente.
-- Exibir cards e detalhes do produto.
-- Suportar descrição, imagens e preço configurável.
-- Encaminhar interesse no produto ao WhatsApp com mensagem apropriada.
+### Login (`auth`)
 
-### Modelo conceitual (a implementar quando necessário)
+Validação de e-mail e senha, estados de envio e erro. `signInWithPassword` do Supabase Auth, verificação de que o usuário está em `administradores` (senão a sessão é encerrada), sessão persistida no navegador e guards nas rotas. Mensagens: credenciais inválidas, sem conexão e indisponibilidade.
+
+### Painel (`admin`)
+
+- **Cardápio:** indicadores, busca, filtros, publicar/ocultar, excluir.
+- **Formulário de produto:** nome, categoria, descrição, preço, "A partir de", até 5 fotos com principal, prévia.
+- **Categorias:** contagem de produtos e mostrar/ocultar. Adicionar, editar e excluir estão indisponíveis.
+- **Configurações:** indisponível (sem tela).
+
+### Modelo do front
+
+Contratos em `features/catalog/catalog.ts` (landing) e `features/admin/admin-menu-repository.ts` (`MenuItem`, `AdminCategory`, `ProductInput`; ids do painel são os `uuid` do banco):
 
 ```ts
 export interface Category {
-  id: string;
-  name: string;
-  slug: string;
+  readonly id: string; // = categorias.slug
+  readonly name: string; // = categorias.nome (chip)
+  readonly label: string; // = categorias.rotulo (cards e painel)
+  readonly image: string;
 }
 
-export type ProductPricing =
-  | { kind: 'fixed'; amountInCents: number }
-  | { kind: 'starting-at'; amountInCents: number }
-  | { kind: 'on-request' };
-
 export interface Product {
-  id: string;
-  name: string;
-  description: string;
-  categoryId: string;
-  imageUrl?: string;
-  pricing: ProductPricing;
-  published: boolean;
+  readonly id: string; // = produtos.slug
+  readonly name: string;
+  readonly description: string;
+  readonly details?: string; // = produtos.detalhes
+  readonly priceNote?: string; // = produtos.observacao_preco
+  readonly information?: readonly { icon: 'clock' | 'snowflake' | 'info'; text: string }[];
+  readonly categoryId: string; // = categoria_slug
+  readonly categoryLabel: string; // = categoria_rotulo
+  readonly image: string; // URL pública da foto principal; vazia = sem foto
+  readonly additionalImages?: readonly { src: string; alt: string }[];
+  readonly price: { kind: 'fixed' | 'starting-at'; amountInCents: number } | null; // null = "Sob consulta"
 }
 ```
 
-Os contratos acima são **propostas**, não arquivos já criados. Valores monetários em centavos evitam imprecisão de `number` com valores fracionários. Formatar a exibição como `pt-BR`/`BRL`.
+Valores monetários ficam em centavos no front. O banco guarda `numeric(10,2)` e a conversão acontece no repositório (`amountInCents = round(preco * 100)`); `preco` nulo é "Sob consulta".
 
 ## 7. Fluxos principais
 
@@ -164,44 +171,73 @@ Os contratos acima são **propostas**, não arquivos já criados. Valores monet�
 sequenceDiagram
     actor V as Visitante
     participant UI as Landing page
-    participant CAT as Catálogo
+    participant SB as Supabase
     participant WA as WhatsApp
     V->>UI: Abre a página
-    UI->>CAT: Obtém produtos publicados
-    CAT-->>UI: Lista e categorias
-    V->>UI: Filtra / abre detalhes
+    UI->>SB: Lê categorias visíveis e cardapio_publico (anônimo)
+    SB-->>UI: Produtos publicados
+    UI->>SB: Lê produto_imagens dos produtos retornados
+    V->>UI: Filtra / abre detalhes (sem nova busca)
     UI-->>V: Exibe informações do doce
     V->>UI: Clica em Pedir pelo WhatsApp
-    UI->>UI: Monta texto e codifica URL
-    UI-->>WA: Abre link wa.me
+    UI-->>WA: Abre link wa.me com o nome do produto
 ```
 
-### Geração do link
+Falha em qualquer leitura mostra o estado de erro com "Tentar de novo".
 
-- Configurar número público da doceria em lugar centralizado, apenas com dígitos e DDI.
-- Usar `https://wa.me/<numero>?text=<texto_codificado>`.
-- Construir mensagem com `encodeURIComponent`, incluindo o nome do produto quando aplicável.
-- Não supor que uma conversa foi iniciada ou que o pedido foi concluído: a navegação externa não comprova conversão nem venda.
+### Administradora alterando o cardápio
 
-## 8. Dados e evolução de persistência
+```mermaid
+sequenceDiagram
+    actor A as Administradora
+    participant UI as Painel
+    participant AUTH as Supabase Auth
+    participant DB as Postgres (RLS)
+    participant ST as Storage
+    A->>UI: E-mail e senha
+    UI->>AUTH: signInWithPassword
+    AUTH-->>UI: Sessão
+    UI->>DB: Confere administradores
+    A->>UI: Salva produto com fotos
+    UI->>DB: insert/update produtos
+    UI->>ST: upload produtos/<id>/<uuid>.<ext>
+    UI->>DB: recria produto_imagens na ordem do formulário
+    UI->>ST: remove arquivos das fotos retiradas
+```
 
-### MVP
+### Geração do link do WhatsApp
 
-- Dados locais tipados (arquivo TS/JSON) são suficientes se o conteúdo mudar pouco.
-- Filtros e diálogos operam no cliente.
-- Nenhum backend é exigido para o WhatsApp via link.
+- Número público com DDI, só dígitos, em `public-config.ts`.
+- `https://wa.me/<numero>?text=<texto_codificado>` com `encodeURIComponent`, incluindo o nome do produto quando aplicável.
+- A navegação externa não comprova conversa, pedido ou venda.
 
-### Evolução futura: painel administrativo
+## 8. Dados e persistência
 
-Se o gerenciamento do catálogo for adotado:
+### Origem dos dados
 
-1. Definir backend/API e mecanismo de autenticação e autorização.
-2. Persistir produtos, categorias e configurações públicas.
-3. Separar API administrativa autenticada dos endpoints públicos de leitura.
-4. Criar um serviço/repositório de catálogo no frontend que esconda a origem dos dados.
-5. Definir estratégia de atualização da página pré-renderizada (novo build, revalidação ou dados buscados em tempo de execução).
+- Landing e painel: Supabase, pelos repositórios. Falhas viram mensagens fixas (`loadError`, `saveError` em `core/supabase/supabase.ts`).
+- Contatos: `public-config.ts` (Configurações do site ainda não usa o banco).
 
-O stack backend, banco de dados e provedor de identidade **ainda não foram escolhidos**. Não assumir Spring, Quarkus, Firebase ou outra solução sem decisão explícita.
+### Banco (Supabase)
+
+Schema versionado em `supabase/migrations/` e aplicado com a CLI (`npx supabase db push --linked`). Alterações no banco são feitas **somente por migration**, nunca direto no painel do Supabase.
+
+| Tabela / view                    | Conteúdo                                                                                                                                                                                                                                  |
+| -------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `categorias`                     | `nome` (chip, único), `slug`, `rotulo`, `imagem_url`, `visivel`, `ordem`                                                                                                                                                                  |
+| `produtos`                       | `categoria_id` (FK, `on delete set null`), `nome` (≤ 80), `slug`, `descricao` (≤ 300), `detalhes`, `preco` (nulo = sob consulta, ≤ 99.999,99), `preco_a_partir`, `observacao_preco`, `informacoes` (jsonb validado), `publicado`, `ordem` |
+| `produto_imagens`                | até 5 por produto; `storage_path` no bucket `produtos`; `posicao` 0 = principal                                                                                                                                                           |
+| `configuracoes_site`             | linha única com identidade, contato, atendimento e textos da landing. **Ainda sem tela; não usada pelo front.**                                                                                                                           |
+| `administradores`                | liga usuários do Supabase Auth ao papel de admin                                                                                                                                                                                          |
+| `cardapio_publico` (view)        | produtos publicados com categoria visível (ou sem categoria), rótulo da categoria e foto principal                                                                                                                                        |
+| `categorias_com_contagem` (view) | categorias com o total de produtos                                                                                                                                                                                                        |
+
+Buckets do Storage: `produtos` (fotos dos doces) e `site` (logo e imagens da landing), públicos para leitura, JPG/PNG/WEBP até 5 MB.
+
+| Migration                                       | Conteúdo                                                                                                |
+| ----------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
+| `20261030041002_schema_inicial.sql`             | Tabelas, views, RLS, buckets e dados iniciais                                                           |
+| `20261030042000_alinhar_catalogo_com_front.sql` | Colunas e limites que o front usa, `rotulo` da categoria, views recriadas e dados iguais a `catalog.ts` |
 
 ## 9. Design system
 
@@ -227,57 +263,59 @@ Centralizar valores no tema, definir tokens `*-content` acessíveis e reutilizar
 
 ### Segurança
 
-- Não incluir credenciais no frontend.
+- O front usa só a **chave publishable** do Supabase, que é pública por natureza. A chave secret / `service_role` e a senha do banco **nunca** entram no repositório nem no front.
+- A autorização é feita no banco por **RLS**:
+  - visitante anônimo lê só categorias visíveis, produtos publicados e as fotos deles, e não grava nada;
+  - só usuários cadastrados em `administradores` (função `is_admin()`) leem itens ocultos e gravam em tabelas e no Storage.
+- O guard do Angular melhora a navegação, mas **não** é a proteção: ela está no RLS.
+- Cadastro aberto de usuários deve ficar desativado no Supabase Auth.
 - URLs e dados externos devem ser validados/escapados.
-- O painel futuro precisa de autorização no servidor, não apenas guards no Angular.
-- Não processar informações de pagamento ou armazenar pedidos no MVP.
+- Não processar pagamento nem armazenar pedidos.
 
 ### Acessibilidade
 
-- Estrutura de headings e landmarks semânticos.
-- Contraste, foco visível, teclado e labels associados.
-- Modal com foco gerenciado, fechamento acessível e retorno de foco.
-- Textos alternativos e suporte a redução de movimento.
+- Headings e landmarks semânticos; contraste, foco visível, teclado e labels associados.
+- Modais com foco gerenciado, fechamento acessível e retorno de foco.
+- Textos alternativos (`produto_imagens.alt`) e suporte a redução de movimento.
+- Estados de carregamento e erro anunciados de forma acessível.
 
 ### Performance
 
-- Imagens responsivas e otimizadas; carregar imagens secundárias sob demanda.
-- Evitar scripts/efeitos pesados, principalmente no mobile.
-- Minimizar JavaScript inicial e evitar dependências redundantes.
-- Validar o resultado do build e o comportamento na hospedagem escolhida.
+- Imagens otimizadas; secundárias sob demanda.
+- Uma consulta por tela sempre que possível (views prontas em vez de várias chamadas).
+- Filtros e busca no cliente enquanto o volume for pequeno.
+- Minimizar JavaScript inicial.
 
 ## 11. Qualidade e verificações
 
-Testes prioritários ao implementar a lógica:
-
-- Filtragem por categoria e visibilidade de produtos.
-- Formatação de preços fixos, iniciais e sob consulta.
-- Montagem e codificação da URL do WhatsApp.
-- Navegação e interação acessível no modal de detalhes.
-
-Comandos de build, lint e testes devem seguir os **scripts reais do `package.json`**. Não presumir que scripts de lint/teste existam antes de conferir.
+- Pelo menos um teste por critério de aceitação e 90% de cobertura por unidade (`AGENTS.md`).
+- **Testes unitários não usam o Supabase real:** usam implementações falsas dos repositórios. O mapeamento banco ↔ modelo tem testes próprios com respostas de exemplo.
+- **Playwright** intercepta as chamadas ao Supabase (`/rest/v1`, `/auth/v1`, `/storage/v1`) com fixtures, para não depender de rede nem de dados reais.
+- Validar o RLS manualmente contra o projeto real a cada mudança de política: aba anônima não vê itens ocultos e não grava.
+- Comandos de build e testes conforme os scripts de `package.json`.
 
 ## 12. Decisões arquiteturais
 
-| ID      | Decisão                                  | Justificativa                                             | Situação                              |
-| ------- | ---------------------------------------- | --------------------------------------------------------- | ------------------------------------- |
-| ADR-001 | Landing page no lugar de e-commerce      | Reduz custo e complexidade; pedido concluído por conversa | Definida                              |
-| ADR-002 | Angular standalone e divisão por feature | Organização incremental e APIs atuais                     | Implementada no setup                 |
-| ADR-003 | Tailwind v4 + daisyUI v5                 | Styling consistente com tema semântico                    | Implementada no setup                 |
-| ADR-004 | Catálogo local no MVP                    | Sem dependência inicial de backend                        | Proposta; confirmar                   |
-| ADR-005 | WhatsApp via link `wa.me`                | Integração simples sem serviço de mensagens               | Definida                              |
-| ADR-006 | SSG para página pública                  | Favorecer entrega de HTML e SEO                           | SSG implementado; hospedagem pendente |
-| ADR-007 | Administração em fase futura             | MVP enxuto                                                | Definida                              |
+| ID      | Decisão                                                                             | Justificativa                                                                                       | Situação                                                      |
+| ------- | ----------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------- | ------------------------------------------------------------- |
+| ADR-001 | Landing page no lugar de e-commerce                                                 | Reduz custo e complexidade; pedido concluído por conversa                                           | Definida                                                      |
+| ADR-002 | Angular standalone e divisão por feature                                            | Organização incremental e APIs atuais                                                               | Implementada                                                  |
+| ADR-003 | Tailwind v4 + daisyUI v5                                                            | Styling consistente com tema semântico                                                              | Implementada                                                  |
+| ADR-004 | Catálogo local no MVP                                                               | Sem dependência inicial de backend                                                                  | **Substituída pela ADR-008**                                  |
+| ADR-005 | WhatsApp via link `wa.me`                                                           | Integração simples sem serviço de mensagens                                                         | Definida                                                      |
+| ADR-006 | SSG para página pública                                                             | Favorecer entrega de HTML e SEO                                                                     | Implementada para a `/`; login e painel renderizam no cliente |
+| ADR-007 | Administração em fase futura                                                        | MVP enxuto                                                                                          | **Superada:** painel integrado ao Supabase                    |
+| ADR-008 | **Supabase como backend** (Postgres + RLS, Auth, Storage), acessado direto do front | Dispensa API própria; autenticação e armazenamento prontos; plano gratuito suficiente para o volume | Implementada                                                  |
+| ADR-009 | Schema versionado por migrations da Supabase CLI                                    | Histórico do banco junto com o código; ambientes reproduzíveis                                      | Implementada                                                  |
+| ADR-010 | Acesso a dados por repositórios com interface própria                               | Telas e testes independentes do `supabase-js`                                                       | Implementada (`CatalogRepository`, `AdminMenuRepository`)     |
 
 ## 13. Pontos em aberto
 
-- Versões e configuração instaladas estão registradas no README e no lockfile.
-- Obter designs finais do Paper, logo e imagens aprovadas.
-- Confirmar produtos, categorias, preços e regras de visibilidade reais.
-- Confirmar número de WhatsApp, Instagram e dados públicos da doceria.
-- Escolher plataforma de hospedagem e validar a publicação do build estático.
-- Decidir se haverá API e administração, quando esse escopo começar.
+- Validar manualmente contra o projeto real o login da Mary e as gravações do painel (publicar, excluir, criar com fotos).
+- Tela de Configurações e uso de `configuracoes_site`. Quando entrar, ajustar a `check` de WhatsApp do banco (hoje 10–11 dígitos sem DDI; o front usa DDI `55`).
+- Escolher a hospedagem e validar a publicação. A hospedagem precisa servir `index.csr.html` em `/login` e `/admin/**`.
+- Fotos originais/adicionais dos produtos e confirmação de antecedência, conservação e alérgenos antes de cadastrá-los como reais.
 
 ## 14. Manutenção deste documento
 
-Atualize este arquivo quando houver alterações em stack, roteamento, origem de dados, fronteiras das features, renderização, segurança ou decisões relevantes. Descreva apenas o que foi confirmado no repositório e identifique claramente propostas futuras.
+Atualize este arquivo quando houver alterações em stack, roteamento, origem de dados, schema do banco, políticas de acesso, fronteiras das features, renderização, segurança ou decisões relevantes. Descreva apenas o que foi confirmado no repositório e identifique claramente o que ainda é alvo ou proposta.

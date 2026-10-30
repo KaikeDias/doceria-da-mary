@@ -1,4 +1,5 @@
-import { filterProducts, formatPrice, products } from './catalog';
+import { filterProducts, formatPrice } from './catalog';
+import { products } from './catalog.fixture';
 
 describe('Catálogo demonstrativo', () => {
   it('retorna todos os produtos e filtra sem alterar os dados', () => {

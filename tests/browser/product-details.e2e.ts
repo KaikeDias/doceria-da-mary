@@ -1,4 +1,5 @@
 import { expect, Page, test } from '@playwright/test';
+import { mockSupabase } from './supabase-mock';
 
 const details = (page: Page) => page.getByRole('dialog');
 
@@ -45,6 +46,7 @@ test.beforeEach(async ({ page }) => {
       body: '<svg xmlns="http://www.w3.org/2000/svg" width="400" height="400"><rect width="400" height="400" fill="#f0d2c8"/><text x="40" y="200" fill="#5a3a2e">Foto de teste</text></svg>',
     }),
   );
+  await mockSupabase(page, { allPublished: true });
   await page.goto('/');
   await page.waitForFunction(() =>
     (window as any).ng?.getComponent(document.querySelector('app-home')),
@@ -254,6 +256,7 @@ test('CA06–CA08: toque mobile abre e fecha o painel', async ({ browser }) => {
     isMobile: true,
   });
   const page = await context.newPage();
+  await mockSupabase(page, { allPublished: true });
   await page.goto('/');
   await page.locator('.product-photo').first().tap();
   await expect(details(page)).toBeVisible();

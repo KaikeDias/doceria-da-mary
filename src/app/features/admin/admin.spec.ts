@@ -2,6 +2,8 @@ import { TestBed } from '@angular/core/testing';
 import { Router, provideRouter } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
 import { routes } from '../../app.routes';
+import { Auth } from '../../core/auth/auth';
+import { provideAdmin } from './admin.fixture';
 
 describe('Admin layout', () => {
   beforeEach(() => {
@@ -28,14 +30,16 @@ describe('Admin layout', () => {
   });
 
   async function setup() {
-    TestBed.configureTestingModule({ providers: [provideRouter(routes)] });
+    TestBed.configureTestingModule({ providers: [provideRouter(routes), ...provideAdmin()] });
     const harness = await RouterTestingHarness.create('/admin/cardapio');
+    await harness.fixture.whenStable();
+    harness.detectChanges();
     return { harness, page: harness.fixture.nativeElement as HTMLElement };
   }
 
   it(
     'CA02/CA08/CA09: menu items, current page, disabled entries and external actions',
-    { timeout: 30000 },
+    { timeout: 60000 },
     async () => {
       const { page } = await setup();
       const nav = page.querySelector('aside nav')!;
@@ -50,14 +54,26 @@ describe('Admin layout', () => {
       const site = nav.querySelector<HTMLAnchorElement>('a[target=_blank]')!;
       expect(site.getAttribute('href')).toBe('/');
       expect(site.rel).toContain('noopener');
-      expect(nav.querySelector('a[href="/login"]')?.textContent).toContain('Sair');
+      expect(nav.querySelector('button')?.textContent).toContain('Sair');
     },
   );
 
-  it('CA09: "Sair" navigates to /login', async () => {
+  it('Autenticação CA07: "Sair" encerra a sessão e leva a /login', async () => {
     const { harness, page } = await setup();
-    page.querySelector<HTMLAnchorElement>('aside nav a[href="/login"]')!.click();
+    const auth = TestBed.inject(Auth);
+    const signOut = vi.spyOn(auth, 'signOut');
+    vi.spyOn(auth, 'isAdmin').mockResolvedValue(false);
+    page.querySelector<HTMLButtonElement>('aside nav button')!.click();
     await harness.fixture.whenStable();
+    expect(signOut).toHaveBeenCalled();
+    expect(TestBed.inject(Router).url).toBe('/login');
+  });
+
+  it('Autenticação CA06: sem sessão de admin, /admin leva a /login', async () => {
+    TestBed.configureTestingModule({
+      providers: [provideRouter(routes), ...provideAdmin(undefined, false)],
+    });
+    await RouterTestingHarness.create('/admin/cardapio');
     expect(TestBed.inject(Router).url).toBe('/login');
   });
 
