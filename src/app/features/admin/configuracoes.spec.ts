@@ -103,7 +103,7 @@ describe('Configurações do site', () => {
       expect(field('heroTitle').value).toBe(siteConfig.heroTitle);
       expect(
         page.querySelector<HTMLImageElement>('img[alt="Logo atual"]')!.getAttribute('src'),
-      ).toBe('logo.png');
+      ).toBe('logo.webp');
       expect(
         page
           .querySelector<HTMLImageElement>('img[alt="Imagem principal atual"]')!

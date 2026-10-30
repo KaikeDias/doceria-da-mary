@@ -1,4 +1,6 @@
 import { TestBed } from '@angular/core/testing';
+import { DOCUMENT } from '@angular/common';
+import { Title } from '@angular/platform-browser';
 import { categories, products, provideCatalog } from '../catalog/catalog.fixture';
 import { SiteConfigRepository, siteConfigDefaults } from '../../core/config/site-config';
 import { provideSiteConfig, siteConfig } from '../../core/config/site-config.fixture';
@@ -304,17 +306,19 @@ describe('Landing lendo as configurações do site', () => {
     expect(instagram.textContent).toContain('@doceriadamary');
   });
 
-  it('CA04: enquanto carrega, skeletons no lugar dos textos e contatos sem link', async () => {
+  it('SEO CA08: enquanto carrega, textos e imagens padrão; só o contato fica em skeleton e sem link', async () => {
     let release!: (config: typeof siteConfig) => void;
     const { fixture, page } = setup(() => new Promise((done) => (release = done)));
     await settle(fixture);
-    expect(text(page, 'h1')).toBe('');
-    expect(page.querySelectorAll('h1 .skeleton')).toHaveLength(2);
-    expect(page.querySelector('.hero-picture img')).toBeNull();
-    expect(page.querySelector('.hero-picture .skeleton')).toBeTruthy();
-    expect(page.querySelector('.site-header .brand img')).toBeNull();
-    expect(page.querySelector('.site-header .brand')?.getAttribute('aria-label')).toBe('Início');
-    expect(text(page, '#orders-title')).toBe('');
+    expect(text(page, 'h1')).toBe(siteConfigDefaults.heroTitle);
+    expect(page.querySelector('.hero-picture img')?.getAttribute('src')).toBe('images/hero.webp');
+    expect(page.querySelector('.site-header .brand img')?.getAttribute('src')).toBe('logo.webp');
+    expect(page.querySelector('.site-header .brand')?.getAttribute('aria-label')).toBe(
+      'Doceria da Mary — início',
+    );
+    expect(text(page, '#orders-title')).toBe(siteConfigDefaults.ordersTitle);
+    expect(text(page, '#sobre .about-copy p:nth-of-type(2)')).toBe(siteConfigDefaults.about);
+    expect(page.querySelectorAll('.skeleton')).toHaveLength(2);
     expect(text(page, '.whatsapp-card .contact-detail')).not.toContain('+55');
     expect(page.querySelectorAll('a[href^="https://wa.me/"]')).toHaveLength(0);
     expect(page.querySelectorAll('a[href^="https://www.instagram.com/"]')).toHaveLength(0);
@@ -343,10 +347,75 @@ describe('Landing lendo as configurações do site', () => {
     expect(text(empty.page, '.site-header .brand small')).toBe(siteConfigDefaults.tagline);
     expect(text(empty.page, '#orders-title')).toBe(siteConfigDefaults.ordersTitle);
     expect(empty.page.querySelector('.site-header .brand img')?.getAttribute('src')).toBe(
-      'logo.png',
+      'logo.webp',
     );
     const heroImg = empty.page.querySelector('.hero-picture img')!;
     expect(heroImg.getAttribute('src')).toBe('images/hero.webp');
     expect(heroImg.getAttribute('alt')).toContain('Seleção de doces artesanais');
+  });
+});
+
+describe('SEO da landing', () => {
+  function setup(load: () => Promise<typeof siteConfig>) {
+    TestBed.configureTestingModule({ providers: [provideCatalog(), provideSiteConfig(load)] });
+    const fixture = TestBed.createComponent(Home);
+    return { fixture, page: fixture.nativeElement as HTMLElement };
+  }
+
+  const head = () => TestBed.inject(DOCUMENT).head;
+  const meta = (selector: string) => head().querySelector(selector)?.getAttribute('content');
+  const jsonLd = () => JSON.parse(head().querySelector('#dados-estruturados')!.textContent!);
+
+  afterEach(() => head().querySelector('#dados-estruturados')?.remove());
+
+  it('CA03/CA04/CA09: título, metas, JSON-LD e região padrão antes do banco', async () => {
+    const { fixture, page } = setup(() => new Promise(() => {}));
+    fixture.detectChanges();
+    await fixture.whenStable();
+    const title = 'Doceria da Mary | Doces artesanais · Paes Landim, Piauí';
+    const description = 'Doces artesanais para momentos especiais. Paes Landim, Piauí.';
+    expect(TestBed.inject(Title).getTitle()).toBe(title);
+    expect(meta('meta[name=description]')).toBe(description);
+    expect(meta('meta[property="og:title"]')).toBe(title);
+    expect(meta('meta[property="og:description"]')).toBe(description);
+    expect(meta('meta[property="og:site_name"]')).toBe('Doceria da Mary');
+    expect(jsonLd()).toEqual({
+      '@context': 'https://schema.org',
+      '@type': 'Bakery',
+      name: 'Doceria da Mary',
+      description: 'Doces artesanais para momentos especiais.',
+      areaServed: 'Paes Landim, Piauí',
+      telephone: '+5589994259584',
+      sameAs: ['https://www.instagram.com/doceriadamarypl/'],
+    });
+    expect(page.querySelector('.contact-region')?.textContent?.trim()).toBe(
+      'Região atendida: Paes Landim, Piauí',
+    );
+  });
+
+  it('CA07/CA09/CA11: valores do banco, sem telefone inválido e com "<" escapado', async () => {
+    const { fixture, page } = setup(async () => ({
+      ...siteConfig,
+      name: 'Mary Doces',
+      description: 'Doces </script> para festas.',
+      whatsapp: '123',
+    }));
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+    expect(TestBed.inject(Title).getTitle()).toBe(
+      'Mary Doces | Doces artesanais · Toda a cidade e região',
+    );
+    expect(meta('meta[property="og:site_name"]')).toBe('Mary Doces');
+    expect(head().querySelectorAll('#dados-estruturados')).toHaveLength(1);
+    expect(head().querySelector('#dados-estruturados')!.textContent).not.toContain('</script>');
+    const data = jsonLd();
+    expect(data.description).toBe('Doces </script> para festas.');
+    expect(data.areaServed).toBe('Toda a cidade e região');
+    expect(data.telephone).toBeUndefined();
+    expect(data.sameAs).toEqual(['https://www.instagram.com/doceriadamary/']);
+    expect(page.querySelector('.contact-region')?.textContent?.trim()).toBe(
+      'Região atendida: Toda a cidade e região',
+    );
   });
 });

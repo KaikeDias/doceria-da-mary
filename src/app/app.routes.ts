@@ -15,7 +15,7 @@ export const routes: Routes = [
   {
     path: '',
     pathMatch: 'full',
-    title: 'Doceria da Mary',
+    // Título definido pela Home a partir das configurações do site.
     loadComponent: () => import('./features/home/home').then((m) => m.Home),
   },
   {
@@ -58,5 +58,10 @@ export const routes: Routes = [
         loadComponent: () => import('./features/admin/configuracoes').then((m) => m.Configuracoes),
       },
     ],
+  },
+  {
+    path: '**',
+    title: 'Página não encontrada | Doceria da Mary',
+    loadComponent: () => import('./features/not-found/not-found').then((m) => m.NotFound),
   },
 ];

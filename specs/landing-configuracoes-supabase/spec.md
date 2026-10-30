@@ -15,7 +15,7 @@ Esta especificação **substitui** a RN12 e o item "Configurações do site vind
 ## Regras de negócio
 
 - RN01: A casca da landing continua pré-renderizada. As configurações são buscadas **no navegador** ao abrir a página, junto com o cardápio, mas em leitura separada: falha nas configurações não afeta o cardápio, e vice-versa.
-- RN01a: **Carregando**: enquanto as configurações não chegam, cada conteúdo vindo delas (RN03, número e @ do contato) aparece como bloco de skeleton com o tamanho aproximado do conteúdo, para o texto não trocar na frente do cliente. Os botões de WhatsApp e Instagram ficam indisponíveis (sem link) até carregar.
+- RN01a: _Substituída em parte por `specs/seo-landing` (RN09): só número, @ e links de contato continuam com skeleton; os demais conteúdos usam os valores padrão enquanto carregam._ **Carregando**: enquanto as configurações não chegam, cada conteúdo vindo delas (RN03, número e @ do contato) aparece como bloco de skeleton com o tamanho aproximado do conteúdo, para o texto não trocar na frente do cliente. Os botões de WhatsApp e Instagram ficam indisponíveis (sem link) até carregar.
 - RN02: Se a leitura falhar, os skeletons dão lugar aos valores padrão (os textos e contatos atuais), sem mensagem de erro. Campo nulo no banco também usa o valor padrão.
 - RN03: Mapeamento:
   - `nome_doceria` → nome no cabeçalho, no rodapé, no `aria-label` do link de início e na linha "© 2026 {nome}. Feito com carinho.";
