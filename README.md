@@ -1,96 +1,109 @@
 # Doceria da Mary
 
-Landing page responsiva de uma doceria artesanal, implementada a partir dos layouts desktop/mobile exportados do Paper. Inclui apresentação, categorias, cardápio demonstrativo com seis produtos e filtros, modais de detalhes, sobre, encomendas e contato. WhatsApp e Instagram estão ativos com os dados fornecidos pela proprietária. Não há administração, backend ou e-commerce.
+Site de uma doceria artesanal: landing page com cardápio digital que leva o visitante ao WhatsApp para fazer o pedido, e painel administrativo para a própria doceria manter produtos, categorias e informações do site. Não há carrinho, checkout, pagamento online nem contas de clientes.
 
-## Stack instalada
+## Funcionalidades
 
-- Angular, Router, CLI e build: 22.2.2, standalone, OnPush e zoneless.
-- TypeScript: 6.0.3, com strict e strictTemplates.
-- Tailwind CSS / PostCSS plugin: 4.3.3; PostCSS: 8.5.30.
-- daisyUI: 5.7.50, apenas o tema claro `doceria-mary`.
-- Lucide: `@lucide/angular` 1.57.0, com importação individual.
-- Vitest e cobertura V8: 5.0.4; jsdom: 30.1.2; Playwright: 1.64.1; Prettier: 3.9.10.
-- RxJS: 7.8.2; tslib: 2.8.1.
+**Site público (`/`)**
 
-As versões efetivas estão fixadas pelo `package-lock.json`. Foi usado o pacote atual oficial do Lucide porque o legado `lucide-angular` limita seus peers ao Angular 21. TypeScript 7 ainda não é compatível: Angular 22.2 exige TypeScript >=6.0 e <6.1.
+- Apresentação, categorias, cardápio, sobre, encomendas, contato e rodapé, com layout responsivo.
+- Cardápio carregado do Supabase, com filtro por categoria, skeleton, estado de erro com "Tentar de novo" e cardápio vazio.
+- Modal de detalhes do produto: preço fixo, variável ou "Sob consulta", galeria de fotos e botão de pedido.
+- Links `wa.me` com mensagem pronta para cada contexto (pedido, encomenda, dúvida, produto). O site não envia mensagens.
+- Textos, contatos, logo, imagem principal e região atendida vêm das configurações do site; metadados de SEO e JSON-LD são gerados a partir delas.
+- Página de "não encontrado" para rotas desconhecidas.
+
+**Painel administrativo (`/login`, `/admin`)**
+
+- Login com Supabase Auth; só usuários cadastrados em `administradores` entram no painel.
+- Cardápio: indicadores, busca, filtros, publicar/ocultar e excluir produtos.
+- Formulário de produto com validação e até 5 fotos (JPG, PNG ou WEBP) enviadas ao Storage.
+- Categorias: criar, editar, excluir e mostrar/ocultar.
+- Configurações do site: nome, textos, contatos, horários, região, logo e imagem principal.
+
+## Stack
+
+- Angular 22 (standalone, OnPush, Signals, zoneless) e TypeScript 6 strict.
+- Tailwind CSS 4, daisyUI 5 (tema `doceria-mary`) e `@lucide/angular`.
+- Supabase: Postgres com RLS, Auth e Storage, acessados direto do navegador com `@supabase/supabase-js`. Não há API própria; a segurança está nas políticas do banco.
+- Vitest (cobertura V8) para testes unitários, Playwright (Chrome) para testes de navegador e Prettier para formatação.
+- Hospedagem estática na Vercel.
 
 ## Pré-requisitos
 
-Node.js `^22.22.3 || ^24.15.0 || >=26.0.0` e npm >=11.
-Validações recentes executadas com Node 26.5.0 e npm >=11. Os testes em navegador usam Google Chrome instalado.
+- Node.js `^22.22.3 || ^24.15.0 || >=26.0.0` e npm >= 11.
+- Google Chrome instalado, para os testes Playwright.
 
 ## Comandos
 
 ```sh
-npm ci
-npm start
-npm test -- --watch=false --coverage
-npm run test:e2e
-npm run format:check
-npm run format
-npm run build
+npm ci                                # instala as dependências
+npm start                             # servidor de desenvolvimento em http://localhost:4200
+npm run build                         # build de produção em dist/doceria-da-mary/browser
+npm test -- --watch=false --coverage  # testes unitários com cobertura
+npm run test:e2e                      # testes Playwright em http://127.0.0.1:4201
+npm run format:check                  # confere a formatação (não há lint)
+npm run format                        # aplica a formatação
 ```
 
-O servidor de desenvolvimento atende em `http://localhost:4200`.
-O build padrão é de produção. Os testes unitários usam o builder Angular com Vitest. `npm run test:e2e` inicia a aplicação em `http://127.0.0.1:4201` e executa os testes Playwright no Chrome.
-Não há ferramenta de lint instalada; a formatação é verificada com Prettier.
+Os testes unitários usam repositórios falsos e os testes Playwright simulam o Supabase (`tests/browser/supabase-mock.ts`); nenhum deles acessa o banco real.
 
-## Estrutura existente
+## Supabase
+
+A URL do projeto e a chave **publishable** ficam em `src/environments/environment.ts` (produção) e `environment.development.ts`. Essa chave é pública por design; o que protege os dados é o RLS.
+
+O schema está versionado em `supabase/migrations/` e o projeto é ligado pela CLI (`supabase/config.toml`):
+
+```sh
+npx supabase db push                                            # aplica as migrations pendentes
+npx supabase gen types typescript --linked > src/app/core/supabase/database.types.ts
+```
+
+Para criar a administradora, cadastre o usuário em **Authentication** e depois:
+
+```sql
+insert into public.administradores (user_id, nome)
+select id, 'Mary' from auth.users where email = 'email-da-mary@exemplo.com';
+```
+
+Desative também "Allow new users to sign up" em **Authentication > Sign In / Providers**.
+
+## Renderização e publicação
+
+O build usa `outputMode: "static"`. Só a casca da `/` é pré-renderizada; o catálogo é buscado no navegador e `/login` e `/admin/**` renderizam no cliente via `index.csr.html`. Nenhum servidor Node.js roda em produção.
+
+O `vercel.json` define o build, a pasta publicada, as reescritas de `/login` e `/admin/**` para `index.csr.html` e copia esse arquivo para `404.html`.
+
+## Estrutura
 
 ```text
-public/                            # logo, fotos WebP, fontes, ícones e referências
-specs/                             # spec.md e tasks.md por funcionalidade
-tests/browser/                     # regressões Playwright de UI, hover e animações
-src/
-  app/
-    core/config/public-config.ts   # contatos públicos e placeholders restantes
-    core/config/contact-links.ts   # links WhatsApp e mensagens por contexto
-    features/home/                 # landing page, filtros e seções responsivas
-    features/catalog/              # dados, preços, cards e diálogo de detalhes
-    app.ts / app.html              # shell com RouterOutlet
-    app.routes.ts                  # rota / com loadComponent
-    app.config.ts                  # Router, hidratação e tratamento de erros
-    app.routes.server.ts           # prerender de /
-    app.config.server.ts           # configuração usada durante SSG
-  main.ts
-  main.server.ts                   # entrada Angular para geração estática
-  index.html                       # pt-BR, título e descrição inicial
-  styles.css                       # Tailwind, daisyUI e tokens do tema
+src/app/
+  core/auth/            # sessão, login e guards (adminGuard, guestGuard)
+  core/config/          # configurações do site e links do WhatsApp
+  core/supabase/        # client, tipos gerados e fake para testes
+  features/home/        # landing page
+  features/catalog/     # repositório do catálogo, cards e modal de detalhes
+  features/auth/        # tela de login
+  features/admin/       # layout do painel, cardápio, produtos, categorias e configurações
+  features/not-found/   # página 404
+  app.routes.ts         # rotas lazy; supabase-js fica fora do bundle inicial da landing
+  app.routes.server.ts  # prerender da / e client nas demais rotas
+public/                 # logo, fotos, fontes, ícones e referências de design (fora do build)
+supabase/               # config da CLI e migrations
+tests/browser/          # testes Playwright
+specs/                  # spec.md e tasks.md por funcionalidade
+docs/                   # status, roadmap, decisões e descrições de MR
 ```
 
-Documentação de progresso em `docs/PROJECT_STATUS.md`, especificações/tarefas por funcionalidade em `specs/`, histórico de entregas em `docs/tasks/` e decisões em `docs/decisions/`. UI compartilhada e administração serão criadas somente quando necessárias.
+## Documentação
 
-## Publicação estática e SEO
+- [AGENTS.md](AGENTS.md): fluxo de desenvolvimento orientado por especificação (SDD).
+- [ARCHITECTURE.md](ARCHITECTURE.md): arquitetura, rotas, decisões e convenções.
+- [docs/PROJECT_STATUS.md](docs/PROJECT_STATUS.md): estado atual e pendências.
+- [specs/](specs/): especificação, tarefas e evidências de cada funcionalidade.
 
-`outputMode: "static"` pré-renderiza a rota `/` no build. Publique o conteúdo de
-`dist/doceria-da-mary/browser/` em uma hospedagem estática. Nenhum servidor Node.js
-é necessário em produção; os arquivos de renderização Angular são usados no build.
-A hospedagem ainda precisa ser escolhida e validada.
+## Pendências
 
-O HTML tem idioma pt-BR, viewport, título e descrição inicial. Não foi incluído
-favicon porque o asset específico ainda não foi fornecido.
-
-## Contatos e designs
-
-Configurações públicas ficam em `src/app/core/config/public-config.ts`. WhatsApp e Instagram usam os valores fornecidos pelo usuário; e-mail, endereço, localização, horários e API continuam `null`.
-
-`src/app/core/config/contact-links.ts` centraliza validação do número, montagem do link `wa.me` e mensagens: pedido no cabeçalho, apresentação no hero, encomenda especial, dúvidas e interesse em cada produto com seu nome. A mensagem é codificada com `encodeURIComponent`. Sem número internacional válido, não há URL. Links externos abrem em nova aba com `noopener noreferrer`.
-
-O WhatsApp recebe somente um texto preenchido para o visitante revisar e enviar; o site não envia mensagens nem utiliza API externa.
-
-O Paper é a referência oficial. Como o MCP estava limitado, o usuário forneceu PNGs desktop/mobile para a implementação atual. As fotos foram recortadas dessas exportações e salvas em WebP; substituir pelos arquivos originais quando disponíveis. Fontes Cormorant Garamond e DM Sans são locais, com licenças OFL. Todas as referências em `public/design/landing-page/`, incluindo os modais desktop/mobile, ficam fora do build.
-
-Os modais de preço fixo e variável seguem os designs fornecidos, com galeria quando há fotos adicionais, informações opcionais e pedido pelo WhatsApp. Cada produto real ainda possui uma foto; informações comerciais não confirmadas são omitidas. Consulte `AGENTS.md`, `ARCHITECTURE.md` e as especificações em `specs/`.
-
-O padrão visual usa Tailwind para layout, espaçamento, tipografia, responsividade e hover; DaisyUI para botões, modal e estados. CSS específico fica restrito ao tema/fontes, personalizações compartilhadas e animações necessárias.
-
-## Validação da landing page
-
-- `npm run build`: aprovado, com uma rota estática pré-renderizada.
-- `npm test -- --watch=false --coverage`: 30 testes aprovados; cobertura global de 99,8% de statements e 100% de linhas.
-- `npm run test:e2e`: 21 testes aprovados no Chrome, cobrindo detalhes, teclado/foco, rolagem, hover, animações, toque e movimento reduzido.
-- `npm run format:check`: aprovado.
-- HTML de produção: seis cards pré-renderizados, modal inicialmente fechado, contatos contextualizados e assets locais; designs excluídos da publicação.
-- Layout conferido em 320, 390, 768, 1024 e 1440 px, sem overflow horizontal; página e modais comparados visualmente antes/depois da refatoração.
-
-As evidências por funcionalidade estão nos arquivos `specs/*/tasks.md`. Os registros de outubro de 2026 em `docs/tasks/` descrevem entregas anteriores. Firefox e Safari não foram executados; fotos originais, fotos adicionais e confirmação das informações comerciais permanecem pendentes. Nenhuma publicação em hospedagem foi realizada.
+- Publicar na Vercel e validar rotas e 404 ([hospedagem-vercel](specs/hospedagem-vercel/tasks.md)).
+- Aplicar a migration da região atendida e validar o JSON-LD ([seo-landing](specs/seo-landing/tasks.md)).
+- Cadastrar fotos originais dos produtos e confirmar informações comerciais (antecedência, conservação, alérgenos).
