@@ -2,3 +2,5 @@ node_modules/
 dist/
 .angular/
 package-lock.json
+src/app/core/supabase/database.types.ts
+supabase/.temp
