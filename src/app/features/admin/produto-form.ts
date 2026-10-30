@@ -12,15 +12,20 @@ import {
   LucideArrowLeft,
   LucideArrowRight,
   LucideChevronRight,
+  LucideCircleAlert,
   LucideEye,
   LucideImage,
   LucideImagePlus,
   LucideX,
 } from '@lucide/angular';
-import { categories, formatPrice } from '../catalog/catalog';
+import { formatPrice } from '../catalog/catalog';
+import { saveError } from '../../core/supabase/supabase';
+import { AdminMenuRepository } from './admin-menu-repository';
 import { MenuStore } from './menu-store';
 
 const maxImages = 5;
+const maxImageBytes = 5 * 1024 * 1024;
+const imageTypes = ['image/jpeg', 'image/png', 'image/webp'];
 
 // Mantém só o que cabe num preço: até 5 dígitos inteiros e 2 decimais.
 export function limitPrice(text: string): string {
@@ -46,6 +51,7 @@ export function parsePrice(text: string): number | null {
     LucideArrowLeft,
     LucideArrowRight,
     LucideChevronRight,
+    LucideCircleAlert,
     LucideEye,
     LucideImage,
     LucideImagePlus,
@@ -56,14 +62,18 @@ export function parsePrice(text: string): number | null {
 })
 export class ProdutoForm {
   private readonly store = inject(MenuStore);
+  private readonly repository = inject(AdminMenuRepository);
   private readonly router = inject(Router);
   private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
-  // A rota de edição só ativa com um id existente (guarda em app.routes.ts).
+  // As rotas só ativam com o store carregado e, na edição, com um id existente (menuReady).
   protected readonly existing = this.store.find(
     inject(ActivatedRoute).snapshot.paramMap.get('id') ?? '',
   );
 
-  protected readonly categories = categories;
+  protected readonly categories = this.store.categories;
+  protected readonly saveError = saveError;
+  // Arquivos novos por URL blob:, enviados só ao salvar.
+  private readonly files = new Map<string, File>();
   protected readonly name = signal(this.existing?.name ?? '');
   protected readonly categoryId = signal(this.existing?.categoryId ?? '');
   protected readonly description = signal(this.existing?.description ?? '');
@@ -76,6 +86,8 @@ export class ProdutoForm {
   protected readonly images = signal<readonly string[]>(this.existing?.images ?? []);
   protected readonly imageNotice = signal('');
   protected readonly submitted = signal(false);
+  protected readonly saving = signal(false);
+  protected readonly saveFailed = signal(false);
 
   private readonly cents = computed(() => parsePrice(this.price()));
   protected readonly hasPrice = computed(() => !!this.cents());
@@ -96,23 +108,29 @@ export class ProdutoForm {
       : 'Sob consulta',
   );
   protected readonly previewCategory = computed(
-    () => categories.find((category) => category.id === this.categoryId())?.label ?? 'Categoria',
+    () =>
+      this.categories().find((category) => category.id === this.categoryId())?.name ?? 'Categoria',
   );
 
   protected addFiles(files: FileList | null | undefined): void {
     const all = Array.from(files ?? []);
-    const accepted = all.filter((file) => file.type.startsWith('image/'));
+    const accepted = all.filter(
+      (file) => imageTypes.includes(file.type) && file.size <= maxImageBytes,
+    );
     const room = maxImages - this.images().length;
     this.imageNotice.set(
       [
-        accepted.length < all.length ? 'Só dá para enviar imagens.' : '',
+        accepted.length < all.length ? 'Envie fotos JPG, PNG ou WEBP de até 5 MB.' : '',
         accepted.length > room ? 'Você pode enviar até 5 fotos.' : '',
       ]
         .filter(Boolean)
         .join(' '),
     );
-    // shortcut: fotos só no navegador (URL temporária), trocar por upload quando houver backend.
-    const urls = accepted.slice(0, Math.max(room, 0)).map((file) => URL.createObjectURL(file));
+    const urls = accepted.slice(0, Math.max(room, 0)).map((file) => {
+      const url = URL.createObjectURL(file);
+      this.files.set(url, file);
+      return url;
+    });
     this.images.update((images) => [...images, ...urls]);
   }
 
@@ -129,12 +147,13 @@ export class ProdutoForm {
 
   protected drop(event: DragEvent): void {
     event.preventDefault();
-    this.addFiles(event.dataTransfer?.files);
+    if (!this.saving()) this.addFiles(event.dataTransfer?.files);
   }
 
   protected remove(index: number): void {
     const url = this.images()[index];
     if (url.startsWith('blob:')) URL.revokeObjectURL(url);
+    this.files.delete(url);
     this.images.update((images) => images.filter((_, i) => i !== index));
   }
 
@@ -142,7 +161,8 @@ export class ProdutoForm {
     this.images.update((images) => [images[index], ...images.filter((_, i) => i !== index)]);
   }
 
-  protected save(): void {
+  protected async save(): Promise<void> {
+    if (this.saving()) return;
     this.submitted.set(true);
     const errors = this.errors();
     const invalid = (['name', 'category', 'price'] as const).find((field) => errors[field]);
@@ -152,20 +172,37 @@ export class ProdutoForm {
     }
     const name = this.name().trim();
     const cents = this.cents();
-    this.store.save({
-      id: this.existing?.id ?? `produto-${Date.now()}`,
-      name,
-      categoryId: this.categoryId(),
-      description: this.description().trim(),
-      price:
-        cents === null
-          ? null
-          : { kind: this.startingAt() ? 'starting-at' : 'fixed', amountInCents: cents },
-      images: this.images(),
-      published: this.existing?.published ?? true,
-    });
+    this.saving.set(true);
+    this.saveFailed.set(false);
+    let failedUploads: number;
+    try {
+      ({ failedUploads } = await this.repository.saveProduct(
+        {
+          name,
+          categoryId: this.categoryId(),
+          description: this.description().trim(),
+          price:
+            cents === null
+              ? null
+              : { kind: this.startingAt() ? 'starting-at' : 'fixed', amountInCents: cents },
+          images: this.images().map((url) => this.files.get(url) ?? url),
+        },
+        this.existing,
+      ));
+    } catch {
+      this.saving.set(false);
+      this.saveFailed.set(true);
+      return;
+    }
+    const lost =
+      failedUploads === 0
+        ? ''
+        : failedUploads === 1
+          ? ' 1 foto não foi enviada.'
+          : ` ${failedUploads} fotos não foram enviadas.`;
     this.store.flash.set(
-      this.existing ? `Alterações em ${name} salvas.` : `${name} foi adicionado ao cardápio.`,
+      (this.existing ? `Alterações em ${name} salvas.` : `${name} foi adicionado ao cardápio.`) +
+        lost,
     );
     this.router.navigate(['/admin/cardapio']);
   }

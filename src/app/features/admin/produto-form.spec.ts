@@ -4,10 +4,20 @@ import { RouterTestingHarness } from '@angular/router/testing';
 import { routes } from '../../app.routes';
 import { MenuStore } from './menu-store';
 import { limitPrice, parsePrice } from './produto-form';
+import { FakeAdminMenuRepository, provideAdmin } from './admin.fixture';
+import { publicUrl, saveError } from '../../core/supabase/supabase';
 
-async function setup(url = '/admin/cardapio/novo') {
-  TestBed.configureTestingModule({ providers: [provideRouter(routes)] });
+async function setup(url = '/admin/cardapio/novo', repository = new FakeAdminMenuRepository()) {
+  TestBed.configureTestingModule({
+    providers: [provideRouter(routes), ...provideAdmin(repository)],
+  });
   const harness = await RouterTestingHarness.create(url);
+  const flush = async () => {
+    await new Promise((resolve) => setTimeout(resolve));
+    await harness.fixture.whenStable();
+    harness.detectChanges();
+  };
+  await flush();
   const page = () => harness.routeNativeElement as HTMLElement;
   const field = <T extends HTMLElement>(id: string) => page().querySelector<T>(`#produto-${id}`)!;
   const fill = (id: string, value: string) => {
@@ -19,14 +29,19 @@ async function setup(url = '/admin/cardapio/novo') {
   const submit = async () => {
     page().querySelector('form')!.dispatchEvent(new Event('submit'));
     harness.detectChanges();
-    await harness.fixture.whenStable();
-    harness.detectChanges();
+    await flush();
   };
   const preview = () =>
     page().querySelector('form aside')!.textContent!.replaceAll(' ', ' ').replace(/\s+/g, ' ');
   const files = (...types: string[]) =>
     types.map((type, i) => new File(['x'], `f${i}`, { type })) as unknown as FileList;
-  return { harness, page, field, fill, submit, preview, files };
+  const pick = (list: FileList) => {
+    const input = page().querySelector<HTMLInputElement>('input[type=file]')!;
+    Object.defineProperty(input, 'files', { value: list, configurable: true });
+    input.dispatchEvent(new Event('change'));
+    harness.detectChanges();
+  };
+  return { harness, page, field, fill, submit, preview, files, pick, flush };
 }
 
 describe('Formulário de produto', () => {
@@ -103,12 +118,12 @@ describe('Formulário de produto', () => {
     const { harness, page, field, preview } = await setup('/admin/cardapio/bolo-chocolate/editar');
     expect(page().querySelector('h1')?.textContent).toContain('Editar produto');
     expect(field<HTMLInputElement>('name').value).toBe('Bolo de Chocolate');
-    expect(field<HTMLSelectElement>('category').value).toBe('bolos');
+    expect(field<HTMLSelectElement>('category').value).toBe('c-bolos');
     expect(field<HTMLTextAreaElement>('description').value).toContain('Massa fofinha');
     expect(field<HTMLInputElement>('price').value).toBe('85,00');
     expect(page().querySelector<HTMLInputElement>('input.checkbox')!.checked).toBe(true);
     expect(page().querySelector('section li img')?.getAttribute('src')).toBe(
-      'images/chocolate-cake.webp',
+      publicUrl('produtos', 'seed/chocolate-cake.webp'),
     );
     expect(preview()).toContain('A partir de R$ 85,00');
     expect(page().querySelector('button[type=submit]')?.textContent).toContain('Salvar alterações');
@@ -128,7 +143,7 @@ describe('Formulário de produto', () => {
     expect(page().textContent).not.toContain('Informe o nome do produto.');
     await submit();
     expect(document.activeElement).toBe(field('category'));
-    fill('category', 'sobremesas');
+    fill('category', 'c-sobremesas');
     for (const value of ['0', ',5']) {
       fill('price', value);
       await submit();
@@ -161,7 +176,7 @@ describe('Formulário de produto', () => {
     expect(preview()).toContain('Pedir no WhatsApp');
     expect(page().querySelector('form aside a')).toBeNull();
     fill('name', '  Mini Bolo de Morango ');
-    fill('category', 'bolos');
+    fill('category', 'c-bolos');
     fill('description', 'Versão individual.');
     fill('price', '18');
     expect(preview()).toContain('Bolos');
@@ -198,7 +213,7 @@ describe('Formulário de produto', () => {
     drop(files('application/pdf', 'image/webp'));
     expect(thumbs()).toHaveLength(3);
     expect(page().querySelector('[role=status]')?.textContent).toContain(
-      'Só dá para enviar imagens.',
+      'Envie fotos JPG, PNG ou WEBP de até 5 MB.',
     );
     const second = thumbs()[1].src;
     page()
@@ -230,7 +245,7 @@ describe('Formulário de produto', () => {
   it('CA07: saving a new product adds it published at the end with a message', async () => {
     const { page, fill, submit } = await setup();
     fill('name', ' Pudim ');
-    fill('category', 'sobremesas');
+    fill('category', 'c-sobremesas');
     fill('description', ' Cremoso. ');
     fill('price', '25,5');
     await submit();
@@ -239,7 +254,7 @@ describe('Formulário de produto', () => {
     expect(items).toHaveLength(7);
     expect(items[6]).toMatchObject({
       name: 'Pudim',
-      categoryId: 'sobremesas',
+      categoryId: 'c-sobremesas',
       description: 'Cremoso.',
       price: { kind: 'fixed', amountInCents: 2550 },
       images: [],
@@ -270,5 +285,91 @@ describe('Formulário de produto', () => {
       'Alterações em Caixa Presente salvas.',
     );
     expect(page().querySelectorAll('tbody tr')[5].textContent).toContain('Sob consulta');
+  });
+
+  it('Supabase CA08: categorias do banco no select; falha na carga volta para a lista', async () => {
+    const repository = new FakeAdminMenuRepository();
+    const { harness, field } = await setup(undefined, repository);
+    expect(
+      Array.from(field<HTMLSelectElement>('category').options, (option) => option.text.trim()),
+    ).toEqual([
+      'Escolha uma categoria',
+      'Bolos',
+      'Docinhos',
+      'Sobremesas',
+      'Kits e presentes',
+      'Datas especiais',
+    ]);
+    vi.spyOn(repository, 'listProducts').mockRejectedValue(new Error('offline'));
+    await harness.navigateByUrl('/admin/cardapio/brownie/editar');
+    expect(TestBed.inject(Router).url).toBe('/admin/cardapio');
+  });
+
+  it('Supabase CA07: recusa GIF e foto acima de 5 MB', async () => {
+    const { page, pick } = await setup();
+    const big = new File(['x'], 'grande.png', { type: 'image/png' });
+    Object.defineProperty(big, 'size', { value: 5 * 1024 * 1024 + 1 });
+    pick([new File(['x'], 'a.gif', { type: 'image/gif' }), big] as unknown as FileList);
+    expect(page().querySelectorAll('section li img')).toHaveLength(0);
+    expect(page().querySelector('[role=status]')?.textContent).toContain(
+      'Envie fotos JPG, PNG ou WEBP de até 5 MB.',
+    );
+  });
+
+  it('Supabase CA01/CA06: envia arquivos novos, bloqueia durante a gravação e mostra erro', async () => {
+    const repository = new FakeAdminMenuRepository();
+    let fail!: (error: Error) => void;
+    const saveProduct = vi.spyOn(repository, 'saveProduct');
+    saveProduct.mockImplementationOnce(() => new Promise((_, reject) => (fail = reject)));
+    const { harness, page, field, fill, files, pick, flush } = await setup(
+      '/admin/cardapio/brownie/editar',
+      repository,
+    );
+    const photos = files('image/png');
+    pick(photos);
+    fill('name', 'Brownie Duplo');
+    page().querySelector('form')!.dispatchEvent(new Event('submit'));
+    harness.detectChanges();
+    const submit = page().querySelector<HTMLButtonElement>('button[type=submit]')!;
+    expect(submit.textContent).toContain('Salvando…');
+    expect(page().querySelector('fieldset')!.disabled).toBe(true);
+    expect(page().querySelector('form')!.getAttribute('aria-busy')).toBe('true');
+    expect(page().querySelector('a.btn-disabled')?.textContent).toContain('Cancelar');
+    page().querySelector('form')!.dispatchEvent(new Event('submit'));
+    expect(saveProduct).toHaveBeenCalledTimes(1);
+    expect(saveProduct.mock.calls[0][0]).toMatchObject({
+      name: 'Brownie Duplo',
+      categoryId: 'c-sobremesas',
+      images: [publicUrl('produtos', 'seed/brownie.webp'), photos[0]],
+    });
+    expect(saveProduct.mock.calls[0][1]).toMatchObject({ id: 'brownie' });
+    fail(new Error('offline'));
+    await flush();
+    expect(TestBed.inject(Router).url).toBe('/admin/cardapio/brownie/editar');
+    expect(page().querySelector('[role=alert]')?.textContent).toContain(saveError);
+    expect(page().querySelector('fieldset')!.disabled).toBe(false);
+    expect(field<HTMLInputElement>('name').value).toBe('Brownie Duplo');
+  });
+
+  it('Supabase CA05: avisa quantas fotos não foram enviadas', async () => {
+    const repository = new FakeAdminMenuRepository();
+    const saveProduct = vi.spyOn(repository, 'saveProduct');
+    saveProduct.mockResolvedValueOnce({ id: 'brownie', failedUploads: 1 });
+    saveProduct.mockResolvedValueOnce({ id: 'novo', failedUploads: 2 });
+    const { harness, page, fill, submit } = await setup(
+      '/admin/cardapio/brownie/editar',
+      repository,
+    );
+    await submit();
+    expect(page().querySelector('[role=status]')?.textContent).toContain(
+      'Alterações em Brownie Recheado salvas. 1 foto não foi enviada.',
+    );
+    await harness.navigateByUrl('/admin/cardapio/novo');
+    fill('name', 'Pudim');
+    fill('category', 'c-sobremesas');
+    await submit();
+    expect(page().querySelector('[role=status]')?.textContent).toContain(
+      'Pudim foi adicionado ao cardápio. 2 fotos não foram enviadas.',
+    );
   });
 });

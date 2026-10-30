@@ -38,16 +38,13 @@ export const routes: Routes = [
       {
         path: 'cardapio/novo',
         title: 'Novo produto | Painel Doceria da Mary',
+        canActivate: [lazy(() => import('./features/admin/menu-store').then((m) => m.menuReady))],
         loadComponent: () => import('./features/admin/produto-form').then((m) => m.ProdutoForm),
       },
       {
         path: 'cardapio/:id/editar',
         title: 'Editar produto | Painel Doceria da Mary',
-        canActivate: [
-          (route: ActivatedRouteSnapshot) =>
-            !!inject(MenuStore).find(route.paramMap.get('id')!) ||
-            inject(Router).createUrlTree(['/admin/cardapio']),
-        ],
+        canActivate: [lazy(() => import('./features/admin/menu-store').then((m) => m.menuReady))],
         loadComponent: () => import('./features/admin/produto-form').then((m) => m.ProdutoForm),
       },
       {
