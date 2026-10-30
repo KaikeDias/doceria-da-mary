@@ -1,7 +1,9 @@
 import { expect, test } from '@playwright/test';
+import { mockSupabase } from './supabase-mock';
 
 test.beforeEach(async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'no-preference' });
+  await mockSupabase(page, { allPublished: true });
   await page.goto('/');
   await page.waitForFunction(() =>
     (window as any).ng?.getComponent(document.querySelector('app-home')),
@@ -129,6 +131,7 @@ test('Animações CA03: toque não deixa hover de ampliação no card', async ({
     reducedMotion: 'no-preference',
   });
   const page = await context.newPage();
+  await mockSupabase(page, { allPublished: true });
   await page.goto('/');
   const card = page.locator('.product-card').first();
   await card.locator('.product-photo').tap();

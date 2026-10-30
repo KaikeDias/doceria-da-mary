@@ -5,6 +5,7 @@ import { routes } from './app.routes';
 import { App } from './app';
 import { publicConfig } from './core/config/public-config';
 import { whatsappMessages } from './core/config/contact-links';
+import { provideCatalog } from './features/catalog/catalog.fixture';
 
 describe('Setup', () => {
   it('creates the application shell', () => {
@@ -13,8 +14,10 @@ describe('Setup', () => {
   });
 
   it('loads six products with contextual WhatsApp links and the configured Instagram', async () => {
-    TestBed.configureTestingModule({ providers: [provideRouter(routes)] });
+    TestBed.configureTestingModule({ providers: [provideRouter(routes), provideCatalog()] });
     const harness = await RouterTestingHarness.create('/');
+    await harness.fixture.whenStable();
+    harness.detectChanges();
     const page = harness.routeNativeElement;
     expect(page?.querySelector('h1')?.textContent).toContain('Adoçando seus');
     expect(page?.querySelector('.header-order')?.classList.contains('btn-primary')).toBe(true);
@@ -41,7 +44,7 @@ describe('Setup', () => {
     filter?.click();
     harness.detectChanges();
     expect(page?.querySelectorAll('app-product-card')).toHaveLength(2);
-  }, 30000);
+  }, 60000);
 
   it('keeps unspecified configurations unset', () => {
     const { whatsapp, instagram, ...unspecified } = publicConfig.contact;

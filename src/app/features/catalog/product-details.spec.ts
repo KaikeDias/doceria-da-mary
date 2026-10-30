@@ -1,6 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { ProductDetails } from './product-details';
-import { Product, products } from './catalog';
+import { Product } from './catalog';
+import { products, provideCatalog } from './catalog.fixture';
 import { Home } from '../home/home';
 import { publicConfig } from '../../core/config/public-config';
 
@@ -62,7 +63,7 @@ describe('Modais de detalhes dos produtos', () => {
       expect(page.querySelector('.details-description')?.textContent?.trim()).toBe(
         product.details || product.description,
       );
-      const variable = product.price.kind === 'starting-at';
+      const variable = product.price!.kind === 'starting-at';
       for (const selector of ['.content-price', '.footer-price']) {
         expect(page.querySelector(`${selector} span`)?.textContent?.trim()).toBe(
           variable ? 'A partir de' : 'Preço',
@@ -268,6 +269,17 @@ describe('Modais de detalhes dos produtos', () => {
     visible.mockRestore();
   });
 
+  it('Catálogo do banco CA07: "Sob consulta", observação e produto sem foto', async () => {
+    const { fixture, page } = await render({ ...products[1], price: null, image: '' });
+    expect(page.querySelector('.product-information')?.textContent).toContain('Sob consulta');
+    expect(page.textContent).toContain('Consulte as opções e o valor final pelo WhatsApp');
+    expect(page.querySelector('.product-image')).toBeNull();
+    expect(page.querySelector('.photo-unavailable')).toBeTruthy();
+    fixture.componentRef.setInput('product', { ...products[2], priceNote: 'Só por encomenda' });
+    fixture.detectChanges();
+    expect(page.textContent).not.toContain('Só por encomenda');
+  });
+
   it('CA11: destruir antes da abertura não altera a rolagem', () => {
     const previous = document.documentElement.style.overflow;
     const fixture = TestBed.createComponent(ProductDetails);
@@ -276,9 +288,10 @@ describe('Modais de detalhes dos produtos', () => {
   });
 
   it('CA01–CA08–CA11: integra os seis cards, preserva pedido direto, filtro e estado fechado', async () => {
+    TestBed.configureTestingModule({ providers: [provideCatalog()] });
     const fixture = TestBed.createComponent(Home);
-    fixture.detectChanges();
     await fixture.whenStable();
+    fixture.detectChanges();
     const page = fixture.nativeElement as HTMLElement;
     expect(page.querySelector('dialog')).toBeNull();
     const cards = page.querySelectorAll('app-product-card');

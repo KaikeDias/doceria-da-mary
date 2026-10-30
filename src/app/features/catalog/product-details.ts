@@ -21,7 +21,7 @@ import {
   LucideSnowflake,
   LucideX,
 } from '@lucide/angular';
-import { categories, formatPrice, Product } from './catalog';
+import { formatPrice, Product } from './catalog';
 import { productWhatsappUrl } from '../../core/config/contact-links';
 
 @Component({
@@ -46,23 +46,22 @@ export class ProductDetails implements OnDestroy {
   protected readonly selectedImage = linkedSignal({ source: this.product, computation: () => 0 });
   protected readonly failedImages = signal<ReadonlySet<string>>(new Set());
   protected readonly images = computed(() => [
-    { src: `images/${this.product().image}.webp`, alt: `${this.product().name} — foto 1` },
+    { src: this.product().image, alt: `${this.product().name} — foto 1` },
     ...(this.product().additionalImages ?? []),
   ]);
   protected readonly currentImage = computed(() => this.images()[this.selectedImage()]);
-  protected readonly categoryName = computed(
-    () => categories.find((category) => category.id === this.product().categoryId)!.label,
-  );
+  protected readonly categoryName = computed(() => this.product().categoryLabel);
   protected readonly priceLabel = computed(() =>
-    this.product().price.kind === 'starting-at' ? 'A partir de' : 'Preço',
+    this.product().price?.kind === 'starting-at' ? 'A partir de' : 'Preço',
   );
-  protected readonly amount = computed(() =>
-    formatPrice({ ...this.product().price, kind: 'fixed' }),
-  );
+  protected readonly amount = computed(() => {
+    const price = this.product().price;
+    return formatPrice(price && { ...price, kind: 'fixed' });
+  });
   protected readonly priceNote = computed(() =>
-    this.product().price.kind === 'starting-at'
-      ? (this.product().priceNote ?? 'Consulte as opções e o valor final pelo WhatsApp')
-      : null,
+    this.product().price?.kind === 'fixed'
+      ? null
+      : (this.product().priceNote ?? 'Consulte as opções e o valor final pelo WhatsApp'),
   );
   protected readonly whatsappLink = computed(() => productWhatsappUrl(this.product().name));
   private readonly document = inject(DOCUMENT);
