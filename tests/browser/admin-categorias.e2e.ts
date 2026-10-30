@@ -1,10 +1,12 @@
 import { expect, test } from '@playwright/test';
+import { mockSupabase } from './supabase-mock';
 
 for (const width of [320, 390, 768, 1023, 1024, 1440]) {
   test(`categorias: no horizontal scroll at ${width}px and layout switches at 1024px`, async ({
     page,
   }) => {
     await page.setViewportSize({ width, height: 900 });
+    await mockSupabase(page, { session: true });
     await page.goto('/admin/categorias');
     await expect(page.locator('h1')).toBeVisible();
     expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(
@@ -19,6 +21,7 @@ test('categorias: mobile targets are at least 44px and the drawer highlights Cat
   page,
 }) => {
   await page.setViewportSize({ width: 390, height: 844 });
+  await mockSupabase(page, { session: true });
   await page.goto('/admin/categorias');
   for (const target of await page.locator('main ul button, main ul label').all()) {
     const box = (await target.boundingBox())!;
@@ -32,6 +35,7 @@ test('categorias: mobile targets are at least 44px and the drawer highlights Cat
 });
 
 test('categorias: switch toggles by keyboard with visible focus', async ({ page }) => {
+  await mockSupabase(page, { session: true });
   await page.goto('/admin/categorias');
   await page.waitForLoadState('networkidle');
   const toggle = page.getByRole('switch', { name: 'Exibir Bolos no site' }).first();
