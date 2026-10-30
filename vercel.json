@@ -1,0 +1,10 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "buildCommand": "npm run build && cp dist/doceria-da-mary/browser/index.csr.html dist/doceria-da-mary/browser/404.html",
+  "outputDirectory": "dist/doceria-da-mary/browser",
+  "rewrites": [
+    { "source": "/login", "destination": "/index.csr.html" },
+    { "source": "/admin", "destination": "/index.csr.html" },
+    { "source": "/admin/:path*", "destination": "/index.csr.html" }
+  ]
+}
