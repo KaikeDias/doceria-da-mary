@@ -39,7 +39,7 @@ As imagens são referência de composição, tipografia, cores, espaçamento, í
 - RN07: A chave de status alterna entre "Publicado" e "Oculto" para aquele produto, sem recarregar a lista e sem mudar a ordem. Com o filtro "Publicados" ou "Ocultos" ativo, o produto alternado deixa a lista imediatamente.
 - RN08: "Adicionar produto", "Editar" e o menu "…" aparecem como na referência, mas ficam desabilitados (`aria-disabled`, sem ação, sem aparência de disponibilidade) e com explicação acessível de que a funcionalidade chega em breve. Não inventar formulário, modal ou rota para eles.
 - RN09: Estado vazio: sem produtos após filtros, exibir "Nenhum doce encontrado" com orientação para ajustar a busca ou os filtros, e uma ação "Limpar filtros". Os indicadores permanecem.
-- RN10: Mobile: abaixo de 1024 px o menu lateral é substituído por barra superior com botão de menu (abre a gaveta), marca e atalho "Visualizar site"; a tabela vira lista de cards. A gaveta fecha pelo botão ×, pela tecla `Esc`, pelo clique no fundo escurecido e ao navegar.
+- RN10: Mobile: abaixo de 1024 px o menu lateral é substituído por barra superior com botão de menu (abre a gaveta), marca e atalho "Visualizar site"; a tabela vira lista de cards. A gaveta entra deslizando da esquerda e sai deslizando de volta, com o fundo escurecido aparecendo e sumindo junto (300 ms; sem transição com "reduzir movimento"). A gaveta fecha pelo botão ×, pela tecla `Esc`, pelo clique no fundo escurecido e ao navegar.
 
 ## Requisitos funcionais
 
