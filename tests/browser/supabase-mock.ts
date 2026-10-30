@@ -40,17 +40,17 @@ interface Image {
 
 function seed() {
   const categories: Category[] = [
-    ['c-bolos', 'Bolos', 'bolos', 'Bolos', 'chocolate-cake', true],
-    ['c-docinhos', 'Docinhos', 'docinhos', 'Docinhos', 'brigadeiros', true],
-    ['c-sobremesas', 'Sobremesas', 'sobremesas', 'Sobremesas', 'dessert-cup', true],
-    ['c-kits', 'Kits', 'kits', 'Kits e presentes', 'sweet-box', true],
-    ['c-datas', 'Datas especiais', 'datas-especiais', 'Datas especiais', null, false],
-  ].map(([id, nome, slug, rotulo, image, visivel], i) => ({
+    ['c-bolos', 'Bolos', 'bolos', true, true],
+    ['c-docinhos', 'Docinhos', 'docinhos', true, true],
+    ['c-sobremesas', 'Sobremesas', 'sobremesas', true, true],
+    ['c-kits', 'Kits e presentes', 'kits', true, true],
+    ['c-datas', 'Datas especiais', 'datas-especiais', false, false],
+  ].map(([id, nome, slug, image, visivel], i) => ({
     id,
     nome,
     slug,
-    rotulo,
-    imagem_url: image ? `images/${image}.webp` : null,
+    rotulo: nome,
+    imagem_url: image ? `categorias/${id}/capa.webp` : null,
     visivel,
     ordem: i + 1,
   })) as Category[];
@@ -244,10 +244,37 @@ export async function mockSupabase(
       return respond(logged || eq(url, 'user_id') === user.id ? [{ user_id: user.id }] : []);
     }
     if (table === 'categorias' && method === 'GET') {
+      const select = url.searchParams.get('select');
+      if (select === 'ordem')
+        return respond([{ ordem: Math.max(0, ...db.categories.map((c) => c.ordem)) }]);
+      if (select === 'slug') {
+        const base = url.searchParams.get('slug')!.replace(/^like\.|%$/g, '');
+        return respond(
+          db.categories.filter((c) => c.slug.startsWith(base)).map(({ slug }) => ({ slug })),
+        );
+      }
       return respond(db.categories.filter((item) => item.visivel));
     }
-    if (table === 'categorias' && method === 'PATCH') {
-      Object.assign(category(eq(url, 'id')!)!, request.postDataJSON());
+    if (table === 'categorias' && (method === 'POST' || method === 'PATCH')) {
+      const body = request.postDataJSON();
+      const id = eq(url, 'id');
+      // nome é citext único no banco.
+      const taken = db.categories.some(
+        (c) => c.id !== id && body.nome && c.nome.toLowerCase() === body.nome.toLowerCase(),
+      );
+      if (taken) return json(route, { code: '23505', message: 'duplicate key' }, 409);
+      if (method === 'PATCH') {
+        Object.assign(category(id)!, body);
+        return route.fulfill({ status: 204 });
+      }
+      const row = { imagem_url: null, ...body, id: `c-${body.slug}` };
+      db.categories.push(row);
+      return respond([{ id: row.id }]);
+    }
+    if (table === 'categorias' && method === 'DELETE') {
+      const id = eq(url, 'id');
+      db.categories = db.categories.filter((c) => c.id !== id);
+      for (const p of db.products) if (p.categoria_id === id) p.categoria_id = null;
       return route.fulfill({ status: 204 });
     }
     if (table === 'categorias_com_contagem') {

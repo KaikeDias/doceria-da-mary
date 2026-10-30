@@ -4,8 +4,8 @@ import { publicUrl } from '../../core/supabase/supabase';
 import { CatalogRepository } from './catalog-repository';
 
 const categoryRows = [
-  { slug: 'bolos', nome: 'Bolos', rotulo: 'Bolos', imagem_url: 'images/chocolate-cake.webp' },
-  { slug: 'kits', nome: 'Kits', rotulo: 'Kits e presentes', imagem_url: null },
+  { slug: 'bolos', rotulo: 'Bolos', imagem_url: 'categorias/c1/bolo.webp' },
+  { slug: 'kits', rotulo: 'Kits e presentes', imagem_url: null },
 ];
 const productRows = [
   {
@@ -66,8 +66,13 @@ describe('Repositório do catálogo público', () => {
     expect(images.searchParams.get('order')).toBe('posicao.asc');
 
     expect(catalog.categories).toEqual([
-      { id: 'bolos', name: 'Bolos', label: 'Bolos', image: 'images/chocolate-cake.webp' },
-      { id: 'kits', name: 'Kits', label: 'Kits e presentes', image: '' },
+      {
+        id: 'bolos',
+        name: 'Bolos',
+        label: 'Bolos',
+        image: publicUrl('site', 'categorias/c1/bolo.webp'),
+      },
+      { id: 'kits', name: 'Kits e presentes', label: 'Kits e presentes', image: '' },
     ]);
     expect(catalog.products[0]).toEqual({
       id: 'bolo-chocolate',

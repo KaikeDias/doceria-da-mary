@@ -23,7 +23,33 @@ async function setup(repository = new FakeAdminMenuRepository()) {
   return { harness, page, rows, names, switches, settle };
 }
 
+// jsdom has no dialog implementation; real focus/Esc behavior is covered in Chrome.
+function stubDialog() {
+  beforeEach(() => {
+    Object.defineProperties(HTMLDialogElement.prototype, {
+      showModal: {
+        configurable: true,
+        value: function (this: HTMLDialogElement) {
+          this.open = true;
+        },
+      },
+      close: {
+        configurable: true,
+        value: function (this: HTMLDialogElement) {
+          this.open = false;
+          this.dispatchEvent(new Event('close'));
+        },
+      },
+    });
+  });
+  afterEach(() => {
+    delete (HTMLDialogElement.prototype as Partial<HTMLDialogElement>).showModal;
+    delete (HTMLDialogElement.prototype as Partial<HTMLDialogElement>).close;
+  });
+}
+
 describe('Categorias', () => {
+  stubDialog();
   afterEach(() => vi.useRealTimers());
 
   it(
@@ -144,24 +170,95 @@ describe('Categorias', () => {
     expect(rows()).toHaveLength(5);
   });
 
-  it('CA06: unavailable actions are marked and do nothing', async () => {
-    const { harness, page, switches } = await setup();
-    const disabled = Array.from(
-      page.querySelectorAll<HTMLButtonElement>('main button[aria-disabled=true]'),
-    );
-    // 1 add button + edit/delete for 5 rows in table and in cards.
-    expect(disabled).toHaveLength(21);
-    expect(disabled[0].textContent).toContain('Adicionar categoria');
-    expect(disabled[0].textContent).toContain('(em breve)');
-    expect(disabled[1].getAttribute('aria-label')).toBe('Editar Bolos (em breve)');
-    expect(disabled[2].getAttribute('aria-label')).toBe('Excluir Bolos (em breve)');
-    disabled.forEach((button) => {
-      button.click();
-      button.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter' }));
-    });
+  it('Formulário CA07: categoria com produto publicado não pode ser excluída', async () => {
+    const repository = new FakeAdminMenuRepository();
+    const remove = vi.spyOn(repository, 'deleteCategory');
+    const { harness, page } = await setup(repository);
+    page.querySelector<HTMLButtonElement>('[aria-label="Excluir Bolos"]')!.click();
     harness.detectChanges();
-    expect(TestBed.inject(Router).url).toBe('/admin/categorias');
-    expect(switches().map((input) => input.checked)).toEqual([true, true, true, true, false]);
+    const dialog = page.querySelector<HTMLDialogElement>('dialog[aria-labelledby=confirm-title]')!;
+    expect(dialog.open).toBe(true);
+    expect(dialog.textContent).toContain('Não é possível excluir Bolos');
+    expect(dialog.textContent).toContain('Ela tem 2 produtos ativos no cardápio.');
+    expect(dialog.querySelectorAll('button')).toHaveLength(1);
+    dialog.querySelector('button')!.click();
+    expect(dialog.open).toBe(false);
+    page.querySelector<HTMLButtonElement>('[aria-label="Excluir Docinhos"]')!.click();
+    harness.detectChanges();
+    expect(dialog.textContent).toContain('Ela tem 1 produto ativo no cardápio.');
+    expect(remove).not.toHaveBeenCalled();
+  });
+
+  it('Formulário CA08: confirma, cancela e exclui categorias sem produtos publicados', async () => {
+    const repository = new FakeAdminMenuRepository();
+    const { harness, page, names, settle } = await setup(repository);
+    const dialog = page.querySelector<HTMLDialogElement>('dialog[aria-labelledby=confirm-title]')!;
+    page.querySelector<HTMLButtonElement>('[aria-label="Excluir Datas especiais"]')!.click();
+    harness.detectChanges();
+    expect(dialog.textContent).toContain('Excluir a categoria Datas especiais?');
+    expect(dialog.textContent).toContain('Ela não tem produtos. Essa ação não dá para desfazer.');
+    dialog.querySelector<HTMLButtonElement>('button')!.click();
+    expect(dialog.open).toBe(false);
+    expect(names()).toHaveLength(5);
+
+    page.querySelector<HTMLButtonElement>('[aria-label="Excluir Kits e presentes"]')!.click();
+    harness.detectChanges();
+    expect(dialog.textContent).toContain('Ela tem 1 produto oculto. Os doces continuam salvos');
+    const [, yes] = Array.from(dialog.querySelectorAll('button'));
+    yes.click();
+    harness.detectChanges();
+    expect(yes.textContent).toContain('Excluindo…');
+    await settle();
+    expect(dialog.open).toBe(false);
+    expect(names()).not.toContain('Kits e presentes');
+    expect(page.querySelector('[role=status]')?.textContent).toContain(
+      'Kits e presentes foi excluída.',
+    );
+    expect(repository.items.find((item) => item.id === 'caixa-docinhos')?.categoryId).toBe('');
+  });
+
+  it('Formulário CA08: plural de ocultos e falha ao excluir mostra o aviso vermelho', async () => {
+    const repository = new FakeAdminMenuRepository();
+    repository.items = repository.items.map((item) => ({ ...item, published: false }));
+    vi.spyOn(repository, 'deleteCategory').mockRejectedValue(new Error('offline'));
+    const { harness, page, names, settle } = await setup(repository);
+    const dialog = page.querySelector<HTMLDialogElement>('dialog[aria-labelledby=confirm-title]')!;
+    page.querySelector<HTMLButtonElement>('[aria-label="Excluir Bolos"]')!.click();
+    harness.detectChanges();
+    expect(dialog.textContent).toContain('Ela tem 2 produtos ocultos.');
+    dialog.click();
+    expect(dialog.open).toBe(false);
+    page.querySelector<HTMLButtonElement>('[aria-label="Excluir Bolos"]')!.click();
+    dialog.querySelectorAll('button')[1].click();
+    await settle();
+    expect(dialog.open).toBe(false);
+    expect(names()).toContain('Bolos');
+    expect(page.querySelector('[role=status] [role=alert]')?.textContent).toContain(saveError);
+  });
+
+  it('Formulário CA09: lista mostra a imagem da categoria ou o ícone sem imagem', async () => {
+    const { rows } = await setup();
+    expect(rows()[0].querySelector('img')?.getAttribute('src')).toContain(
+      '/site/categorias/c-bolos/capa.webp',
+    );
+    expect(rows()[4].querySelector('img')).toBeNull();
+    expect(rows()[4].querySelector('[aria-hidden=true] svg')).toBeTruthy();
+  });
+
+  it('Formulário CA10: botões "Editar" e "Excluir" dos cards mobile abrem os diálogos', async () => {
+    const { harness, page } = await setup();
+    const [edit, remove] = Array.from(page.querySelectorAll<HTMLButtonElement>('ul li button'));
+    edit.click();
+    harness.detectChanges();
+    const form = page.querySelector<HTMLDialogElement>('dialog[aria-labelledby=categoria-title]')!;
+    expect(form.open).toBe(true);
+    expect(form.querySelector<HTMLInputElement>('#categoria-name')!.value).toBe('Bolos');
+    form.close();
+    remove.click();
+    harness.detectChanges();
+    expect(page.querySelector('dialog[aria-labelledby=confirm-title]')?.textContent).toContain(
+      'Não é possível excluir Bolos',
+    );
   });
 
   it('CA07/CA09: mobile cards mirror the table; decorative icons are hidden', async () => {
@@ -169,9 +266,12 @@ describe('Categorias', () => {
     expect(page.querySelector('table')?.className).toContain('lg:table');
     const cards = page.querySelectorAll('ul.lg\\:hidden > li');
     expect(cards).toHaveLength(5);
-    expect(cards[4].textContent).toContain('Nenhum produto');
+    expect(cards[4].textContent).toContain('Nenhum produto · Oculta');
+    expect(cards[0].textContent).toContain('2 produtos · Visível');
     expect(cards[4].querySelector('[role=switch]')).toBeTruthy();
-    expect(cards[4].querySelectorAll('[aria-disabled=true]')).toHaveLength(2);
+    expect(
+      Array.from(cards[4].querySelectorAll('button')).map((b) => b.textContent?.trim()),
+    ).toEqual(['Editar Datas especiais', 'Excluir Datas especiais']);
     expect(page.querySelectorAll('h1')).toHaveLength(1);
     const icons = Array.from(page.querySelectorAll('main svg'));
     expect(icons.every((svg) => svg.closest('[aria-hidden=true]'))).toBe(true);

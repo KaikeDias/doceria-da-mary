@@ -47,9 +47,14 @@ export function fromPrice(price: Price | null): { preco: number | null; preco_a_
   };
 }
 
+// Imagem de categoria: caminho no bucket "site"; vazio = sem imagem.
 export function categoryImageUrl(path: string | null): string {
-  if (!path) return '';
-  return path.startsWith('images/') ? path : publicUrl('site', path);
+  return path ? publicUrl('site', path) : '';
+}
+
+// Caminho no bucket "site" de uma URL pública gerada por categoryImageUrl.
+export function categoryImagePath(url: string): string {
+  return url.slice(publicUrl('site', '').length);
 }
 
 // Erro do supabase-js ({ data, error }) vira exceção para as telas tratarem com try/catch.
