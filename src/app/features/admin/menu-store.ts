@@ -1,6 +1,11 @@
 import { inject, Injectable, signal } from '@angular/core';
 import { CanActivateFn, Router } from '@angular/router';
-import { AdminCategory, AdminMenuRepository, MenuItem } from './admin-menu-repository';
+import {
+  AdminCategory,
+  AdminMenuRepository,
+  CategoryInput,
+  MenuItem,
+} from './admin-menu-repository';
 
 export type { AdminCategory, MenuItem };
 
@@ -55,6 +60,26 @@ export class MenuStore {
         other.id === category.id ? { ...other, visible: !category.visible } : other,
       ),
     );
+  }
+
+  // Produtos publicados da categoria; com algum, ela não pode ser excluída.
+  activeCount(categoryId: string): number {
+    return this.items().filter((item) => item.published && item.categoryId === categoryId).length;
+  }
+
+  // Recarrega tudo depois: a contagem e os produtos sem categoria vêm do banco.
+  async saveCategory(
+    input: CategoryInput,
+    existing?: AdminCategory,
+  ): Promise<{ imageFailed: boolean }> {
+    const result = await this.repository.saveCategory(input, existing);
+    await this.load();
+    return result;
+  }
+
+  async deleteCategory(category: AdminCategory): Promise<void> {
+    await this.repository.deleteCategory(category);
+    await this.load();
   }
 
   async delete(item: MenuItem): Promise<void> {

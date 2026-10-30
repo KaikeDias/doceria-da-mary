@@ -28,7 +28,7 @@ export class SupabaseCatalogRepository implements CatalogRepository {
       // Filtro explícito: com sessão de admin o RLS também libera as ocultas.
       db
         .from('categorias')
-        .select('slug, nome, rotulo, imagem_url')
+        .select('slug, rotulo, imagem_url')
         .eq('visivel', true)
         .order('ordem')
         .then(check),
@@ -48,7 +48,8 @@ export class SupabaseCatalogRepository implements CatalogRepository {
     return {
       categories: categoryRows.map((row) => ({
         id: row.slug,
-        name: row.nome,
+        // Um nome só por categoria: o chip usa o mesmo nome dos cards.
+        name: row.rotulo,
         label: row.rotulo,
         image: categoryImageUrl(row.imagem_url),
       })),

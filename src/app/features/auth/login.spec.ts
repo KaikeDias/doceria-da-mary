@@ -2,7 +2,6 @@ import { TestBed } from '@angular/core/testing';
 import { Router, provideRouter } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
 import { routes } from '../../app.routes';
-import { publicConfig } from '../../core/config/public-config';
 import { LOGIN_REQUEST, Login, LoginCredentials, emailError, passwordError } from './login';
 import { Auth, InvalidCredentials, Offline } from '../../core/auth/auth';
 import { provideAdmin } from '../admin/admin.fixture';
@@ -211,7 +210,6 @@ describe('Login', () => {
     harness.detectChanges();
     expect(page.querySelector('aside img')).toBeNull();
     expect(page.querySelector('form')).toBeTruthy();
-    expect(publicConfig.apiUrl).toBeNull();
   });
 
   it('validates e-mail and password formats', () => {

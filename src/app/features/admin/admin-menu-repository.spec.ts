@@ -1,9 +1,23 @@
 import { TestBed } from '@angular/core/testing';
 import { FakeRequest, failure, fakeSupabase } from '../../core/supabase/supabase.fake';
 import { publicUrl } from '../../core/supabase/supabase';
-import { AdminMenuRepository, MenuItem, slugify } from './admin-menu-repository';
+import {
+  AdminCategory,
+  AdminMenuRepository,
+  DuplicateCategory,
+  MenuItem,
+  slugify,
+} from './admin-menu-repository';
 
 const url = (path: string) => publicUrl('produtos', path);
+
+const bolos: AdminCategory = {
+  id: 'c1',
+  name: 'Bolos',
+  visible: true,
+  productCount: 2,
+  image: publicUrl('site', 'categorias/c1/velha.webp'),
+};
 
 const existing: MenuItem = {
   id: 'p1',
@@ -64,12 +78,24 @@ describe('Repositório do painel', () => {
 
   it('Categorias CA01: lista categorias com rótulo e contagem', async () => {
     const { fake, repository } = setup(() => [
-      { id: 'c1', rotulo: 'Kits e presentes', visivel: false, total_produtos: 3 },
-      { id: 'c2', rotulo: 'Bolos', visivel: true, total_produtos: null },
+      {
+        id: 'c1',
+        rotulo: 'Kits e presentes',
+        visivel: false,
+        total_produtos: 3,
+        imagem_url: 'categorias/c1/a.webp',
+      },
+      { id: 'c2', rotulo: 'Bolos', visivel: true, total_produtos: null, imagem_url: null },
     ]);
     expect(await repository.listCategories()).toEqual([
-      { id: 'c1', name: 'Kits e presentes', visible: false, productCount: 3 },
-      { id: 'c2', name: 'Bolos', visible: true, productCount: 0 },
+      {
+        id: 'c1',
+        name: 'Kits e presentes',
+        visible: false,
+        productCount: 3,
+        image: publicUrl('site', 'categorias/c1/a.webp'),
+      },
+      { id: 'c2', name: 'Bolos', visible: true, productCount: 0, image: '' },
     ]);
     expect(fake.requests[0].url.pathname).toMatch(/categorias_com_contagem$/);
   });
@@ -197,5 +223,103 @@ describe('Repositório do painel', () => {
   it('Formulário CA06: falha ao gravar o produto vira erro', async () => {
     const { repository } = setup(() => failure());
     await expect(repository.saveProduct({ ...existing, name: 'X' }, existing)).rejects.toBeTruthy();
+  });
+
+  it('Categoria CA04: cria com nome único, slug, ordem no fim e imagem no bucket site', async () => {
+    const { fake, calls, repository } = setup(({ method, url }) => {
+      if (url.pathname.includes('/storage/')) return { Key: 'ok' };
+      if (method === 'GET' && url.searchParams.has('slug')) return [{ slug: 'datas' }];
+      if (method === 'GET') return [{ ordem: 5 }];
+      if (method === 'POST') return { id: 'nova' };
+      return null;
+    });
+    const image = new File(['x'], 'capa', { type: 'image/jpeg' });
+    expect(await repository.saveCategory({ name: 'Datas', visible: false, image })).toEqual({
+      imageFailed: false,
+    });
+    expect(calls()).toEqual([
+      'GET categorias',
+      'GET categorias',
+      'POST categorias',
+      expect.stringMatching(/^POST object\/site\/categorias\/nova\/[\w-]+\.jpg$/),
+      'PATCH categorias',
+    ]);
+    expect(fake.requests[2].body).toEqual({
+      nome: 'Datas',
+      rotulo: 'Datas',
+      slug: 'datas-2',
+      visivel: false,
+      ordem: 6,
+    });
+    expect(fake.requests[4].url.searchParams.get('id')).toBe('eq.nova');
+    expect((fake.requests[4].body as { imagem_url: string }).imagem_url).toMatch(
+      /^categorias\/nova\/[\w-]+\.jpg$/,
+    );
+  });
+
+  it('Categoria CA05: edição grava nome e rótulo juntos e mantém a imagem atual', async () => {
+    const { fake, repository } = setup();
+    await repository.saveCategory(
+      { name: 'Bolos e tortas', visible: true, image: bolos.image },
+      bolos,
+    );
+    expect(fake.requests.map((r) => [r.method, r.body])).toEqual([
+      ['PATCH', { nome: 'Bolos e tortas', rotulo: 'Bolos e tortas' }],
+    ]);
+    TestBed.resetTestingModule();
+    const same = setup();
+    await same.repository.saveCategory({ name: 'Bolos', visible: true, image: bolos.image }, bolos);
+    expect(same.fake.requests).toHaveLength(0);
+  });
+
+  it('Categoria CA05: trocar a imagem envia a nova e apaga a anterior', async () => {
+    const { fake, calls, repository } = setup(({ method, url }) =>
+      method === 'POST' && url.pathname.includes('/storage/') ? { Key: 'ok' } : null,
+    );
+    const image = new File(['x'], 'capa', { type: 'image/webp' });
+    await repository.saveCategory({ name: 'Bolos', visible: false, image }, bolos);
+    expect(calls()).toEqual([
+      'PATCH categorias',
+      expect.stringMatching(/^POST object\/site\/categorias\/c1\/[\w-]+\.webp$/),
+      'PATCH categorias',
+      'DELETE object/site',
+    ]);
+    expect(fake.requests[0].body).toEqual({ visivel: false });
+    expect(fake.requests[3].body).toEqual({ prefixes: ['categorias/c1/velha.webp'] });
+  });
+
+  it('Categoria CA06: imagem recusada salva o resto e avisa', async () => {
+    const { calls, repository } = setup(({ url }) =>
+      url.pathname.includes('/storage/') ? failure(400) : null,
+    );
+    const image = new File(['x'], 'capa', { type: 'image/png' });
+    expect(
+      await repository.saveCategory(
+        { name: 'Bolos', visible: true, image },
+        { ...bolos, image: '' },
+      ),
+    ).toEqual({ imageFailed: true });
+    expect(calls()).toEqual([expect.stringMatching(/^POST object\/site\//)]);
+  });
+
+  it('Categoria CA02/CA06: nome duplicado no banco vira DuplicateCategory; outras falhas seguem', async () => {
+    const input = { name: 'Docinhos', visible: true, image: bolos.image };
+    const duplicate = setup(() => failure(409, { code: '23505', message: 'duplicate key' }));
+    await expect(duplicate.repository.saveCategory(input, bolos)).rejects.toBeInstanceOf(
+      DuplicateCategory,
+    );
+    TestBed.resetTestingModule();
+    const offline = setup(() => failure());
+    const error = await offline.repository.saveCategory(input, bolos).catch((e) => e);
+    expect(error).toBeTruthy();
+    expect(error).not.toBeInstanceOf(DuplicateCategory);
+  });
+
+  it('Categoria CA08: exclui a categoria e a imagem; sem imagem só a linha', async () => {
+    const { fake, calls, repository } = setup();
+    await repository.deleteCategory(bolos);
+    await repository.deleteCategory({ ...bolos, id: 'c2', image: '' });
+    expect(calls()).toEqual(['DELETE categorias', 'DELETE object/site', 'DELETE categorias']);
+    expect(fake.requests[1].body).toEqual({ prefixes: ['categorias/c1/velha.webp'] });
   });
 });

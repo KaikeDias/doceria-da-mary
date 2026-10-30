@@ -1,6 +1,8 @@
 import { inject, Injectable } from '@angular/core';
 import { TablesUpdate } from '../../core/supabase/database.types';
 import {
+  categoryImagePath,
+  categoryImageUrl,
   check,
   fromPrice,
   Price,
@@ -28,7 +30,19 @@ export interface AdminCategory {
   readonly name: string;
   readonly visible: boolean;
   readonly productCount: number;
+  // URL pública; vazia = sem imagem.
+  readonly image: string;
 }
+
+export interface CategoryInput {
+  readonly name: string;
+  readonly visible: boolean;
+  // URL da imagem atual ou arquivo novo.
+  readonly image: string | File;
+}
+
+// O banco recusou o nome (ou o slug gerado dele) por já existir.
+export class DuplicateCategory extends Error {}
 
 export interface ProductInput {
   readonly name: string;
@@ -50,6 +64,11 @@ export abstract class AdminMenuRepository {
     input: ProductInput,
     existing?: MenuItem,
   ): Promise<{ id: string; failedUploads: number }>;
+  abstract saveCategory(
+    input: CategoryInput,
+    existing?: AdminCategory,
+  ): Promise<{ imageFailed: boolean }>;
+  abstract deleteCategory(category: AdminCategory): Promise<void>;
 }
 
 export function slugify(name: string): string {
@@ -94,7 +113,7 @@ export class SupabaseAdminMenuRepository implements AdminMenuRepository {
     const rows = check(
       await this.supabase.client
         .from('categorias_com_contagem')
-        .select('id, rotulo, visivel, total_produtos')
+        .select('id, rotulo, visivel, total_produtos, imagem_url')
         .order('ordem'),
     );
     return rows.map((row) => ({
@@ -102,6 +121,7 @@ export class SupabaseAdminMenuRepository implements AdminMenuRepository {
       name: row.rotulo!,
       visible: row.visivel!,
       productCount: row.total_produtos ?? 0,
+      image: categoryImageUrl(row.imagem_url),
     }));
   }
 
@@ -118,7 +138,7 @@ export class SupabaseAdminMenuRepository implements AdminMenuRepository {
   async deleteProduct(item: MenuItem): Promise<void> {
     // As linhas de produto_imagens saem em cascata; os arquivos ficam no Storage.
     check(await this.supabase.client.from('produtos').delete().eq('id', item.id));
-    await this.removeFiles(item.images.map(productImagePath));
+    await this.removeFiles('produtos', item.images.map(productImagePath));
   }
 
   async saveProduct(
@@ -155,7 +175,7 @@ export class SupabaseAdminMenuRepository implements AdminMenuRepository {
           .from('produtos')
           .insert({
             ...fields,
-            slug: await this.uniqueSlug(input.name),
+            slug: await this.uniqueSlug('produtos', input.name),
             publicado: true,
             ordem: (last?.ordem ?? 0) + 1,
           })
@@ -200,14 +220,69 @@ export class SupabaseAdminMenuRepository implements AdminMenuRepository {
       );
     }
     const removed = before.filter((url) => !input.images.includes(url));
-    if (removed.length) await this.removeFiles(removed.map(productImagePath));
+    if (removed.length) await this.removeFiles('produtos', removed.map(productImagePath));
     return { id, failedUploads };
   }
 
-  private async uniqueSlug(name: string): Promise<string> {
+  async saveCategory(
+    input: CategoryInput,
+    existing?: AdminCategory,
+  ): Promise<{ imageFailed: boolean }> {
+    const db = this.supabase.client;
+    let id: string;
+    try {
+      if (existing) {
+        id = existing.id;
+        const patch: TablesUpdate<'categorias'> = {};
+        // Um nome só: chip, cards e painel.
+        if (input.name !== existing.name)
+          Object.assign(patch, { nome: input.name, rotulo: input.name });
+        if (input.visible !== existing.visible) patch.visivel = input.visible;
+        if (Object.keys(patch).length)
+          check(await db.from('categorias').update(patch).eq('id', id));
+      } else {
+        const [last] = check(
+          await db.from('categorias').select('ordem').order('ordem', { ascending: false }).limit(1),
+        );
+        const row = check(
+          await db
+            .from('categorias')
+            .insert({
+              nome: input.name,
+              rotulo: input.name,
+              slug: await this.uniqueSlug('categorias', input.name),
+              visivel: input.visible,
+              ordem: (last?.ordem ?? 0) + 1,
+            })
+            .select('id')
+            .single(),
+        );
+        id = row.id;
+      }
+    } catch (error) {
+      throw (error as { code?: string }).code === '23505' ? new DuplicateCategory() : error;
+    }
+
+    if (typeof input.image === 'string') return { imageFailed: false };
+    const file = input.image;
+    const path = `categorias/${id}/${crypto.randomUUID()}.${file.type.split('/')[1].replace('jpeg', 'jpg')}`;
+    const { error } = await db.storage.from('site').upload(path, file, { contentType: file.type });
+    if (error) return { imageFailed: true };
+    check(await db.from('categorias').update({ imagem_url: path }).eq('id', id));
+    if (existing?.image) await this.removeFiles('site', [categoryImagePath(existing.image)]);
+    return { imageFailed: false };
+  }
+
+  async deleteCategory(category: AdminCategory): Promise<void> {
+    // Os produtos ficam sem categoria pelo banco (on delete set null).
+    check(await this.supabase.client.from('categorias').delete().eq('id', category.id));
+    if (category.image) await this.removeFiles('site', [categoryImagePath(category.image)]);
+  }
+
+  private async uniqueSlug(table: 'produtos' | 'categorias', name: string): Promise<string> {
     const base = slugify(name);
     const rows = check(
-      await this.supabase.client.from('produtos').select('slug').like('slug', `${base}%`),
+      await this.supabase.client.from(table).select('slug').like('slug', `${base}%`),
     );
     const taken = new Set(rows.map((row) => row.slug));
     let slug = base;
@@ -216,9 +291,9 @@ export class SupabaseAdminMenuRepository implements AdminMenuRepository {
   }
 
   // Arquivo órfão no Storage não afeta o site; a falha só é registrada.
-  private async removeFiles(paths: string[]): Promise<void> {
+  private async removeFiles(bucket: 'produtos' | 'site', paths: string[]): Promise<void> {
     if (!paths.length) return;
-    const { error } = await this.supabase.client.storage.from('produtos').remove(paths);
+    const { error } = await this.supabase.client.storage.from(bucket).remove(paths);
     if (error) console.error('Falha ao remover fotos do Storage', error);
   }
 }

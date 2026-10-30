@@ -40,17 +40,17 @@ interface Image {
 
 function seed() {
   const categories: Category[] = [
-    ['c-bolos', 'Bolos', 'bolos', 'Bolos', 'chocolate-cake', true],
-    ['c-docinhos', 'Docinhos', 'docinhos', 'Docinhos', 'brigadeiros', true],
-    ['c-sobremesas', 'Sobremesas', 'sobremesas', 'Sobremesas', 'dessert-cup', true],
-    ['c-kits', 'Kits', 'kits', 'Kits e presentes', 'sweet-box', true],
-    ['c-datas', 'Datas especiais', 'datas-especiais', 'Datas especiais', null, false],
-  ].map(([id, nome, slug, rotulo, image, visivel], i) => ({
+    ['c-bolos', 'Bolos', 'bolos', true, true],
+    ['c-docinhos', 'Docinhos', 'docinhos', true, true],
+    ['c-sobremesas', 'Sobremesas', 'sobremesas', true, true],
+    ['c-kits', 'Kits e presentes', 'kits', true, true],
+    ['c-datas', 'Datas especiais', 'datas-especiais', false, false],
+  ].map(([id, nome, slug, image, visivel], i) => ({
     id,
     nome,
     slug,
-    rotulo,
-    imagem_url: image ? `images/${image}.webp` : null,
+    rotulo: nome,
+    imagem_url: image ? `categorias/${id}/capa.webp` : null,
     visivel,
     ordem: i + 1,
   })) as Category[];
@@ -150,7 +150,31 @@ function seed() {
     alt: item.nome,
     posicao: 0,
   }));
-  return { categories, products, images };
+  // Linha única de configuracoes_site, como fica depois das migrations.
+  const config: Record<string, string | number | null> = {
+    id: 1,
+    nome_doceria: 'Doceria da Mary',
+    texto_apresentacao: 'Doces artesanais',
+    descricao: 'Doces artesanais para momentos especiais.',
+    logo_path: null,
+    whatsapp: '89994259584',
+    instagram: 'doceriadamarypl',
+    email_contato: null,
+    mensagem_whatsapp: 'Olá, Mary! Gostaria de fazer uma encomenda.',
+    horario_atendimento: 'Segunda a sábado, das 9h às 18h',
+    regiao_atendida: 'Toda a cidade e região',
+    endereco: null,
+    texto_encomendas:
+      'Encomendas com pelo menos 2 dias de antecedência. Para festas e datas especiais, fale com a gente com uma semana de antecedência.',
+    hero_titulo: 'Adoçando seus momentos mais especiais.',
+    hero_subtitulo:
+      'Doces artesanais feitos com afeto, ingredientes escolhidos com cuidado e aquele sabor que transforma qualquer ocasião em memória.',
+    hero_imagem_path: null,
+    sobre_texto:
+      'A Doceria da Mary nasceu do prazer de transformar ingredientes simples em momentos cheios de afeto. Cada doce é preparado com cuidado, da escolha dos sabores ao último detalhe da apresentação.',
+    cta_encomendas_titulo: 'Tem uma ocasião especial chegando?',
+  };
+  return { categories, products, images, config };
 }
 
 export type MockDb = ReturnType<typeof seed>;
@@ -240,14 +264,48 @@ export async function mockSupabase(
     const imagesOf = (id: string) =>
       db.images.filter((image) => image.produto_id === id).sort((a, b) => a.posicao - b.posicao);
 
+    if (table === 'configuracoes_site') {
+      if (method === 'PATCH') {
+        Object.assign(db.config, request.postDataJSON());
+        return route.fulfill({ status: 204 });
+      }
+      return respond([db.config]);
+    }
     if (table === 'administradores') {
       return respond(logged || eq(url, 'user_id') === user.id ? [{ user_id: user.id }] : []);
     }
     if (table === 'categorias' && method === 'GET') {
+      const select = url.searchParams.get('select');
+      if (select === 'ordem')
+        return respond([{ ordem: Math.max(0, ...db.categories.map((c) => c.ordem)) }]);
+      if (select === 'slug') {
+        const base = url.searchParams.get('slug')!.replace(/^like\.|%$/g, '');
+        return respond(
+          db.categories.filter((c) => c.slug.startsWith(base)).map(({ slug }) => ({ slug })),
+        );
+      }
       return respond(db.categories.filter((item) => item.visivel));
     }
-    if (table === 'categorias' && method === 'PATCH') {
-      Object.assign(category(eq(url, 'id')!)!, request.postDataJSON());
+    if (table === 'categorias' && (method === 'POST' || method === 'PATCH')) {
+      const body = request.postDataJSON();
+      const id = eq(url, 'id');
+      // nome é citext único no banco.
+      const taken = db.categories.some(
+        (c) => c.id !== id && body.nome && c.nome.toLowerCase() === body.nome.toLowerCase(),
+      );
+      if (taken) return json(route, { code: '23505', message: 'duplicate key' }, 409);
+      if (method === 'PATCH') {
+        Object.assign(category(id)!, body);
+        return route.fulfill({ status: 204 });
+      }
+      const row = { imagem_url: null, ...body, id: `c-${body.slug}` };
+      db.categories.push(row);
+      return respond([{ id: row.id }]);
+    }
+    if (table === 'categorias' && method === 'DELETE') {
+      const id = eq(url, 'id');
+      db.categories = db.categories.filter((c) => c.id !== id);
+      for (const p of db.products) if (p.categoria_id === id) p.categoria_id = null;
       return route.fulfill({ status: 204 });
     }
     if (table === 'categorias_com_contagem') {

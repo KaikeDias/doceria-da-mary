@@ -41,6 +41,33 @@ test('mobile drawer opens, traps focus on close and returns focus on Escape', as
   expect(size!.width).toBeGreaterThanOrEqual(44);
 });
 
+test('mobile drawer slides in from the left and slides back out before hiding', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await mockSupabase(page, { session: true });
+  await page.goto('/admin/cardapio');
+  await page.getByRole('button', { name: 'Abrir menu' }).click();
+  const drawer = page.locator('dialog[aria-label="Menu do painel"]');
+  expect(await drawer.evaluate((el) => getComputedStyle(el).transitionDuration)).toBe('0.3s');
+  await expect.poll(async () => (await drawer.boundingBox())!.x).toBe(0);
+  await page.keyboard.press('Escape');
+  // Durante a saída a gaveta continua na tela, indo para a esquerda.
+  await expect(drawer).toBeVisible();
+  await expect.poll(async () => (await drawer.boundingBox())?.x ?? -1).toBeLessThan(0);
+  await expect(drawer).toBeHidden();
+});
+
+test('mobile drawer has no transition with reduced motion', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.setViewportSize({ width: 390, height: 844 });
+  await mockSupabase(page, { session: true });
+  await page.goto('/admin/cardapio');
+  await page.getByRole('button', { name: 'Abrir menu' }).click();
+  const drawer = page.locator('dialog[aria-label="Menu do painel"]');
+  expect(await drawer.evaluate((el) => getComputedStyle(el).transitionProperty)).toBe('none');
+});
+
 test('toggling publication updates the indicator and filters', async ({ page }) => {
   await mockSupabase(page, { session: true });
   await page.goto('/admin/cardapio');

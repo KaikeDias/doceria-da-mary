@@ -52,6 +52,11 @@ export const routes: Routes = [
         title: 'Categorias | Painel Doceria da Mary',
         loadComponent: () => import('./features/admin/categorias').then((m) => m.Categorias),
       },
+      {
+        path: 'configuracoes',
+        title: 'Configurações | Painel Doceria da Mary',
+        loadComponent: () => import('./features/admin/configuracoes').then((m) => m.Configuracoes),
+      },
     ],
   },
 ];

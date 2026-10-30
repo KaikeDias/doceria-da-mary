@@ -38,19 +38,19 @@ describe('Admin layout', () => {
   }
 
   it(
-    'CA02/CA08/CA09: menu items, current page, disabled entries and external actions',
+    'CA02/CA08/CA09: menu items, current page and external actions',
     { timeout: 60000 },
     async () => {
       const { page } = await setup();
       const nav = page.querySelector('aside nav')!;
       expect(nav.getAttribute('aria-label')).toBe('Menu do painel');
       expect(nav.querySelector('a[aria-current=page]')?.textContent).toContain('Cardápio');
-      const disabled = Array.from(nav.querySelectorAll('[aria-disabled=true]'));
-      expect(disabled.map((item) => item.textContent?.trim())).toEqual([
-        expect.stringContaining('Configurações'),
-      ]);
+      expect(nav.querySelectorAll('[aria-disabled=true]')).toHaveLength(0);
       expect(nav.querySelector('a[href="/admin/categorias"]')?.textContent).toContain('Categorias');
-      expect(disabled.every((item) => !item.hasAttribute('href'))).toBe(true);
+      // Configurações CA01: o item deixa de estar indisponível.
+      expect(nav.querySelector('a[href="/admin/configuracoes"]')?.textContent).toContain(
+        'Configurações',
+      );
       const site = nav.querySelector<HTMLAnchorElement>('a[target=_blank]')!;
       expect(site.getAttribute('href')).toBe('/');
       expect(site.rel).toContain('noopener');

@@ -2,6 +2,7 @@ import { PLATFORM_ID } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { environment } from '../../../environments/environment';
 import {
+  categoryImagePath,
   categoryImageUrl,
   check,
   fromPrice,
@@ -46,9 +47,9 @@ describe('Base Supabase', () => {
       `${storage}/produtos/seed/brownie.webp`,
     );
     expect(productImagePath(`${storage}/produtos/abc/1.webp`)).toBe('abc/1.webp');
-    expect(categoryImageUrl('images/sweet-box.webp')).toBe('images/sweet-box.webp');
-    expect(categoryImageUrl('logo.webp')).toBe(`${storage}/site/logo.webp`);
+    expect(categoryImageUrl('categorias/c1/a.webp')).toBe(`${storage}/site/categorias/c1/a.webp`);
     expect(categoryImageUrl(null)).toBe('');
+    expect(categoryImagePath(`${storage}/site/categorias/c1/a.webp`)).toBe('categorias/c1/a.webp');
   });
 
   it('transforma o erro do supabase-js em exceção', () => {

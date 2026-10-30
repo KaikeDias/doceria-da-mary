@@ -1,16 +1,16 @@
 import { TestBed } from '@angular/core/testing';
 import { categories, products, provideCatalog } from '../catalog/catalog.fixture';
-import { publicConfig } from '../../core/config/public-config';
-import { whatsappMessages } from '../../core/config/contact-links';
+import { SiteConfigRepository, siteConfigDefaults } from '../../core/config/site-config';
+import { provideSiteConfig, siteConfig } from '../../core/config/site-config.fixture';
+import { publicUrl } from '../../core/supabase/supabase';
 import { Home } from './home';
 import { Catalog } from '../catalog/catalog-repository';
 import { loadError } from '../../core/supabase/supabase';
 
 describe('Atualização do design da landing page', () => {
-  const configuredContact = publicConfig.contact;
-  afterEach(() => Object.defineProperty(publicConfig, 'contact', { value: configuredContact }));
-
-  beforeEach(() => TestBed.configureTestingModule({ providers: [provideCatalog()] }));
+  beforeEach(() =>
+    TestBed.configureTestingModule({ providers: [provideCatalog(), provideSiteConfig()] }),
+  );
 
   async function render() {
     const fixture = TestBed.createComponent(Home);
@@ -47,7 +47,7 @@ describe('Atualização do design da landing page', () => {
       expect(icon?.getAttribute('alt')).toBe('');
       expect(icon?.getAttribute('aria-hidden')).toBe('true');
       expect(link.getAttribute('aria-label')).toContain('WhatsApp');
-      expect(link.href).toContain(`https://wa.me/${publicConfig.contact.whatsapp}`);
+      expect(link.href).toContain('https://wa.me/5589994259584');
     }
     expect(page.querySelector('[lucideMessageCircle]')).toBeNull();
   });
@@ -109,8 +109,10 @@ describe('Atualização do design da landing page', () => {
     expect(cards[1].classList.contains('instagram-card')).toBe(true);
     expect(cards[0].textContent).toContain('+55 (89) 99425-9584');
     expect(cards[1].textContent).toContain('@doceriadamarypl');
-    expect(cards[1].href).toBe(publicConfig.contact.instagram);
-    expect(new URL(cards[0].href).searchParams.get('text')).toBe(whatsappMessages.questions);
+    expect(cards[1].href).toBe('https://www.instagram.com/doceriadamarypl/');
+    expect(new URL(cards[0].href).searchParams.get('text')).toBe(
+      siteConfigDefaults.whatsappMessage,
+    );
     for (const card of cards) {
       expect(card.querySelector('svg, img')).toBeTruthy();
       expect(card.getAttribute('aria-label')).toContain('abre em nova aba');
@@ -134,19 +136,12 @@ describe('Atualização do design da landing page', () => {
   });
 
   it('mantém mensagem vazia e contatos indisponíveis sem criar destinos fictícios', async () => {
-    Object.defineProperty(publicConfig, 'contact', {
-      value: {
-        ...publicConfig.contact,
-        whatsapp: null,
-        instagram: null,
-      },
+    TestBed.overrideProvider(SiteConfigRepository, {
+      useValue: { load: async () => ({ ...siteConfigDefaults, whatsapp: '123' }) },
     });
     const { fixture, page } = await render();
     expect(page.querySelector('.whatsapp-card')?.textContent?.trim()).toContain(
       'Número a configurar',
-    );
-    expect(page.querySelector('.instagram-card')?.textContent?.trim()).toContain(
-      'Perfil a configurar',
     );
     for (const link of page.querySelectorAll('[aria-disabled="true"]')) {
       expect(link.hasAttribute('href')).toBe(false);
@@ -160,7 +155,7 @@ describe('Atualização do design da landing page', () => {
 
 describe('Catálogo público lendo do banco', () => {
   function setup(load: () => Promise<Catalog>) {
-    TestBed.configureTestingModule({ providers: [provideCatalog(load)] });
+    TestBed.configureTestingModule({ providers: [provideCatalog(load), provideSiteConfig()] });
     const fixture = TestBed.createComponent(Home);
     return { fixture, page: fixture.nativeElement as HTMLElement };
   }
@@ -236,5 +231,122 @@ describe('Catálogo público lendo do banco', () => {
     fixture.detectChanges();
     expect(page.querySelectorAll('app-product-card')).toHaveLength(2);
     expect(load).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('Landing lendo as configurações do site', () => {
+  function setup(load: () => Promise<typeof siteConfig>) {
+    TestBed.configureTestingModule({ providers: [provideCatalog(), provideSiteConfig(load)] });
+    const fixture = TestBed.createComponent(Home);
+    return { fixture, page: fixture.nativeElement as HTMLElement };
+  }
+
+  async function settle(fixture: { whenStable(): Promise<unknown>; detectChanges(): void }) {
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+  }
+
+  const text = (page: HTMLElement, selector: string) =>
+    page.querySelector(selector)?.textContent?.replace(/\s+/g, ' ').trim();
+
+  it('CA01/CA05: textos e imagens vêm das configurações', async () => {
+    const logo = publicUrl('site', 'configuracoes/logo-1.png');
+    const hero = publicUrl('site', 'configuracoes/hero-1.webp');
+    const { fixture, page } = setup(async () => ({
+      ...siteConfig,
+      name: 'Mary Doces',
+      tagline: 'Feito em casa',
+      description: 'Doces para festas.',
+      logo,
+      heroTitle: 'Doce que abraça.',
+      heroSubtitle: 'Receitas de família.',
+      heroImage: hero,
+      about: 'Começamos na cozinha de casa.',
+      ordersTitle: 'Vai ter festa?',
+    }));
+    await settle(fixture);
+    expect(text(page, '.site-header .brand')).toBe('Mary DocesFeito em casa');
+    expect(page.querySelector('.site-header .brand')?.getAttribute('aria-label')).toBe(
+      'Mary Doces — início',
+    );
+    expect(page.querySelector('.site-header .brand img')?.getAttribute('src')).toBe(logo);
+    expect(page.querySelector('.site-footer .brand img')?.getAttribute('src')).toBe(logo);
+    expect(text(page, 'h1')).toBe('Doce que abraça.');
+    expect(page.querySelector('h1 br')).toBeNull();
+    expect(text(page, '.hero-description')).toBe('Receitas de família.');
+    const heroImg = page.querySelector('.hero-picture img')!;
+    expect(heroImg.getAttribute('src')).toBe(hero);
+    expect(heroImg.getAttribute('alt')).toBe('Doces da Mary Doces');
+    expect(text(page, '#sobre .about-copy p:nth-of-type(2)')).toBe('Começamos na cozinha de casa.');
+    expect(text(page, '#orders-title')).toBe('Vai ter festa?');
+    expect(text(page, '.site-footer .brand')).toBe('Mary Doces');
+    expect(text(page, '.footer-bottom')).toContain('© 2026 Mary Doces. Feito com carinho.');
+    expect(text(page, '.footer-bottom')).toContain('Doces para festas.');
+  });
+
+  it('CA02/CA03: WhatsApp e Instagram das configurações', async () => {
+    const { fixture, page } = setup(async () => siteConfig);
+    await settle(fixture);
+    const links = Array.from(page.querySelectorAll<HTMLAnchorElement>('a[href^="https://wa.me/"]'));
+    expect(links.every((link) => new URL(link.href).pathname === '/5511987654321')).toBe(true);
+    const general = links.filter((link) => !link.closest('app-product-card'));
+    expect(general).toHaveLength(4);
+    for (const link of general)
+      expect(new URL(link.href).searchParams.get('text')).toBe(siteConfig.whatsappMessage);
+    const product = page.querySelector<HTMLAnchorElement>(
+      'app-product-card a[href^="https://wa.me/"]',
+    )!;
+    expect(new URL(product.href).searchParams.get('text')).toContain('Bolo de Chocolate');
+    expect(text(page, '.whatsapp-card')).toContain('+55 (11) 98765-4321');
+    const instagram = page.querySelector<HTMLAnchorElement>('.instagram-card')!;
+    expect(instagram.href).toBe('https://www.instagram.com/doceriadamary/');
+    expect(instagram.textContent).toContain('@doceriadamary');
+  });
+
+  it('CA04: enquanto carrega, skeletons no lugar dos textos e contatos sem link', async () => {
+    let release!: (config: typeof siteConfig) => void;
+    const { fixture, page } = setup(() => new Promise((done) => (release = done)));
+    await settle(fixture);
+    expect(text(page, 'h1')).toBe('');
+    expect(page.querySelectorAll('h1 .skeleton')).toHaveLength(2);
+    expect(page.querySelector('.hero-picture img')).toBeNull();
+    expect(page.querySelector('.hero-picture .skeleton')).toBeTruthy();
+    expect(page.querySelector('.site-header .brand img')).toBeNull();
+    expect(page.querySelector('.site-header .brand')?.getAttribute('aria-label')).toBe('Início');
+    expect(text(page, '#orders-title')).toBe('');
+    expect(text(page, '.whatsapp-card .contact-detail')).not.toContain('+55');
+    expect(page.querySelectorAll('a[href^="https://wa.me/"]')).toHaveLength(0);
+    expect(page.querySelectorAll('a[href^="https://www.instagram.com/"]')).toHaveLength(0);
+    expect(page.querySelectorAll('app-product-card')).toHaveLength(6);
+    for (const skeleton of page.querySelectorAll('.skeleton'))
+      expect(skeleton.closest('[aria-hidden=true]')).toBeTruthy();
+
+    release(siteConfig);
+    await settle(fixture);
+    expect(page.querySelectorAll('.skeleton')).toHaveLength(0);
+    expect(text(page, 'h1')).toBe(siteConfig.heroTitle);
+    expect(page.querySelectorAll('a[href^="https://wa.me/5511987654321"]')).toHaveLength(10);
+  });
+
+  it('CA04/CA05: falha e campos vazios trocam os skeletons pelos padrões; o cardápio carrega', async () => {
+    const failed = setup(async () => {
+      throw new Error('offline');
+    });
+    await settle(failed.fixture);
+    expect(text(failed.page, 'h1')).toBe(siteConfigDefaults.heroTitle);
+    expect(failed.page.querySelectorAll('app-product-card')).toHaveLength(6);
+    TestBed.resetTestingModule();
+
+    const empty = setup(async () => ({ ...siteConfig, tagline: '', about: '', ordersTitle: '' }));
+    await settle(empty.fixture);
+    expect(text(empty.page, '.site-header .brand small')).toBe(siteConfigDefaults.tagline);
+    expect(text(empty.page, '#orders-title')).toBe(siteConfigDefaults.ordersTitle);
+    expect(empty.page.querySelector('.site-header .brand img')?.getAttribute('src')).toBe(
+      'logo.png',
+    );
+    const heroImg = empty.page.querySelector('.hero-picture img')!;
+    expect(heroImg.getAttribute('src')).toBe('images/hero.webp');
+    expect(heroImg.getAttribute('alt')).toContain('Seleção de doces artesanais');
   });
 });

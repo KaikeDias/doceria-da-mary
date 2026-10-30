@@ -4,16 +4,38 @@ import { publicUrl } from '../../core/supabase/supabase';
 import {
   AdminCategory,
   AdminMenuRepository,
+  CategoryInput,
   MenuItem,
   ProductInput,
 } from './admin-menu-repository';
 
+const cover = (id: string) => publicUrl('site', `categorias/${id}/capa.webp`);
+
 export const adminCategories: readonly AdminCategory[] = [
-  { id: 'c-bolos', name: 'Bolos', visible: true, productCount: 2 },
-  { id: 'c-docinhos', name: 'Docinhos', visible: true, productCount: 1 },
-  { id: 'c-sobremesas', name: 'Sobremesas', visible: true, productCount: 2 },
-  { id: 'c-kits', name: 'Kits e presentes', visible: true, productCount: 1 },
-  { id: 'c-datas', name: 'Datas especiais', visible: false, productCount: 0 },
+  { id: 'c-bolos', name: 'Bolos', visible: true, productCount: 2, image: cover('c-bolos') },
+  {
+    id: 'c-docinhos',
+    name: 'Docinhos',
+    visible: true,
+    productCount: 1,
+    image: cover('c-docinhos'),
+  },
+  {
+    id: 'c-sobremesas',
+    name: 'Sobremesas',
+    visible: true,
+    productCount: 2,
+    image: cover('c-sobremesas'),
+  },
+  // Único produto (Caixa de Docinhos) está oculto: pode ser excluída.
+  {
+    id: 'c-kits',
+    name: 'Kits e presentes',
+    visible: true,
+    productCount: 1,
+    image: cover('c-kits'),
+  },
+  { id: 'c-datas', name: 'Datas especiais', visible: false, productCount: 0, image: '' },
 ];
 
 const photo = (file: string) => [publicUrl('produtos', `seed/${file}.webp`)];
@@ -110,6 +132,25 @@ export class FakeAdminMenuRepository implements AdminMenuRepository {
       ? this.items.map((item) => (item.id === id ? saved : item))
       : [...this.items, saved];
     return { id, failedUploads: 0 };
+  }
+  async saveCategory(input: CategoryInput, existing?: AdminCategory) {
+    const saved: AdminCategory = {
+      id: existing?.id ?? `c-nova-${this.categories.length}`,
+      name: input.name,
+      visible: input.visible,
+      productCount: existing?.productCount ?? 0,
+      image: typeof input.image === 'string' ? input.image : `blob:${input.image.name}`,
+    };
+    this.categories = existing
+      ? this.categories.map((other) => (other.id === saved.id ? saved : other))
+      : [...this.categories, saved];
+    return { imageFailed: false };
+  }
+  async deleteCategory(category: AdminCategory): Promise<void> {
+    this.categories = this.categories.filter((other) => other.id !== category.id);
+    this.items = this.items.map((item) =>
+      item.categoryId === category.id ? { ...item, categoryId: '' } : item,
+    );
   }
 }
 
