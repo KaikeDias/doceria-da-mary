@@ -35,7 +35,8 @@ Repositório na branch `main`, com entregas separadas por funcionalidade. Os reg
 
 - Fornecer fotos originais/adicionais dos produtos e confirmar antecedência de encomenda, conservação e alérgenos antes de cadastrá-los como informações reais.
 - E-mail, endereço, localização, horários e API continuam não configurados.
-- Definir hospedagem e validar publicação. O push do código ao GitHub não constitui publicação em hospedagem.
+- Hospedagem definida: Vercel (sem domínio próprio). O push do código ao GitHub não constitui publicação em hospedagem.
+- Publicar na Vercel e validar rotas e 404 ([hospedagem-vercel](../specs/hospedagem-vercel/tasks.md), V01–V02); validar o JSON-LD e aplicar a migration da região ([seo-landing](../specs/seo-landing/tasks.md), V02–V03).
 
 ## Histórico
 
