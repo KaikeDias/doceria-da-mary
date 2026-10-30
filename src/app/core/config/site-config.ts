@@ -40,7 +40,7 @@ export const siteConfigDefaults: SiteConfig = {
   email: '',
   whatsappMessage: 'Olá, Mary! Vim pelo site e gostaria de fazer um pedido.',
   hours: '',
-  region: '',
+  region: 'Paes Landim, Piauí',
   address: '',
   ordersText: '',
   heroTitle: 'Adoçando seus momentos mais especiais.',
@@ -53,7 +53,7 @@ export const siteConfigDefaults: SiteConfig = {
 };
 
 // Imagens padrão quando nenhuma foi enviada.
-export const defaultImages = { logo: 'logo.png', heroImage: 'images/hero.webp' } as const;
+export const defaultImages = { logo: 'logo.webp', heroImage: 'images/hero.webp' } as const;
 
 export const limits: Partial<Record<SiteConfigField, number>> = {
   description: 160,

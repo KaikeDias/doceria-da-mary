@@ -15,7 +15,7 @@ export const routes: Routes = [
   {
     path: '',
     pathMatch: 'full',
-    title: 'Doceria da Mary',
+    // Título definido pela Home a partir das configurações do site.
     loadComponent: () => import('./features/home/home').then((m) => m.Home),
   },
   {

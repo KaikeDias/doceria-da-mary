@@ -11,30 +11,16 @@
       <a
         href="#inicio"
         class="brand inline-flex items-center gap-4 whitespace-nowrap font-display text-[26px] leading-[1.1] font-medium text-neutral max-desktop:gap-2.5 max-desktop:text-[20px]"
-        [attr.aria-label]="configReady() ? config().name + ' — início' : 'Início'"
+        [attr.aria-label]="config().name + ' — início'"
       >
-        @if (configReady()) {
-          <img [src]="logo()" alt="" width="64" height="64" class="max-desktop:size-9" />
-          <span
-            >{{ config().name
-            }}<small
-              class="mt-[5px] block font-body text-[9px] leading-normal font-medium tracking-[2px] uppercase max-desktop:mt-[3px] max-desktop:text-[7px] max-desktop:tracking-[1.8px]"
-              >{{ config().tagline }}</small
-            ></span
-          >
-        } @else {
-          <span
-            aria-hidden="true"
-            class="skeleton size-16 shrink-0 rounded-full max-desktop:size-9"
-          ></span>
-          <span aria-hidden="true" class="flex flex-col gap-1.5"
-            ><span
-              aria-hidden="true"
-              class="skeleton inline-block h-[0.8em] w-[7.5em] align-middle"
-            ></span
-            ><span class="skeleton block h-2 w-24 max-desktop:w-16"></span
-          ></span>
-        }
+        <img [src]="logo()" alt="" width="64" height="64" class="max-desktop:size-9" />
+        <span
+          >{{ config().name
+          }}<small
+            class="mt-[5px] block font-body text-[9px] leading-normal font-medium tracking-[2px] uppercase max-desktop:mt-[3px] max-desktop:text-[7px] max-desktop:tracking-[1.8px]"
+            >{{ config().tagline }}</small
+          ></span
+        >
       </a>
       <nav
         class="desktop-nav flex items-center gap-[38px] text-[13px] font-medium desktop:max-[1101px]:gap-5 desktop:max-[901px]:order-3 desktop:max-[901px]:basis-full desktop:max-[901px]:justify-center max-desktop:hidden"
@@ -84,22 +70,12 @@
             id="hero-title"
             class="font-display font-medium text-neutral mt-7 mb-[30px] text-[clamp(48px,5vw,72px)] leading-[1.1] tracking-[-1.2px] max-desktop:mt-6 max-desktop:mb-[22px] max-desktop:text-[clamp(42px,11.8vw,46px)] max-desktop:leading-[1.05] max-desktop:tracking-[-0.5px]"
           >
-            @if (configReady()) {
-              {{ config().heroTitle }}
-            } @else {
-              <span aria-hidden="true" class="skeleton block h-[0.9em] w-full"></span>
-              <span aria-hidden="true" class="skeleton mt-[0.2em] block h-[0.9em] w-2/3"></span>
-            }
+            {{ config().heroTitle }}
           </h1>
           <p
             class="hero-description max-w-[465px] text-[17px] leading-[1.7] max-desktop:text-[15px] max-desktop:leading-[1.75]"
           >
-            @if (configReady()) {
-              {{ config().heroSubtitle }}
-            } @else {
-              <span aria-hidden="true" class="skeleton block h-[1em] w-full"></span>
-              <span aria-hidden="true" class="skeleton mt-[0.7em] block h-[1em] w-4/5"></span>
-            }
+            {{ config().heroSubtitle }}
           </p>
           <div
             class="hero-actions mt-9 flex flex-wrap gap-4 max-desktop:mt-7 max-desktop:flex-col max-desktop:gap-3"
@@ -129,25 +105,18 @@
         <div
           class="hero-picture relative rounded-[36px] bg-secondary p-3.5 max-desktop:rounded-[26px] max-desktop:p-2.5"
         >
-          @if (!configReady()) {
-            <div
-              aria-hidden="true"
-              class="skeleton aspect-[1.3] w-full rounded-3xl max-desktop:aspect-[1.1] max-desktop:rounded-[18px]"
-            ></div>
-          } @else {
-            <img
-              [src]="heroImage()"
-              [alt]="
-                config().heroImage
-                  ? 'Doces da ' + config().name
-                  : 'Seleção de doces artesanais com chocolate, creme e morangos em uma bandeja'
-              "
-              width="984"
-              height="783"
-              fetchpriority="high"
-              class="block aspect-[1.3] w-full rounded-3xl object-cover max-desktop:aspect-[1.1] max-desktop:rounded-[18px]"
-            />
-          }
+          <img
+            [src]="heroImage()"
+            [alt]="
+              config().heroImage
+                ? 'Doces da ' + config().name
+                : 'Seleção de doces artesanais com chocolate, creme e morangos em uma bandeja'
+            "
+            width="984"
+            height="783"
+            fetchpriority="high"
+            class="block aspect-[1.3] w-full rounded-3xl object-cover max-desktop:aspect-[1.1] max-desktop:rounded-[18px]"
+          />
           <div
             class="hero-label absolute bottom-9 -left-9 rounded-[18px] bg-base-100 px-6 py-4.5 max-desktop:-bottom-4.5 max-desktop:left-3.5 max-desktop:rounded-2xl max-desktop:px-4.5 max-desktop:py-4"
           >
@@ -360,13 +329,7 @@
           <p
             class="mt-6 text-base leading-[1.75] max-desktop:mt-4 max-desktop:text-[15px] max-desktop:leading-[1.7]"
           >
-            @if (configReady()) {
-              {{ config().about }}
-            } @else {
-              <span aria-hidden="true" class="skeleton block h-[1em] w-full"></span>
-              <span aria-hidden="true" class="skeleton mt-[0.75em] block h-[1em] w-full"></span>
-              <span aria-hidden="true" class="skeleton mt-[0.75em] block h-[1em] w-3/5"></span>
-            }
+            {{ config().about }}
           </p>
           <p
             class="about-extra mt-6 text-base leading-[1.75] max-desktop:mt-4 max-desktop:text-[15px] max-desktop:leading-[1.7]"
@@ -403,11 +366,7 @@
             id="orders-title"
             class="font-display font-medium text-neutral text-[56px] leading-[1.05] tracking-[-0.7px] max-desktop:text-[40px] max-desktop:leading-[1.04] max-desktop:tracking-[-0.3px] mt-4.5 mb-[22px] max-desktop:mt-4 max-desktop:mb-4.5"
           >
-            @if (configReady()) {
-              {{ config().ordersTitle }}
-            } @else {
-              <span aria-hidden="true" class="skeleton block h-[0.9em] w-full max-w-[520px]"></span>
-            }
+            {{ config().ordersTitle }}
           </h2>
           <p class="text-base leading-[1.6] max-desktop:text-sm max-desktop:leading-[1.7]">
             Conte pra gente o que você está imaginando. Vamos conversar sobre a sua encomenda!
@@ -448,6 +407,9 @@
           </h2>
           <p class="max-w-[390px] text-base leading-[1.7] max-desktop:text-sm">
             Tem uma ideia, uma dúvida ou uma ocasião para celebrar? Estamos por aqui para conversar.
+          </p>
+          <p class="contact-region mt-4 text-sm font-medium text-neutral">
+            Região atendida: {{ config().region }}
           </p>
         </div>
         <div class="contact-grid grid gap-4 max-desktop:mt-7 max-desktop:gap-3.5">
@@ -547,20 +509,9 @@
           href="#inicio"
           class="brand inline-flex items-center gap-4 whitespace-nowrap font-display text-[26px] leading-[1.1] font-medium max-desktop:gap-2.5 max-desktop:text-[20px] text-inherit"
         >
-          @if (configReady()) {
-            <img [src]="logo()" alt="" width="54" height="54" class="max-desktop:size-9" /><span>{{
-              config().name
-            }}</span>
-          } @else {
-            <span
-              aria-hidden="true"
-              class="skeleton size-[54px] shrink-0 rounded-full max-desktop:size-9"
-            ></span
-            ><span
-              aria-hidden="true"
-              class="skeleton inline-block h-[0.8em] w-[7.5em] align-middle"
-            ></span>
-          }
+          <img [src]="logo()" alt="" width="54" height="54" class="max-desktop:size-9" /><span>{{
+            config().name
+          }}</span>
         </a>
         <nav
           class="footer-nav flex flex-wrap items-center gap-7 text-[13px] font-medium max-desktop:mt-6 max-desktop:gap-x-[22px] max-desktop:gap-y-4 max-desktop:text-xs"
@@ -583,16 +534,8 @@
         </nav>
       </div>
       <div class="footer-bottom flex justify-between border-t border-[#fff8f340] pt-6 text-xs">
-        @if (configReady()) {
-          <p>© 2026 {{ config().name }}. Feito com carinho.</p>
-          <p class="desktop-copy max-desktop:hidden">{{ config().description }}</p>
-        } @else {
-          <span aria-hidden="true" class="skeleton block h-3 w-64 max-w-full"></span>
-          <span
-            aria-hidden="true"
-            class="desktop-copy skeleton block h-3 w-56 max-desktop:hidden"
-          ></span>
-        }
+        <p>© 2026 {{ config().name }}. Feito com carinho.</p>
+        <p class="desktop-copy max-desktop:hidden">{{ config().description }}</p>
       </div>
     </div>
   </footer>
