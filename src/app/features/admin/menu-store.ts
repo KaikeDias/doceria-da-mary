@@ -1,46 +1,72 @@
-import { Injectable, signal } from '@angular/core';
-import { Product, products } from '../catalog/catalog';
+import { inject, Injectable, signal } from '@angular/core';
+import { CanActivateFn, Router } from '@angular/router';
+import { AdminCategory, AdminMenuRepository, MenuItem } from './admin-menu-repository';
 
-export interface MenuItem {
-  readonly id: string;
-  readonly name: string;
-  readonly categoryId: string;
-  readonly description: string;
-  // null = "Sob consulta".
-  readonly price: Product['price'] | null;
-  // Caminhos completos; a primeira é a principal.
-  readonly images: readonly string[];
-  readonly published: boolean;
-}
-
-// shortcut: publicação só em memória (sem backend), trocar pelo estado salvo quando houver API.
-const hiddenByDefault = new Set(['caixa-docinhos']);
+export type { AdminCategory, MenuItem };
 
 @Injectable({ providedIn: 'root' })
 export class MenuStore {
-  readonly items = signal<readonly MenuItem[]>(
-    products.map((product) => ({
-      id: product.id,
-      name: product.name,
-      categoryId: product.categoryId,
-      description: product.description,
-      price: product.price,
-      images: [`images/${product.image}.webp`],
-      published: !hiddenByDefault.has(product.id),
-    })),
-  );
+  private readonly repository = inject(AdminMenuRepository);
+  readonly state = signal<'loading' | 'ready' | 'error'>('loading');
+  readonly items = signal<readonly MenuItem[]>([]);
+  readonly categories = signal<readonly AdminCategory[]>([]);
   // Mensagem de sucesso que a lista exibe ao abrir depois de salvar o formulário.
   readonly flash = signal('');
+
+  // Recarrega do banco a cada entrada nas telas do painel.
+  async load(): Promise<boolean> {
+    this.state.set('loading');
+    try {
+      const [items, categories] = await Promise.all([
+        this.repository.listProducts(),
+        this.repository.listCategories(),
+      ]);
+      this.items.set(items);
+      this.categories.set(categories);
+      this.state.set('ready');
+      return true;
+    } catch {
+      this.state.set('error');
+      return false;
+    }
+  }
 
   find(id: string): MenuItem | undefined {
     return this.items().find((item) => item.id === id);
   }
 
-  save(item: MenuItem): void {
+  categoryLabel(id: string): string {
+    return this.categories().find((category) => category.id === id)?.name ?? 'Sem categoria';
+  }
+
+  async setPublished(item: MenuItem): Promise<void> {
+    await this.repository.setPublished(item.id, !item.published);
     this.items.update((items) =>
-      items.some((other) => other.id === item.id)
-        ? items.map((other) => (other.id === item.id ? item : other))
-        : [...items, item],
+      items.map((other) =>
+        other.id === item.id ? { ...other, published: !item.published } : other,
+      ),
     );
   }
+
+  async setCategoryVisible(category: AdminCategory): Promise<void> {
+    await this.repository.setCategoryVisible(category.id, !category.visible);
+    this.categories.update((categories) =>
+      categories.map((other) =>
+        other.id === category.id ? { ...other, visible: !category.visible } : other,
+      ),
+    );
+  }
+
+  async delete(item: MenuItem): Promise<void> {
+    await this.repository.deleteProduct(item);
+    this.items.update((items) => items.filter((other) => other.id !== item.id));
+  }
 }
+
+// O formulário só abre com produtos e categorias carregados; id inexistente volta para a lista.
+export const menuReady: CanActivateFn = async (route) => {
+  const store = inject(MenuStore);
+  const list = inject(Router).createUrlTree(['/admin/cardapio']);
+  const id = route.paramMap.get('id');
+  return ((await store.load()) && (!id || !!store.find(id))) || list;
+};
