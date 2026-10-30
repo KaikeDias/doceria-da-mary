@@ -1,10 +1,13 @@
 import { expect, test } from '@playwright/test';
+import { credentials, mockSupabase } from './supabase-mock';
 
 test('/admin redirects to the cardápio and the login leads to it', async ({ page }) => {
-  await page.goto('/login');
+  await mockSupabase(page);
+  await page.goto('/admin');
+  await expect(page).toHaveURL(/\/login$/);
   await page.waitForLoadState('networkidle');
-  await page.getByLabel('E-mail').fill('admin');
-  await page.getByLabel('Senha', { exact: true }).fill('admin');
+  await page.getByLabel('E-mail').fill(credentials.email);
+  await page.getByLabel('Senha', { exact: true }).fill(credentials.password);
   await page.getByRole('button', { name: 'Entrar' }).click();
   await expect(page).toHaveURL(/\/admin\/cardapio$/);
   await expect(page).toHaveTitle('Cardápio | Painel Doceria da Mary');
@@ -13,6 +16,7 @@ test('/admin redirects to the cardápio and the login leads to it', async ({ pag
 for (const width of [320, 390, 768, 1023, 1024, 1440]) {
   test(`no horizontal scroll at ${width}px and layout switches at 1024px`, async ({ page }) => {
     await page.setViewportSize({ width, height: 900 });
+    await mockSupabase(page, { session: true });
     await page.goto('/admin/cardapio');
     await expect(page.locator('h1')).toBeVisible();
     expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(
@@ -25,6 +29,7 @@ for (const width of [320, 390, 768, 1023, 1024, 1440]) {
 
 test('mobile drawer opens, traps focus on close and returns focus on Escape', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
+  await mockSupabase(page, { session: true });
   await page.goto('/admin/cardapio');
   const menu = page.getByRole('button', { name: 'Abrir menu' });
   await menu.click();
@@ -37,8 +42,12 @@ test('mobile drawer opens, traps focus on close and returns focus on Escape', as
 });
 
 test('toggling publication updates the indicator and filters', async ({ page }) => {
+  await mockSupabase(page, { session: true });
   await page.goto('/admin/cardapio');
-  await page.getByRole('switch', { name: 'Publicar Bolo de Chocolate no site' }).first().uncheck();
+  const toggle = page.getByRole('switch', { name: 'Publicar Bolo de Chocolate no site' }).first();
+  // A chave só muda quando a gravação termina.
+  await toggle.click();
+  await expect(toggle).not.toBeChecked();
   await expect(
     page.locator('div', { has: page.getByText('Publicados no site', { exact: true }) }).last(),
   ).toContainText('4');
@@ -51,6 +60,7 @@ test('toggling publication updates the indicator and filters', async ({ page }) 
 test('delete confirmation focuses Cancelar, closes on Escape and deletes on confirm', async ({
   page,
 }) => {
+  await mockSupabase(page, { session: true });
   await page.goto('/admin/cardapio');
   await page.waitForLoadState('networkidle');
   const ask = page.locator('tbody').getByRole('button', { name: 'Excluir Brownie Recheado' });
@@ -71,6 +81,12 @@ test('delete confirmation focuses Cancelar, closes on Escape and deletes on conf
 });
 
 test('toggling shows the saving state and then a closable success message', async ({ page }) => {
+  await mockSupabase(page, { session: true });
+  // Gravação lenta para observar o estado de salvamento.
+  await page.route('**/rest/v1/produtos?*', async (route) => {
+    if (route.request().method() === 'PATCH') await new Promise((done) => setTimeout(done, 500));
+    await route.fallback();
+  });
   await page.goto('/admin/cardapio');
   await page.waitForLoadState('networkidle');
   const row = page.locator('tbody tr', { hasText: 'Caixa de Docinhos' });
@@ -87,6 +103,7 @@ test('toggling shows the saving state and then a closable success message', asyn
 for (const width of [320, 1440]) {
   test(`modal and messages fit at ${width}px`, async ({ page }) => {
     await page.setViewportSize({ width, height: 900 });
+    await mockSupabase(page, { session: true });
     await page.goto('/admin/cardapio');
     await page.waitForLoadState('networkidle');
     const noScroll = async () =>
@@ -112,3 +129,31 @@ for (const width of [320, 1440]) {
     expect(cancel!.height).toBeGreaterThanOrEqual(44);
   });
 }
+
+test('wrong credentials stay on /login and "Sair" ends the session', async ({ page }) => {
+  await mockSupabase(page);
+  await page.goto('/login');
+  await page.waitForLoadState('networkidle');
+  await page.getByLabel('E-mail').fill(credentials.email);
+  await page.getByLabel('Senha', { exact: true }).fill('errada');
+  await page.getByRole('button', { name: 'Entrar' }).click();
+  await expect(page.getByRole('alert')).toContainText('E-mail ou senha incorretos.');
+  await page.getByLabel('Senha', { exact: true }).fill(credentials.password);
+  await page.getByRole('button', { name: 'Entrar' }).click();
+  await expect(page).toHaveURL(/\/admin\/cardapio$/);
+  await page.locator('aside').getByRole('button', { name: 'Sair' }).click();
+  await expect(page).toHaveURL(/\/login$/);
+  await page.goto('/admin/cardapio');
+  await expect(page).toHaveURL(/\/login$/);
+});
+
+test('hiding a product in the panel removes it from the landing', async ({ page }) => {
+  await mockSupabase(page, { session: true });
+  await page.goto('/admin/cardapio');
+  const toggle = page.getByRole('switch', { name: 'Publicar Brownie Recheado no site' }).first();
+  await toggle.click();
+  await expect(toggle).not.toBeChecked();
+  await page.goto('/');
+  await expect(page.locator('app-product-card')).toHaveCount(4);
+  await expect(page.locator('app-product-card', { hasText: 'Brownie Recheado' })).toHaveCount(0);
+});

@@ -25,7 +25,7 @@
         [attr.aria-disabled]="saving() ? true : null"
         [attr.aria-busy]="saving() === item.id"
         [checked]="item.published"
-        (click)="saving() ? $event.preventDefault() : toggle(item)"
+        (click)="$event.preventDefault(); saving() || toggle(item)"
       />
       @if (saving() === item.id) {
         <span
@@ -68,7 +68,7 @@
       <div>
         <p class="text-[13px] text-neutral">Total de produtos</p>
         <p class="text-[26px] leading-tight font-semibold text-base-content">
-          {{ items().length }}
+          {{ state() === 'ready' ? items().length : '–' }}
         </p>
       </div>
     </div>
@@ -83,8 +83,12 @@
       <div>
         <p class="text-[13px] text-neutral">Publicados no site</p>
         <p class="text-[26px] leading-tight font-semibold text-base-content">
-          {{ publishedCount()
-          }}<span class="ml-1.5 text-sm font-normal text-neutral">de {{ items().length }}</span>
+          @if (state() === 'ready') {
+            {{ publishedCount()
+            }}<span class="ml-1.5 text-sm font-normal text-neutral">de {{ items().length }}</span>
+          } @else {
+            –
+          }
         </p>
       </div>
     </div>
@@ -111,8 +115,8 @@
       (change)="category.set($any($event.target).value)"
     >
       <option value="todas">Todas as categorias</option>
-      @for (item of categories; track item.id) {
-        <option [value]="item.id">{{ item.label }}</option>
+      @for (item of categories(); track item.id) {
+        <option [value]="item.id">{{ item.name }}</option>
       }
     </select>
     <select
@@ -147,7 +151,26 @@
 
   <p class="sr-only" aria-live="polite">{{ visible().length }} doces encontrados</p>
 
-  @if (items().length === 0) {
+  @if (state() === 'loading') {
+    <p class="mt-6 flex items-center justify-center gap-3 py-16 text-[15px] text-neutral">
+      <span aria-hidden="true" class="loading loading-spinner loading-md text-primary"></span>
+      Carregando cardápio…
+    </p>
+  } @else if (state() === 'error') {
+    <div
+      role="alert"
+      class="mt-6 flex flex-col items-center gap-4 rounded-2xl border border-base-300 bg-white px-6 py-16 text-center text-[15px] text-neutral"
+    >
+      <p>{{ loadError }}</p>
+      <button
+        type="button"
+        class="btn btn-outline h-11 min-h-11 rounded-full border-primary px-5 text-brand-text"
+        (click)="store.load()"
+      >
+        Tentar de novo
+      </button>
+    </div>
+  } @else if (items().length === 0) {
     <div
       class="mt-6 flex flex-col items-center rounded-2xl border border-dashed border-base-300 bg-white px-6 py-16 text-center"
     >
@@ -308,6 +331,7 @@
   aria-describedby="confirm-text"
   class="m-auto w-[min(440px,calc(100%_-_32px))] rounded-3xl bg-base-100 p-7 shadow-[0_24px_64px_#2f242040] backdrop:bg-black/40"
   (click)="confirmClick($event)"
+  (cancel)="removing() ? $event.preventDefault() : null"
 >
   <span
     aria-hidden="true"
@@ -329,6 +353,7 @@
       type="button"
       autofocus
       class="btn btn-outline h-12 min-h-12 rounded-full border-neutral/60 px-5"
+      [disabled]="removing()"
       (click)="confirm.close()"
     >
       Cancelar
@@ -336,9 +361,15 @@
     <button
       type="button"
       class="btn btn-primary h-12 min-h-12 rounded-full px-5"
+      [disabled]="removing()"
+      [attr.aria-busy]="removing()"
       (click)="confirmDelete()"
     >
-      Sim, excluir
+      @if (removing()) {
+        <span aria-hidden="true" class="loading loading-spinner loading-sm"></span>Excluindo…
+      } @else {
+        Sim, excluir
+      }
     </button>
   </div>
 </dialog>
@@ -351,9 +382,15 @@
     </div>
   } @else if (message()) {
     <div
-      class="alert flex rounded-2xl border-success/40 bg-[#eef3ea] py-2 pr-2 pl-5 text-[15px] whitespace-normal shadow-lg"
+      class="alert flex rounded-2xl py-2 pr-2 pl-5 text-[15px] whitespace-normal shadow-lg"
+      [class]="failed() ? 'border-error/40 bg-[#fbeceb]' : 'border-success/40 bg-[#eef3ea]'"
+      [attr.role]="failed() ? 'alert' : null"
     >
-      <svg lucideCircleCheck [size]="18" aria-hidden="true" class="shrink-0 text-success"></svg>
+      @if (failed()) {
+        <svg lucideCircleAlert [size]="18" aria-hidden="true" class="shrink-0 text-error"></svg>
+      } @else {
+        <svg lucideCircleCheck [size]="18" aria-hidden="true" class="shrink-0 text-success"></svg>
+      }
       <span class="min-w-0 flex-1">{{ message() }}</span>
       <button
         type="button"
