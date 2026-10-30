@@ -1,6 +1,7 @@
 // Configurações em memória (as mesmas do banco) para os testes unitários.
 import {
   SiteConfig,
+  siteConfigDefaults,
   SiteConfigRepository,
   SiteImageFiles,
 } from './site-config';
@@ -52,3 +53,9 @@ export class FakeSiteConfigRepository implements SiteConfigRepository {
   }
 }
 
+// Repositório falso para os testes da landing; por padrão devolve os valores padrão.
+export function provideSiteConfig(
+  load: () => Promise<SiteConfig> = async () => siteConfigDefaults,
+) {
+  return { provide: SiteConfigRepository, useValue: { load } };
+}

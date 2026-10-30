@@ -23,6 +23,7 @@ import {
 } from '@lucide/angular';
 import { formatPrice, Product } from './catalog';
 import { productWhatsappUrl } from '../../core/config/contact-links';
+import { siteConfigDefaults } from '../../core/config/site-config';
 
 @Component({
   selector: 'app-product-details',
@@ -41,6 +42,8 @@ import { productWhatsappUrl } from '../../core/config/contact-links';
 })
 export class ProductDetails implements OnDestroy {
   readonly product = input.required<Product>();
+  // WhatsApp das configurações do site (DDD + número).
+  readonly phone = input(siteConfigDefaults.whatsapp);
   readonly closed = output<void>();
   protected readonly dialog = viewChild.required<ElementRef<HTMLDialogElement>>('dialog');
   protected readonly selectedImage = linkedSignal({ source: this.product, computation: () => 0 });
@@ -63,7 +66,9 @@ export class ProductDetails implements OnDestroy {
       ? null
       : (this.product().priceNote ?? 'Consulte as opções e o valor final pelo WhatsApp'),
   );
-  protected readonly whatsappLink = computed(() => productWhatsappUrl(this.product().name));
+  protected readonly whatsappLink = computed(() =>
+    productWhatsappUrl(this.phone(), this.product().name),
+  );
   private readonly document = inject(DOCUMENT);
   private returnFocus: HTMLElement | null = null;
   private previousOverflow = '';

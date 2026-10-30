@@ -28,6 +28,30 @@ export interface SiteConfig {
 
 export type SiteConfigField = keyof SiteConfig;
 
+// Valores da landing antes de ler o banco (HTML pré-renderizado), se a leitura falhar ou se um
+// campo estiver vazio.
+export const siteConfigDefaults: SiteConfig = {
+  name: 'Doceria da Mary',
+  tagline: 'Doces artesanais',
+  description: 'Doces artesanais para momentos especiais.',
+  logo: '',
+  whatsapp: '89994259584',
+  instagram: 'doceriadamarypl',
+  email: '',
+  whatsappMessage: 'Olá, Mary! Vim pelo site e gostaria de fazer um pedido.',
+  hours: '',
+  region: '',
+  address: '',
+  ordersText: '',
+  heroTitle: 'Adoçando seus momentos mais especiais.',
+  heroSubtitle:
+    'Doces artesanais feitos com afeto, ingredientes escolhidos com cuidado e aquele sabor que transforma qualquer ocasião em memória.',
+  heroImage: '',
+  about:
+    'A Doceria da Mary nasceu do prazer de transformar ingredientes simples em momentos cheios de afeto. Cada doce é preparado com cuidado, da escolha dos sabores ao último detalhe da apresentação.',
+  ordersTitle: 'Tem uma ocasião especial chegando?',
+};
+
 // Imagens padrão quando nenhuma foi enviada.
 export const defaultImages = { logo: 'logo.png', heroImage: 'images/hero.webp' } as const;
 

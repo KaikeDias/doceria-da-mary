@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, computed, input, output } from '@an
 import { LucideArrowRight } from '@lucide/angular';
 import { formatPrice, Product } from './catalog';
 import { productWhatsappUrl } from '../../core/config/contact-links';
+import { siteConfigDefaults } from '../../core/config/site-config';
 
 @Component({
   selector: 'app-product-card',
@@ -80,8 +81,12 @@ import { productWhatsappUrl } from '../../core/config/contact-links';
 })
 export class ProductCard {
   readonly product = input.required<Product>();
+  // WhatsApp das configurações do site (DDD + número).
+  readonly phone = input(siteConfigDefaults.whatsapp);
   readonly categoryName = input.required<string>();
   readonly details = output<Product>();
   protected readonly price = computed(() => formatPrice(this.product().price));
-  protected readonly whatsappLink = computed(() => productWhatsappUrl(this.product().name));
+  protected readonly whatsappLink = computed(() =>
+    productWhatsappUrl(this.phone(), this.product().name),
+  );
 }

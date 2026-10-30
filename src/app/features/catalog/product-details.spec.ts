@@ -3,10 +3,9 @@ import { ProductDetails } from './product-details';
 import { Product } from './catalog';
 import { products, provideCatalog } from './catalog.fixture';
 import { Home } from '../home/home';
-import { publicConfig } from '../../core/config/public-config';
+import { provideSiteConfig } from '../../core/config/site-config.fixture';
 
 describe('Modais de detalhes dos produtos', () => {
-  const contact = publicConfig.contact;
   const galleryProduct: Product = {
     ...products[0],
     additionalImages: [
@@ -41,14 +40,14 @@ describe('Modais de detalhes dos produtos', () => {
 
   afterEach(() => {
     TestBed.resetTestingModule();
-    Object.defineProperty(publicConfig, 'contact', { value: contact });
     delete (HTMLDialogElement.prototype as Partial<HTMLDialogElement>).showModal;
     delete (HTMLDialogElement.prototype as Partial<HTMLDialogElement>).close;
   });
 
-  async function render(product: Product = products[0]) {
+  async function render(product: Product = products[0], phone?: string) {
     const fixture = TestBed.createComponent(ProductDetails);
     fixture.componentRef.setInput('product', product);
+    if (phone !== undefined) fixture.componentRef.setInput('phone', phone);
     fixture.detectChanges();
     await fixture.whenStable();
     return { fixture, page: fixture.nativeElement as HTMLElement };
@@ -216,7 +215,7 @@ describe('Modais de detalhes dos produtos', () => {
     expect(link.getAttribute('aria-label')).toContain('abre em nova aba');
     expect(link.target).toBe('_blank');
     expect(link.rel).toBe('noopener noreferrer');
-    expect(new URL(link.href).pathname).toBe(`/${contact.whatsapp}`);
+    expect(new URL(link.href).pathname).toBe('/5589994259584');
     expect(new URL(link.href).searchParams.get('text')).toContain(products[0].name);
     expect(link.querySelector('img')?.getAttribute('aria-hidden')).toBe('true');
     expect(page.querySelector('.order-caption')?.textContent?.trim()).toBe(
@@ -225,11 +224,10 @@ describe('Modais de detalhes dos produtos', () => {
     expect(page.querySelector('.close-button')?.getAttribute('aria-label')).toBe('Fechar detalhes');
   });
 
-  it.each([null, 'inválido'])(
+  it.each(['', 'inválido'])(
     'CA09: mantém consulta e indica WhatsApp indisponível (%s)',
     async (phone) => {
-      Object.defineProperty(publicConfig, 'contact', { value: { ...contact, whatsapp: phone } });
-      const { page } = await render();
+      const { page } = await render(products[0], phone);
       const link = page.querySelector('.details-order')!;
       expect(link.hasAttribute('href')).toBe(false);
       expect(link.getAttribute('aria-disabled')).toBe('true');
@@ -288,7 +286,7 @@ describe('Modais de detalhes dos produtos', () => {
   });
 
   it('CA01–CA08–CA11: integra os seis cards, preserva pedido direto, filtro e estado fechado', async () => {
-    TestBed.configureTestingModule({ providers: [provideCatalog()] });
+    TestBed.configureTestingModule({ providers: [provideCatalog(), provideSiteConfig()] });
     const fixture = TestBed.createComponent(Home);
     await fixture.whenStable();
     fixture.detectChanges();

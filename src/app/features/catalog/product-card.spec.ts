@@ -1,12 +1,8 @@
 import { TestBed } from '@angular/core/testing';
 import { products } from './catalog.fixture';
 import { ProductCard } from './product-card';
-import { publicConfig } from '../../core/config/public-config';
 
 describe('Card do produto', () => {
-  const configuredContact = publicConfig.contact;
-  afterEach(() => Object.defineProperty(publicConfig, 'contact', { value: configuredContact }));
-
   it('atualiza foto, descrição, preço e pedido quando o produto muda', () => {
     const fixture = TestBed.createComponent(ProductCard);
     const page = fixture.nativeElement as HTMLElement;
@@ -30,14 +26,13 @@ describe('Card do produto', () => {
       expect(link.textContent).toContain('Pedir no WhatsApp');
       expect(link.getAttribute('aria-label')).toContain(product.name);
       expect(new URL(link.href).searchParams.get('text')).toContain(product.name);
+      expect(new URL(link.href).pathname).toBe('/5589994259584');
     }
   });
 
   it('sinaliza indisponibilidade quando o WhatsApp está ausente', () => {
-    Object.defineProperty(publicConfig, 'contact', {
-      value: { ...publicConfig.contact, whatsapp: null },
-    });
     const fixture = TestBed.createComponent(ProductCard);
+    fixture.componentRef.setInput('phone', '');
     fixture.componentRef.setInput('product', products[0]);
     fixture.componentRef.setInput('categoryName', 'Bolos');
     fixture.detectChanges();

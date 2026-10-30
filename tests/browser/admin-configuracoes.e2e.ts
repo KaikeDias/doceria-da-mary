@@ -52,7 +52,7 @@ test('configurações: alvos ≥ 44px no mobile e item ativo no menu', async ({ 
   ).toHaveAttribute('aria-current', 'page');
 });
 
-test('configurações: erros e gravação', async ({ page }) => {
+test('configurações: erros, gravação e landing atualizada', async ({ page, context }) => {
   const db = await mockSupabase(page, { session: true });
   await page.goto('/admin/configuracoes');
   const save = page.getByRole('button', { name: 'Salvar alterações' });
@@ -86,6 +86,20 @@ test('configurações: erros e gravação', async ({ page }) => {
     hero_titulo: 'Doce que abraça.',
   });
   expect(db.config.logo_path).toMatch(/^configuracoes\/logo-[\w-]+\.png$/);
+
+  const landing = await context.newPage();
+  await mockSupabase(landing);
+  // O mock da nova página começa do seed: aplica o que foi salvo.
+  await landing.route('**/rest/v1/configuracoes_site*', (route) =>
+    route.fulfill({ contentType: 'application/json', body: JSON.stringify(db.config) }),
+  );
+  await landing.goto('/');
+  await expect(landing.locator('h1')).toHaveText('Doce que abraça.');
+  await expect(landing.locator('.instagram-card')).toContainText('@mary.doces');
+  await expect(landing.locator('.header-order')).toHaveAttribute(
+    'href',
+    /^https:\/\/wa\.me\/5521912345678\?text=/,
+  );
 });
 
 test('configurações: falha ao salvar mantém os dados e "Tentar de novo" grava', async ({
