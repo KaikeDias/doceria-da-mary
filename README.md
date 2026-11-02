@@ -107,3 +107,9 @@ docs/                   # status, roadmap, decisões e descrições de MR
 - Publicar na Vercel e validar rotas e 404 ([hospedagem-vercel](specs/hospedagem-vercel/tasks.md)).
 - Aplicar a migration da região atendida e validar o JSON-LD ([seo-landing](specs/seo-landing/tasks.md)).
 - Cadastrar fotos originais dos produtos e confirmar informações comerciais (antecedência, conservação, alérgenos).
+
+## Desenvolvimento isolado
+
+Development usa apenas http://127.0.0.1:54321. Com Docker ativo, execute `npx supabase start` e `npx supabase migration up --local`. Confira a chave anon local em `npx supabase status` e ajuste `environment.development.ts` se sua CLI usar outra chave. Cadastre um administrador local conforme o procedimento acima, no Studio local. Nunca use credenciais de administrador de producao para testar localmente.
+
+Antes de publicar esta revisao, aplique as migrations 20261030210000 e 20261030211000. Testes reais das politicas: `npx supabase test db` (requer Supabase local iniciado).
