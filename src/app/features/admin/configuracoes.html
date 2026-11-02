@@ -173,16 +173,20 @@
           >
             <svg lucideWifiOff [size]="18" aria-hidden="true" class="shrink-0"></svg>
             <p class="min-w-0 flex-1">
-              Não conseguimos salvar agora. Suas alterações continuam aqui. Verifique a internet e
-              tente de novo.
+              @if (conflict()) {
+                Os dados mudaram em outra aba. Recarregue para editar a versão atual.
+              } @else {
+                Não conseguimos salvar agora. Suas alterações continuam aqui. Verifique a internet e
+                tente de novo.
+              }
             </p>
             <button
               type="button"
               class="btn btn-outline h-11 min-h-11 rounded-full border-primary bg-white px-4 text-brand-text"
               [disabled]="saving()"
-              (click)="save()"
+              (click)="conflict() ? load() : save()"
             >
-              Tentar de novo
+              {{ conflict() ? 'Recarregar (descarta edições locais)' : 'Tentar de novo' }}
             </button>
           </div>
         } @else if (submitted() && errorCount()) {

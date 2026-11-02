@@ -30,7 +30,7 @@ test('creates a product with a photo and shows it in the list', async ({ page })
   await expect(page.locator('tbody tr').last()).toContainText('Pudim');
   await expect(page.locator('tbody tr').last().locator('img')).toHaveAttribute(
     'src',
-    /\/storage\/v1\/object\/public\/produtos\/pudim\/[\w-]+\.png$/,
+    /\/storage\/v1\/object\/public\/produtos\/[\w-]+\/[\w-]+\.png$/,
   );
   await expect(page.getByRole('status')).toContainText('Pudim foi adicionado ao cardápio.');
 });

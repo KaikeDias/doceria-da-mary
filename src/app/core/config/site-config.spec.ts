@@ -2,6 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { FakeRequest, failure, fakeSupabase } from '../supabase/supabase.fake';
 import { publicUrl } from '../supabase/supabase';
 import {
+  ConfigConflict,
   formatPhone,
   normalizeInstagram,
   normalizeWhatsapp,
@@ -35,7 +36,10 @@ const row = {
 const oldLogo = publicUrl('site', 'configuracoes/logo-velha.png');
 
 function setup(respond: (request: FakeRequest) => unknown = () => null) {
-  const fake = fakeSupabase(respond);
+  const fake = fakeSupabase((request) => {
+    const result = respond(request);
+    return request.method === 'PATCH' && result === null ? { id: 1 } : result;
+  });
   TestBed.configureTestingModule({ providers: [fake.provider] });
   const calls = () =>
     fake.requests.map(
@@ -179,7 +183,7 @@ describe('Configurações do site', () => {
     const error = vi.spyOn(console, 'error').mockImplementation(() => undefined);
     const { calls, repository } = setup((request) =>
       request.method === 'PATCH'
-        ? failure(500)
+        ? failure(400, { code: '23514', message: 'constraint' })
         : request.method === 'DELETE'
           ? failure(500)
           : storageOk(request),
@@ -195,5 +199,34 @@ describe('Configurações do site', () => {
     ]);
     expect(error).toHaveBeenCalled();
     error.mockRestore();
+  });
+  it('CA15/CA16: conflito compara valores originais e preserva arquivos antigos', async () => {
+    const { fake, repository } = setup((r) =>
+      r.method === 'PATCH'
+        ? failure(406, { code: 'PGRST116', message: 'zero rows' })
+        : storageOk(r),
+    );
+    const logo = new File(['x'], 'nova', { type: 'image/png' });
+    await expect(
+      repository.save(
+        { ...siteConfig, logo: 'blob:1' },
+        { ...siteConfig, logo: oldLogo },
+        { logo },
+      ),
+    ).rejects.toBeInstanceOf(ConfigConflict);
+    const patch = fake.requests.find((r) => r.method === 'PATCH')!;
+    expect(patch.url.searchParams.get('logo_path')).toBe('eq.configuracoes/logo-velha.png');
+    expect(patch.url.searchParams.get('email_contato')).toBe('is.null');
+    const removed = fake.requests.filter((r) => r.method === 'DELETE');
+    expect(removed).toHaveLength(1);
+    expect(removed[0].body).not.toEqual({ prefixes: ['configuracoes/logo-velha.png'] });
+  });
+  it('CA15: resposta incerta nao apaga upload potencialmente confirmado', async () => {
+    const { calls, repository } = setup((r) =>
+      r.method === 'PATCH' ? failure(500) : storageOk(r),
+    );
+    const logo = new File(['x'], 'nova', { type: 'image/png' });
+    await expect(repository.save(siteConfig, siteConfig, { logo })).rejects.toBeTruthy();
+    expect(calls().some((c) => c.startsWith('DELETE'))).toBe(false);
   });
 });

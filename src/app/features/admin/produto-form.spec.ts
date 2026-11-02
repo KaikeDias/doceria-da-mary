@@ -45,6 +45,21 @@ async function setup(url = '/admin/cardapio/novo', repository = new FakeAdminMen
 }
 
 describe('Formulário de produto', () => {
+  it('CA11: repetir criacao preserva o UUID reservado pelo formulario', async () => {
+    const repository = new FakeAdminMenuRepository();
+    const save = vi
+      .spyOn(repository, 'saveProduct')
+      .mockRejectedValue(new Error('resposta perdida'));
+    const { fill, submit } = await setup('/admin/cardapio/novo', repository);
+    fill('name', 'Novo doce');
+    fill('category', 'c-bolos');
+    await submit();
+    await submit();
+    expect(save).toHaveBeenCalledTimes(2);
+    expect(save.mock.calls[0][0].id).toMatch(/^[0-9a-f-]{36}$/);
+    expect(save.mock.calls[1][0].id).toBe(save.mock.calls[0][0].id);
+  });
+
   let count = 0;
   beforeEach(() => {
     URL.createObjectURL = vi.fn(() => `blob:foto-${++count}`);
