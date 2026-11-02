@@ -2,7 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
 import { routes } from '../../app.routes';
-import { SiteConfigRepository } from '../../core/config/site-config';
+import { ConfigConflict, SiteConfigRepository } from '../../core/config/site-config';
 import { FakeSiteConfigRepository, siteConfig } from '../../core/config/site-config.fixture';
 import { loadError } from '../../core/supabase/supabase';
 import { provideAdmin } from './admin.fixture';
@@ -293,6 +293,22 @@ describe('Configurações do site', () => {
     expect(repository.saves).toHaveLength(2);
     expect(alert()).toBeUndefined();
     expect(toast()).toContain('Alterações salvas!');
+  });
+
+  it('CA15/CA16: conflito preserva edicoes e recarrega apenas por acao explicita', async () => {
+    const repository = new FakeSiteConfigRepository();
+    vi.spyOn(repository, 'save').mockRejectedValueOnce(new ConfigConflict());
+    const { fill, pick, submit, alert, button, field, settle } = await setup(repository);
+    fill('hours', 'Alteracao local');
+    pick('logo', 'image/png');
+    await submit();
+    expect(alert()).toContain('Os dados mudaram em outra aba');
+    expect(field('hours').value).toBe('Alteracao local');
+    button('Recarregar').click();
+    await settle();
+    expect(field('hours').value).toBe(siteConfig.hours);
+    expect(alert()).toBeUndefined();
+    expect(URL.revokeObjectURL).toHaveBeenCalled();
   });
 
   it('CA12: "Visualizar site" abre a landing em nova aba', async () => {

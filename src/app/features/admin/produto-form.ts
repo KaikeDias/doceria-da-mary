@@ -73,6 +73,7 @@ export class ProdutoForm {
   protected readonly categories = this.store.categories;
   protected readonly saveError = saveError;
   // Arquivos novos por URL blob:, enviados só ao salvar.
+  private readonly draftId = crypto.randomUUID();
   private readonly files = new Map<string, File>();
   protected readonly name = signal(this.existing?.name ?? '');
   protected readonly categoryId = signal(this.existing?.categoryId ?? '');
@@ -178,6 +179,7 @@ export class ProdutoForm {
     try {
       ({ failedUploads } = await this.repository.saveProduct(
         {
+          id: this.draftId,
           name,
           categoryId: this.categoryId(),
           description: this.description().trim(),

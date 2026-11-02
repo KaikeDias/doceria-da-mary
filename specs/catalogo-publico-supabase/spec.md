@@ -70,3 +70,9 @@ Esta especificação **atualiza** as specs citadas apenas na origem dos dados e 
 - Pré-renderizar os produtos no HTML (SEO), Realtime e paginação.
 - Configurações do site vindas do banco.
 - Alterar layout, animações ou hover existentes.
+
+### Visibilidade na API (2026-10-30)
+
+- RN14: RLS de produtos e referencias de imagens exige publicacao e categoria visivel (ou produto sem categoria), inclusive em consultas diretas; administradores leem tudo.
+- CA10: Visitante e usuario comum nao leem produtos de categoria oculta nem suas referencias; administrador le e gerencia ambos.
+- CA11: Testes SQL executam as politicas reais para visitante, usuario comum e administrador.

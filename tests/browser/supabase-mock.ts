@@ -3,7 +3,7 @@ import { Page, Route } from '@playwright/test';
 // Supabase simulado: os testes não dependem da rede nem do banco real.
 // Ids dos produtos iguais aos slugs para manter as URLs de edição legíveis.
 
-const projectUrl = 'https://qruzjowgvamfasvrunjn.supabase.co';
+const projectUrl = 'http://127.0.0.1:54321';
 export const credentials = { email: 'mary@email.com', password: 'segredo' };
 
 interface Category {
@@ -264,10 +264,39 @@ export async function mockSupabase(
     const imagesOf = (id: string) =>
       db.images.filter((image) => image.produto_id === id).sort((a, b) => a.posicao - b.posicao);
 
+    if (table === 'salvar_produto') {
+      const body = request.postDataJSON();
+      let row = db.products.find((p) => p.id === body.p_id);
+      if (!row) {
+        row = {
+          id: body.p_id,
+          slug: body.p_slug,
+          publicado: true,
+          ordem: Math.max(0, ...db.products.map((p) => p.ordem)) + 1,
+          detalhes: null,
+          observacao_preco: null,
+          informacoes: [],
+          ...body.p_campos,
+        };
+        db.products.push(row!);
+      } else Object.assign(row, body.p_campos);
+      if (body.p_imagens !== null) {
+        db.images = db.images.filter((i) => i.produto_id !== body.p_id);
+        db.images.push(
+          ...body.p_imagens.map((storage_path: string, posicao: number) => ({
+            produto_id: body.p_id,
+            storage_path,
+            posicao,
+            alt: row!.nome,
+          })),
+        );
+      }
+      return json(route, body.p_id);
+    }
     if (table === 'configuracoes_site') {
       if (method === 'PATCH') {
         Object.assign(db.config, request.postDataJSON());
-        return route.fulfill({ status: 204 });
+        return respond([{ id: eq(url, 'id') ?? 1 }]);
       }
       return respond([db.config]);
     }
@@ -296,7 +325,7 @@ export async function mockSupabase(
       if (taken) return json(route, { code: '23505', message: 'duplicate key' }, 409);
       if (method === 'PATCH') {
         Object.assign(category(id)!, body);
-        return route.fulfill({ status: 204 });
+        return respond([{ id: eq(url, 'id') ?? 1 }]);
       }
       const row = { imagem_url: null, ...body, id: `c-${body.slug}` };
       db.categories.push(row);
@@ -306,7 +335,7 @@ export async function mockSupabase(
       const id = eq(url, 'id');
       db.categories = db.categories.filter((c) => c.id !== id);
       for (const p of db.products) if (p.categoria_id === id) p.categoria_id = null;
-      return route.fulfill({ status: 204 });
+      return respond([{ id: eq(url, 'id') }]);
     }
     if (table === 'categorias_com_contagem') {
       return respond(
@@ -336,7 +365,7 @@ export async function mockSupabase(
       const id = eq(url, 'produto_id');
       if (method === 'DELETE') {
         db.images = db.images.filter((image) => image.produto_id !== id);
-        return route.fulfill({ status: 204 });
+        return respond([{ id: eq(url, 'id') ?? 1 }]);
       }
       if (method === 'POST') {
         db.images.push(...(request.postDataJSON() as Image[]));
@@ -359,12 +388,12 @@ export async function mockSupabase(
           db.products.find((item) => item.id === id)!,
           request.postDataJSON(),
         );
-        return route.fulfill({ status: 204 });
+        return respond([{ id: eq(url, 'id') ?? 1 }]);
       }
       if (method === 'DELETE') {
         db.products = db.products.filter((item) => item.id !== id);
         db.images = db.images.filter((image) => image.produto_id !== id);
-        return route.fulfill({ status: 204 });
+        return respond([{ id: eq(url, 'id') ?? 1 }]);
       }
       if (method === 'POST') {
         const row = {

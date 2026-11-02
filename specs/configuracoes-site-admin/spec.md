@@ -134,3 +134,12 @@ Esta especificação **substitui**, em `painel-admin-cardapio`, o item "Configur
 - Destacar o atalho da seção visível durante a rolagem.
 - Trocar a logo do próprio painel (continua `logo.png`).
 - Histórico de versões ou desfazer depois de salvar.
+
+### Concorrencia segura (2026-10-30)
+
+Esta revisao complementa RN17-RN19.
+
+- RN20: UPDATE compara atomicamente todos os valores originalmente carregados e exige uma linha retornada. Outra aba que salvou antes causa conflito, sem sobrescrita.
+- RN21: Conflito preserva formulario e mostra acao explicita para recarregar, indicando descarte das edicoes locais. Arquivos antigos so sao removidos apos confirmacao; uploads com resposta incerta nao sao apagados automaticamente.
+- CA15: Duas abas partindo dos mesmos dados: a segunda gravacao falha sem restaurar caminhos antigos ou apagar imagens atuais.
+- CA16: Registro ausente ou UPDATE sem linha retornada nao mostra sucesso; recarregar limpa arquivos locais e permite editar os dados atuais.

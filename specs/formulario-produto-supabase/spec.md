@@ -65,3 +65,14 @@ Esta especificação **substitui** em `formulario-produto-cardapio` a RN12 (grav
 - Editar `detalhes`, observação de preço e "Bom saber" no painel.
 - Reordenar fotos arrastando, recortar ou comprimir imagens.
 - Aviso de alterações não salvas.
+
+### Persistencia segura (2026-10-30)
+
+Esta revisao substitui RN04-RN06 e o caso de falha ao recriar imagens.
+
+- RN12: O formulario reserva um UUID por criacao e o reutiliza nas tentativas. A RPC salvar_produto grava produto e referencias de fotos em uma transacao autorizada para administrador; falha reverte ambas as etapas.
+- RN13: Uploads precedem a transacao. Arquivos antigos so sao apagados apos confirmacao. Resposta incerta pode deixar arquivos orfaos, mas nunca deve apagar fotos potencialmente confirmadas.
+- RN14: Edicao preserva slug, ordem e publicacao. Fotos inalteradas nao sao recriadas.
+- CA10: Falha ao inserir referencias mantem dados e fotos anteriores; criacao falha nao deixa produto parcial.
+- CA11: Repetir criacao com o mesmo UUID, inclusive apos perda de resposta, mantem um unico produto.
+- CA12: Sem admin, ID inexistente em edicao, mais de cinco fotos e caminhos externos sao recusados.

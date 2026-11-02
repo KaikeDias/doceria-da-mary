@@ -45,6 +45,7 @@ export interface CategoryInput {
 export class DuplicateCategory extends Error {}
 
 export interface ProductInput {
+  readonly id?: string;
   readonly name: string;
   readonly categoryId: string;
   readonly description: string;
@@ -127,17 +128,31 @@ export class SupabaseAdminMenuRepository implements AdminMenuRepository {
 
   async setPublished(id: string, published: boolean): Promise<void> {
     check(
-      await this.supabase.client.from('produtos').update({ publicado: published }).eq('id', id),
+      await this.supabase.client
+        .from('produtos')
+        .update({ publicado: published })
+        .eq('id', id)
+        .select('id')
+        .single(),
     );
   }
 
   async setCategoryVisible(id: string, visible: boolean): Promise<void> {
-    check(await this.supabase.client.from('categorias').update({ visivel: visible }).eq('id', id));
+    check(
+      await this.supabase.client
+        .from('categorias')
+        .update({ visivel: visible })
+        .eq('id', id)
+        .select('id')
+        .single(),
+    );
   }
 
   async deleteProduct(item: MenuItem): Promise<void> {
     // As linhas de produto_imagens saem em cascata; os arquivos ficam no Storage.
-    check(await this.supabase.client.from('produtos').delete().eq('id', item.id));
+    check(
+      await this.supabase.client.from('produtos').delete().eq('id', item.id).select('id').single(),
+    );
     await this.removeFiles('produtos', item.images.map(productImagePath));
   }
 
@@ -146,79 +161,57 @@ export class SupabaseAdminMenuRepository implements AdminMenuRepository {
     existing?: MenuItem,
   ): Promise<{ id: string; failedUploads: number }> {
     const db = this.supabase.client;
+    const id = existing?.id ?? input.id ?? crypto.randomUUID();
     const fields = {
       nome: input.name,
       categoria_id: input.categoryId || null,
       descricao: input.description || null,
       ...fromPrice(input.price),
     };
-    let id: string;
-    if (existing) {
-      id = existing.id;
-      const before: Record<string, unknown> = {
-        nome: existing.name,
-        categoria_id: existing.categoryId || null,
-        descricao: existing.description || null,
-        ...fromPrice(existing.price),
-      };
-      const changed = Object.entries(fields).filter(([key, value]) => before[key] !== value);
-      if (changed.length) {
-        const patch: TablesUpdate<'produtos'> = Object.fromEntries(changed);
-        check(await db.from('produtos').update(patch).eq('id', id));
-      }
-    } else {
-      const [last] = check(
-        await db.from('produtos').select('ordem').order('ordem', { ascending: false }).limit(1),
-      );
-      const row = check(
-        await db
-          .from('produtos')
-          .insert({
-            ...fields,
-            slug: await this.uniqueSlug('produtos', input.name),
-            publicado: true,
-            ordem: (last?.ordem ?? 0) + 1,
-          })
-          .select('id')
-          .single(),
-      );
-      id = row.id;
-    }
-
     const before = existing?.images ?? [];
     const unchanged =
       input.images.length === before.length &&
       input.images.every((image, i) => image === before[i]);
-    if (unchanged) return { id, failedUploads: 0 };
-
     let failedUploads = 0;
     const paths: string[] = [];
-    for (const image of input.images) {
-      if (typeof image === 'string') {
-        paths.push(productImagePath(image));
-        continue;
+    if (!unchanged) {
+      for (const image of input.images) {
+        if (typeof image === 'string') {
+          paths.push(productImagePath(image));
+          continue;
+        }
+        const path = `${id}/${crypto.randomUUID()}.${image.type.split('/')[1].replace('jpeg', 'jpg')}`;
+        const { error } = await db.storage
+          .from('produtos')
+          .upload(path, image, { contentType: image.type });
+        if (error) failedUploads++;
+        else paths.push(path);
       }
-      const path = `${id}/${crypto.randomUUID()}.${image.type.split('/')[1].replace('jpeg', 'jpg')}`;
-      const { error } = await db.storage
-        .from('produtos')
-        .upload(path, image, { contentType: image.type });
-      if (error) failedUploads++;
-      else paths.push(path);
     }
-    // Recria as linhas na ordem final: posição 0 = principal.
-    check(await db.from('produto_imagens').delete().eq('produto_id', id));
-    if (paths.length) {
-      check(
-        await db.from('produto_imagens').insert(
-          paths.map((storage_path, posicao) => ({
-            produto_id: id,
-            storage_path,
-            alt: input.name,
-            posicao,
-          })),
-        ),
-      );
-    }
+    const previous = existing
+      ? {
+          nome: existing.name,
+          categoria_id: existing.categoryId || null,
+          descricao: existing.description || null,
+          ...fromPrice(existing.price),
+        }
+      : {};
+    const patch = Object.fromEntries(
+      Object.entries(fields).filter(
+        ([key, value]) => (previous as Record<string, unknown>)[key] !== value,
+      ),
+    );
+    const slug = existing ? '' : await this.uniqueSlug('produtos', input.name);
+    check(
+      // shortcut: resposta incerta pode deixar uploads órfãos; reconciliar o Storage se o volume crescer.
+      await db.rpc('salvar_produto', {
+        p_id: id,
+        p_campos: patch,
+        p_novo: !existing,
+        p_slug: slug,
+        p_imagens: unchanged ? null : paths,
+      }),
+    );
     const removed = before.filter((url) => !input.images.includes(url));
     if (removed.length) await this.removeFiles('produtos', removed.map(productImagePath));
     return { id, failedUploads };
@@ -239,7 +232,7 @@ export class SupabaseAdminMenuRepository implements AdminMenuRepository {
           Object.assign(patch, { nome: input.name, rotulo: input.name });
         if (input.visible !== existing.visible) patch.visivel = input.visible;
         if (Object.keys(patch).length)
-          check(await db.from('categorias').update(patch).eq('id', id));
+          check(await db.from('categorias').update(patch).eq('id', id).select('id').single());
       } else {
         const [last] = check(
           await db.from('categorias').select('ordem').order('ordem', { ascending: false }).limit(1),
@@ -268,14 +261,30 @@ export class SupabaseAdminMenuRepository implements AdminMenuRepository {
     const path = `categorias/${id}/${crypto.randomUUID()}.${file.type.split('/')[1].replace('jpeg', 'jpg')}`;
     const { error } = await db.storage.from('site').upload(path, file, { contentType: file.type });
     if (error) return { imageFailed: true };
-    check(await db.from('categorias').update({ imagem_url: path }).eq('id', id));
+    const imageUpdate = db.from('categorias').update({ imagem_url: path }).eq('id', id);
+    check(
+      await (
+        existing?.image
+          ? imageUpdate.eq('imagem_url', categoryImagePath(existing.image))
+          : imageUpdate.is('imagem_url', null)
+      )
+        .select('id')
+        .single(),
+    );
     if (existing?.image) await this.removeFiles('site', [categoryImagePath(existing.image)]);
     return { imageFailed: false };
   }
 
   async deleteCategory(category: AdminCategory): Promise<void> {
     // Os produtos ficam sem categoria pelo banco (on delete set null).
-    check(await this.supabase.client.from('categorias').delete().eq('id', category.id));
+    check(
+      await this.supabase.client
+        .from('categorias')
+        .delete()
+        .eq('id', category.id)
+        .select('id')
+        .single(),
+    );
     if (category.image) await this.removeFiles('site', [categoryImagePath(category.image)]);
   }
 

@@ -30,7 +30,12 @@ const existing: MenuItem = {
 };
 
 function setup(respond: (request: FakeRequest) => unknown = () => null) {
-  const fake = fakeSupabase(respond);
+  const fake = fakeSupabase((request) => {
+    const result = respond(request);
+    return result === null && !request.url.pathname.includes('/storage/')
+      ? { id: request.url.searchParams.get('id')?.slice(3) ?? 'ok' }
+      : result;
+  });
   TestBed.configureTestingModule({ providers: [fake.provider] });
   const calls = () =>
     fake.requests.map(
@@ -125,104 +130,98 @@ describe('Repositório do painel', () => {
     expect(blocked.calls()).toEqual(['DELETE produtos']);
   });
 
-  it('Formulário CA01–CA02/CA05: novo produto com slug único, fim da lista e fotos', async () => {
-    const { fake, calls, repository } = setup(({ method, url }) => {
-      if (url.pathname.includes('/storage/')) {
+  it('CA01/CA02/CA05: uploads precedem RPC e falhas sao contadas', async () => {
+    const { fake, calls, repository } = setup(({ url }) => {
+      if (url.pathname.includes('/storage/'))
         return url.pathname.endsWith('.gif') ? failure(400) : { Key: 'ok' };
-      }
-      if (method === 'GET' && url.searchParams.has('slug')) {
-        return [{ slug: 'pao-de-mel' }, { slug: 'pao-de-mel-2' }];
-      }
-      if (method === 'GET') return [{ ordem: 6 }];
-      if (method === 'POST' && url.pathname.endsWith('/produtos')) return { id: 'novo' };
-      return null;
+      if (url.pathname.endsWith('/salvar_produto')) return 'novo';
+      return [{ slug: 'pao-de-mel' }, { slug: 'pao-de-mel-2' }];
     });
-    const photos = ['image/jpeg', 'image/png', 'image/gif'].map(
-      (type) => new File(['x'], 'foto', { type }),
-    );
     const result = await repository.saveProduct({
-      name: 'Pão de Mel',
+      id: 'novo',
+      name: 'Pao de Mel',
       categoryId: '',
       description: '',
       price: { kind: 'starting-at', amountInCents: 2550 },
-      images: photos,
+      images: ['image/jpeg', 'image/png', 'image/gif'].map(
+        (type) => new File(['x'], 'foto', { type }),
+      ),
     });
     expect(result).toEqual({ id: 'novo', failedUploads: 1 });
-    expect(calls()).toEqual([
-      'GET produtos',
-      'GET produtos',
-      'POST produtos',
-      expect.stringMatching(/^POST object\/produtos\/novo\/[\w-]+\.jpg$/),
-      expect.stringMatching(/^POST object\/produtos\/novo\/[\w-]+\.png$/),
-      expect.stringMatching(/^POST object\/produtos\/novo\/[\w-]+\.gif$/),
-      'DELETE produto_imagens',
-      'POST produto_imagens',
-    ]);
-    expect(fake.requests[1].url.searchParams.get('slug')).toBe('like.pao-de-mel%');
-    expect(fake.requests[2].body).toEqual({
-      nome: 'Pão de Mel',
-      categoria_id: null,
-      descricao: null,
-      preco: 25.5,
-      preco_a_partir: true,
-      slug: 'pao-de-mel-3',
-      publicado: true,
-      ordem: 7,
+    expect(calls().at(-1)).toBe('POST rpc/salvar_produto');
+    expect(fake.requests.at(-1)!.body).toMatchObject({
+      p_id: 'novo',
+      p_novo: true,
+      p_slug: 'pao-de-mel-3',
+      p_campos: { nome: 'Pao de Mel', preco: 25.5, categoria_id: null, descricao: null },
+      p_imagens: [
+        expect.stringMatching(/^novo\/.+\.jpg$/),
+        expect.stringMatching(/^novo\/.+\.png$/),
+      ],
     });
-    const rows = fake.requests.at(-1)!.body as { storage_path: string; posicao: number }[];
-    expect(rows.map((row) => row.posicao)).toEqual([0, 1]);
-    expect(rows[0]).toMatchObject({ produto_id: 'novo', alt: 'Pão de Mel' });
-    expect(rows[0].storage_path).toMatch(/^novo\/.+\.jpg$/);
   });
 
-  it('Formulário: primeiro produto do cardápio e sem fotos', async () => {
-    const { fake, repository } = setup(({ method, url }) =>
-      method === 'POST' && url.pathname.endsWith('/produtos') ? { id: 'n1' } : [],
-    );
-    const result = await repository.saveProduct({
-      name: 'Pudim',
-      categoryId: 'c1',
-      description: 'Cremoso',
-      price: null,
-      images: [],
-    });
-    expect(result).toEqual({ id: 'n1', failedUploads: 0 });
-    expect(fake.requests[2].body).toMatchObject({ slug: 'pudim', ordem: 1, preco: null });
-    expect(fake.requests).toHaveLength(3);
-  });
-
-  it('Formulário CA03: edição grava só o que mudou e não mexe nas fotos inalteradas', async () => {
+  it('CA03: edicao envia diff e preserva fotos inalteradas', async () => {
     const { fake, repository } = setup();
-    await repository.saveProduct(
-      { ...existing, name: 'Brownie Duplo', description: 'Úmido.', images: existing.images },
-      existing,
-    );
-    expect(fake.requests).toHaveLength(1);
-    expect(fake.requests[0].method).toBe('PATCH');
-    expect(fake.requests[0].body).toEqual({ nome: 'Brownie Duplo' });
-    TestBed.resetTestingModule();
-    const same = setup();
-    await same.repository.saveProduct({ ...existing }, existing);
-    expect(same.fake.requests).toHaveLength(0);
+    await repository.saveProduct({ ...existing, name: 'Duplo' }, existing);
+    expect(fake.requests[0].body).toMatchObject({
+      p_novo: false,
+      p_campos: { nome: 'Duplo' },
+      p_imagens: null,
+    });
+    await repository.saveProduct(existing, existing);
+    expect(fake.requests[1].body).toMatchObject({ p_campos: {}, p_imagens: null });
   });
 
-  it('Formulário CA04: reordenar e remover foto recria as linhas e apaga o arquivo', async () => {
+  it('CA04: confirma RPC antes de apagar arquivos antigos', async () => {
     const { fake, calls, repository } = setup();
     await repository.saveProduct({ ...existing, images: [existing.images[1]] }, existing);
-    expect(calls()).toEqual([
-      'DELETE produto_imagens',
-      'POST produto_imagens',
-      'DELETE object/produtos',
-    ]);
-    expect(fake.requests[1].body).toEqual([
-      { produto_id: 'p1', storage_path: 'p1/b.webp', alt: 'Brownie', posicao: 0 },
-    ]);
-    expect(fake.requests[2].body).toEqual({ prefixes: ['p1/a.webp'] });
+    expect(calls()).toEqual(['POST rpc/salvar_produto', 'DELETE object/produtos']);
+    expect(fake.requests[0].body).toMatchObject({ p_imagens: ['p1/b.webp'] });
+    expect(fake.requests[1].body).toEqual({ prefixes: ['p1/a.webp'] });
   });
 
-  it('Formulário CA06: falha ao gravar o produto vira erro', async () => {
-    const { repository } = setup(() => failure());
-    await expect(repository.saveProduct({ ...existing, name: 'X' }, existing)).rejects.toBeTruthy();
+  it('CA10: falha da transacao nao remove fotos antigas', async () => {
+    const { calls, repository } = setup(() => failure());
+    await expect(
+      repository.saveProduct({ ...existing, images: [] }, existing),
+    ).rejects.toBeTruthy();
+    expect(calls()).toEqual(['POST rpc/salvar_produto']);
+  });
+
+  it('CA11: repeticao apos resposta perdida usa o mesmo UUID', async () => {
+    let attempts = 0;
+    const { fake, repository } = setup(({ url }) =>
+      url.pathname.endsWith('/salvar_produto') && attempts++ === 0 ? failure() : [],
+    );
+    const input = {
+      id: 'draft',
+      name: 'Pudim',
+      categoryId: 'c1',
+      description: '',
+      price: null,
+      images: [],
+    };
+    await expect(repository.saveProduct(input)).rejects.toBeTruthy();
+    await repository.saveProduct(input);
+    expect(
+      fake.requests
+        .filter((r) => r.url.pathname.endsWith('/salvar_produto'))
+        .map((r) => (r.body as { p_id: string }).p_id),
+    ).toEqual(['draft', 'draft']);
+    await repository.saveProduct({ ...input, id: undefined });
+    expect((fake.requests.at(-1)!.body as { p_id: string }).p_id).toMatch(/^[0-9a-f-]{36}$/);
+  });
+
+  it('CA09/CA12: zero linhas nao confirma escrita nem apaga arquivos', async () => {
+    const { calls, repository } = setup(() =>
+      failure(406, { code: 'PGRST116', message: 'zero rows' }),
+    );
+    await expect(repository.setPublished('p1', true)).rejects.toBeTruthy();
+    await expect(repository.setCategoryVisible('c1', true)).rejects.toBeTruthy();
+    await expect(repository.deleteProduct(existing)).rejects.toBeTruthy();
+    await expect(repository.deleteCategory(bolos)).rejects.toBeTruthy();
+    expect(calls().some((c) => c.includes('object/'))).toBe(false);
   });
 
   it('Categoria CA04: cria com nome único, slug, ordem no fim e imagem no bucket site', async () => {

@@ -18,6 +18,7 @@ import {
   LucideX,
 } from '@lucide/angular';
 import {
+  ConfigConflict,
   defaultImages,
   formatPhone,
   limits,
@@ -78,6 +79,7 @@ export class Configuracoes {
   protected readonly submitted = signal(false);
   protected readonly saving = signal(false);
   protected readonly saveFailed = signal(false);
+  protected readonly conflict = signal(false);
   private readonly justSaved = signal(false);
   protected readonly message = signal('');
   private messageTimer?: ReturnType<typeof setTimeout>;
@@ -128,6 +130,10 @@ export class Configuracoes {
   }
 
   protected async load(): Promise<void> {
+    this.revokeBlobs();
+    this.files = {};
+    this.saveFailed.set(false);
+    this.conflict.set(false);
     this.state.set('loading');
     try {
       const config = await this.repository.load();
@@ -201,6 +207,7 @@ export class Configuracoes {
     }
     this.saving.set(true);
     this.saveFailed.set(false);
+    this.conflict.set(false);
     try {
       const saved = await this.repository.save(
         this.normalized(),
@@ -214,7 +221,8 @@ export class Configuracoes {
       this.submitted.set(false);
       this.justSaved.set(true);
       this.notify('Alterações salvas! O site já mostra as novas informações.');
-    } catch {
+    } catch (error) {
+      this.conflict.set(error instanceof ConfigConflict);
       this.saveFailed.set(true);
     } finally {
       this.saving.set(false);

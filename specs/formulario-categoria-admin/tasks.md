@@ -62,3 +62,18 @@ Especificação: `specs/formulario-categoria-admin/spec.md`.
 - `npm run format:check`: arquivos desta funcionalidade formatados; avisos restantes já existiam (`AGENTS.md`, `README.md`, `docs/PROJECT_STATUS.md`, `package.json`, `playwright.config.ts`).
 - Pendente V01: aplicar a migration `20261030160000_categoria_nome_unico_e_imagens.sql` no banco real e validar com login real.
 - Testes antigos ajustados (V03): "ações indisponíveis" de `categorias.spec.ts` substituído pelos testes de exclusão; chip "Kits" e imagens `images/…` removidos de `catalog-repository.spec.ts`, `supabase.spec.ts` e `tests/browser/supabase-mock.ts`.
+
+## Correcoes de auditoria (2026-10-30)
+
+- [x] Implementar CA12: regras e criterios adicionais do spec.md desta funcionalidade.
+- [x] Adicionar testes de regressao de CA12.
+- [x] Executar testes, cobertura, Playwright e build; registrar resultados.
+
+### Evidencias da correcao
+
+- 172 testes unitarios passaram; cobertura geral: 99,72% linhas e 96,38% ramos. Unidades de producao alteradas acima de 90% de linhas.
+- Build de producao passou; Prettier nos arquivos alterados e git diff --check passaram.
+- Playwright: 71 testes passaram no Edge, com config temporaria e espera de 15 segundos. Houve timeouts nas tentativas anteriores com 5 segundos durante carregamento.
+- Todas as migrations e supabase/tests/persistencia-seguranca.sql passaram em Postgres isolado via PGlite, com schemas Auth/Storage minimos; Docker local estava desligado.
+- Revisao: implementacao e testes aderem aos criterios adicionais desta funcionalidade; nao foram alterados os comportamentos explicitamente fora de escopo.
+- [ ] Aplicar as duas migrations novas no Supabase remoto e validar integracao real antes de publicar o frontend.

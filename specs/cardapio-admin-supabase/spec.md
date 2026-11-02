@@ -62,3 +62,8 @@ Esta especificação **substitui** em `estados-tela-cardapio` o salvamento simul
 - Reordenar produtos, paginação, busca no servidor e Realtime.
 - Desfazer exclusão.
 - Formulário de produto (spec `formulario-produto-supabase`).
+
+### Confirmacao de gravacao (2026-10-30)
+
+- RN10: Publicacao e exclusao exigem uma linha retornada antes de atualizar a interface ou apagar arquivos.
+- CA09: Registro ausente ou bloqueado por RLS gera falha e mantem a interface e os arquivos.

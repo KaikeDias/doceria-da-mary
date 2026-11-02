@@ -100,6 +100,8 @@ export function validateSiteConfig(config: SiteConfig): Partial<Record<SiteConfi
   return errors;
 }
 
+export class ConfigConflict extends Error {}
+
 export interface SiteImageFiles {
   readonly logo?: File;
   readonly heroImage?: File;
@@ -162,29 +164,20 @@ export class SupabaseSiteConfigRepository implements SiteConfigRepository {
         uploaded.push(path);
         images[field] = publicUrl('site', path);
       }
-      const text = (value: string) => value.trim() || null;
-      const row: TablesUpdate<'configuracoes_site'> = {
-        nome_doceria: config.name.trim(),
-        texto_apresentacao: text(config.tagline),
-        descricao: text(config.description),
-        logo_path: sitePath(images.logo),
-        whatsapp: text(config.whatsapp),
-        instagram: text(config.instagram),
-        email_contato: text(config.email),
-        mensagem_whatsapp: text(config.whatsappMessage),
-        horario_atendimento: text(config.hours),
-        regiao_atendida: text(config.region),
-        endereco: text(config.address),
-        texto_encomendas: text(config.ordersText),
-        hero_titulo: config.heroTitle.trim(),
-        hero_subtitulo: text(config.heroSubtitle),
-        hero_imagem_path: sitePath(images.heroImage),
-        sobre_texto: text(config.about),
-        cta_encomendas_titulo: text(config.ordersTitle),
-      };
-      check(await db.from('configuracoes_site').update(row).eq('id', 1));
+      let query = db
+        .from('configuracoes_site')
+        .update(configRow({ ...config, ...images }))
+        .eq('id', 1);
+      for (const [column, value] of Object.entries(configRow(previous))) {
+        query = value === null ? query.is(column, null) : query.eq(column, value);
+      }
+      const result = await query.select('id').single();
+      if (result.error?.code === 'PGRST116') throw new ConfigConflict();
+      check(result);
     } catch (error) {
-      await this.removeFiles(uploaded);
+      // shortcut: resposta incerta pode deixar uploads órfãos; reconciliar o Storage se o volume crescer.
+      if (error instanceof ConfigConflict || (error as { code?: string }).code?.startsWith('23'))
+        await this.removeFiles(uploaded);
       throw error;
     }
     await this.removeFiles(
@@ -204,4 +197,27 @@ export class SupabaseSiteConfigRepository implements SiteConfigRepository {
     const { error } = await this.supabase.client.storage.from('site').remove(paths);
     if (error) console.error('Falha ao remover imagens do Storage', error);
   }
+}
+
+function configRow(config: SiteConfig): TablesUpdate<'configuracoes_site'> {
+  const text = (value: string) => value.trim() || null;
+  return {
+    nome_doceria: config.name.trim(),
+    texto_apresentacao: text(config.tagline),
+    descricao: text(config.description),
+    logo_path: sitePath(config.logo),
+    whatsapp: text(config.whatsapp),
+    instagram: text(config.instagram),
+    email_contato: text(config.email),
+    mensagem_whatsapp: text(config.whatsappMessage),
+    horario_atendimento: text(config.hours),
+    regiao_atendida: text(config.region),
+    endereco: text(config.address),
+    texto_encomendas: text(config.ordersText),
+    hero_titulo: config.heroTitle.trim(),
+    hero_subtitulo: text(config.heroSubtitle),
+    hero_imagem_path: sitePath(config.heroImage),
+    sobre_texto: text(config.about),
+    cta_encomendas_titulo: text(config.ordersTitle),
+  };
 }
