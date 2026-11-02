@@ -53,3 +53,8 @@ Esta especificação **substitui** a origem dos dados e o comportamento imediato
 
 - Adicionar, editar, excluir e reordenar categorias.
 - Editar rótulo e imagem da categoria no painel.
+
+### Confirmacao de gravacao (2026-10-30)
+
+- RN08: Alterar visibilidade exige uma linha retornada.
+- CA07: Zero linhas afetadas gera erro, sem alterar o estado local.

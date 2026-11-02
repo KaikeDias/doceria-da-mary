@@ -56,3 +56,18 @@ Especificação: `specs/catalogo-publico-supabase/spec.md`.
 - `npm run format:check`: arquivos desta funcionalidade formatados; avisos restantes já existiam antes (`AGENTS.md`, `README.md`, `docs/PROJECT_STATUS.md`, `package.json`, `playwright.config.ts`).
 - V01: em `ng serve` com o banco real, a landing exibiu 5 produtos e os chips Todos, Bolos, Docinhos, Sobremesas e Kits; `/admin/cardapio` sem sessão foi para `/login`.
 - O card passou a mostrar o rótulo da categoria (`categoryLabel`, ex.: "Kits e presentes"); antes recebia o id.
+
+## Correcoes de auditoria (2026-10-30)
+
+- [x] Implementar CA10-CA11: regras e criterios adicionais do spec.md desta funcionalidade.
+- [x] Adicionar testes de regressao de CA10-CA11.
+- [x] Executar testes, cobertura, Playwright e build; registrar resultados.
+
+### Evidencias da correcao
+
+- 172 testes unitarios passaram; cobertura geral: 99,72% linhas e 96,38% ramos. Unidades de producao alteradas acima de 90% de linhas.
+- Build de producao passou; Prettier nos arquivos alterados e git diff --check passaram.
+- Playwright: 71 testes passaram no Edge, com config temporaria e espera de 15 segundos. Houve timeouts nas tentativas anteriores com 5 segundos durante carregamento.
+- Todas as migrations e supabase/tests/persistencia-seguranca.sql passaram em Postgres isolado via PGlite, com schemas Auth/Storage minimos; Docker local estava desligado.
+- Revisao: implementacao e testes aderem aos criterios adicionais desta funcionalidade; nao foram alterados os comportamentos explicitamente fora de escopo.
+- [ ] Aplicar as duas migrations novas no Supabase remoto e validar integracao real antes de publicar o frontend.

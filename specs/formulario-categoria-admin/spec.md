@@ -116,3 +116,8 @@ Diferenças intencionais em relação aos designs: a imagem é obrigatória, ent
 - Mover produtos para outra categoria ao excluir.
 - Aviso de alterações não salvas.
 - Apagar os arquivos estáticos `public/images/…` do repositório (continuam usados pelos produtos ou ficam sem uso).
+
+### Confirmacao de gravacao (2026-10-30)
+
+- RN22: Edicao e exclusao exigem uma linha retornada; sem confirmacao nao ha sucesso nem remocao da imagem antiga.
+- CA12: UPDATE/DELETE sem registro retornado falha antes de remover arquivos.
