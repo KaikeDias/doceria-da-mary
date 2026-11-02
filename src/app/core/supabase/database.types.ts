@@ -313,6 +313,10 @@ export type Database = {
       }
     }
     Functions: {
+      salvar_produto: {
+        Args: { p_id: string; p_campos: Json; p_novo: boolean; p_slug: string; p_imagens: string[] | null }
+        Returns: string
+      }
       informacoes_validas: { Args: { dados: Json }; Returns: boolean }
       is_admin: { Args: never; Returns: boolean }
     }
