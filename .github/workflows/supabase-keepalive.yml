@@ -1,0 +1,17 @@
+# Evita que o projeto Supabase (plano gratuito) seja pausado por inatividade.
+name: Supabase keep-alive
+
+on:
+  schedule:
+    - cron: '0 */12 * * *'
+  workflow_dispatch:
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Select em produtos
+        # Mesma URL e chave publicável já expostas em src/environments/environment.ts.
+        run: |
+          curl -fsS "https://qruzjowgvamfasvrunjn.supabase.co/rest/v1/produtos?select=id&limit=1" \
+            -H "apikey: sb_publishable_-qmN1EX03g6yHCWkSpINNg_Su2z6Fqu"
